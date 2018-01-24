@@ -1,0 +1,24 @@
+{
+  "name": "purpleteam-app-scanner",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/binarymist/purpleteam-app-scanner.git"
+  },
+  "keywords": [
+    "security",
+    "regression",
+    "testing"
+  ],
+  "author": "Kim Carter",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/binarymist/purpleteam-app-scanner/issues"
+  },
+  "homepage": "https://github.com/binarymist/purpleteam-app-scanner#readme"
+}
