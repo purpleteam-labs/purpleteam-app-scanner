@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/binarymist/purpleteam-app-scanner/issues"
   },
-  "homepage": "https://github.com/binarymist/purpleteam-app-scanner#readme"
+  "homepage": "https://github.com/binarymist/purpleteam-app-scanner#readme",
+  "dependencies": {
+    "cucumber": "^3.2.1"
+  }
 }
