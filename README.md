@@ -1,0 +1,1 @@
+[![Known Vulnerabilities](https://snyk.io/test/github/binarymist/purpleteam-app-scanner/badge.svg?targetFile=package.json)](https://snyk.io/test/github/binarymist/purpleteam-app-scanner?targetFile=package.json)
