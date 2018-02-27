@@ -16,16 +16,16 @@ var service = new chrome.ServiceBuilder(path).build();
 
 // SUT is an acronym for System Under Test.
 var sutProtocol = "http://";
-var zapTargetApp = sutProtocol + config.hostName + ":" + config.port + "/";
+var zapTargetApp = sutProtocol + config.get('sut.hostIp') + ":" + config.get('sut.port') + "/";
 var zapOptions = {
-    proxy: (sutProtocol + config.zapHostName + ":" + config.zapPort + "/"),
+    proxy: (sutProtocol + config.get('zap.hostIp') + ":" + config.get('zap.port') + "/"),
     targetApp: zapTargetApp
 };
 var ZapClient = require("zaproxy");
 var zaproxy = new ZapClient(zapOptions);
 var zapTargetAppRoute = "profile";
 var zapTargetAppAndRoute = zapTargetApp + zapTargetAppRoute;
-var zapApiKey = config.zapApiKey;
+var zapApiKey = config.get('zap.apiKey');
 var fs = require("fs");
 
 var state = {
@@ -53,7 +53,7 @@ test.before(function() {
         // Proxy all requests through Zap before using Zap to find vulnerabilities,
         // otherwise Zap will say: "URL not found in the scan tree".
         .setProxy(proxy.manual({
-            http: config.zapHostName + ":" + config.zapPort
+            http: config.get('zap.hostIp') + ":" + config.get('zap.port')
         }))
         .build();
     webDriver.getWindowHandle();
@@ -331,7 +331,7 @@ test.describe(zapTargetAppRoute + " regression test suite", function() {
                                 });
 
                             }
-                        }, config.zapApiFeedbackSpeed);
+                        }, config.get('zap.apiFeedbackSpeed'));
 
                     });
             }

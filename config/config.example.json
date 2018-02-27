@@ -1,0 +1,10 @@
+{
+  "sut": {
+    "hostIp": "172.17.0.1"
+  },
+  "zap": {
+    "hostIp": "172.17.0.2",
+    "apiKey": "your api key that Zap is configured to accept."
+    }
+  }
+}
