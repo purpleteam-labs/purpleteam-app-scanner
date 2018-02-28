@@ -1,5 +1,3 @@
-'use strict';
-
 const convict = require('convict');
 const path = require('path');
 
@@ -40,7 +38,7 @@ const schema = {
       default: ''
     },
     apiFeedbackSpeed: {
-      doc: "The speed to poll the Zap API for feedback of test progress",
+      doc: 'The speed to poll the Zap API for feedback of test progress',
       format: 'duration',
       default: 5000
     }
@@ -48,7 +46,7 @@ const schema = {
 };
 
 const config = convict(schema);
-config .loadFile(path.join(__dirname, 'config.' + config.get('env') + '.json'));
+config.loadFile(path.join(__dirname, `config.${config.get('env')}.json`));
 config.validate();
 
 module.exports = config;
