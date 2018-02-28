@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const convict = require('convict');
 const path = require('path');

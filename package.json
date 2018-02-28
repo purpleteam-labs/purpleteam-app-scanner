@@ -4,9 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint .",
+    "deps": "npm-check",
+    "update:deps": "npm-check -u",
+    "test": "echo \"Todo: Create tests.\" && exit 0",
+
     "testsecurity": "mocha ./test/security --recursive",
     "debug:testsecurity": "mocha --inspect-brk ./test/security --recursive"
   },
+  "pre-commit": [
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/binarymist/purpleteam-app-scanner.git"
@@ -33,5 +41,12 @@
     "should": "^8.3.1",
     "zaproxy": "^0.2.0"
   },
-  "devDependencies": {}
+  "//Install ajv --save-dev": "gets rid of npm warning.",
+  "devDependencies": {
+    "eslint": "^4.18.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.9.0",
+    "npm-check": "^5.5.2",
+    "pre-commit": "^1.2.2"
+  }
 }

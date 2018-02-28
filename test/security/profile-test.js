@@ -1,3 +1,5 @@
+'use strict';
+
 var config = require("../../config/config");
 var assert = require("assert");
 var should = require("should");
