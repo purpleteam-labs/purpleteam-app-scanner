@@ -1,6 +1,5 @@
 const config = require('../../config/config');
 require('should');
-const async = require('async');
 const { By } = require('selenium-webdriver');
 const chromeDriver = require('chromedriver');
 
@@ -27,11 +26,6 @@ const zapTargetAppRoute = 'profile';
 const zapTargetAppAndRoute = zapTargetApp + zapTargetAppRoute;
 const zapApiKey = config.get('zap.apiKey');
 const fs = require('fs');
-
-const state = {
-  description: '',
-  error: null
-};
 
 const sutUserName = 'user1';
 const sutUserPassword = 'User1_123';
@@ -96,18 +90,15 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
   // http://bites.goodeggs.com/posts/selenium-webdriver-nodejs-tutorial/
   test.it('Should not exceed the decided threshold of vulnerabilities known to Zap', (done) => {
     const contextId = 1;
-    let userId;
     const maxChildren = 1;
     const alertThreshold = 3;
     let numberOfAlerts;
+    let userId;
     let scanId;
     let zapInProgressIntervalId;
     // Todo: Let's do something with resultsFromAllAsyncSeriesFunctions.
-    const onCompletion = (error, resultsFromAllAsyncSeriesFunctions) => {
-      if (!error) {
-        // eslint-disable-next-line no-console
-        console.log(resultsFromAllAsyncSeriesFunctions[resultsFromAllAsyncSeriesFunctions.length - 1].description);
-      } else throw error;
+    const onCompletion = (outcome) => {
+      console.log(outcome); // eslint-disable-line no-console
       if (numberOfAlerts > alertThreshold) {
         // eslint-disable-next-line no-console
         console.log(`Search the generated report for "/${zapTargetAppRoute}" to see the ${numberOfAlerts - alertThreshold} vulnerabilities that exceed the user defined threshold of: ${alertThreshold}`);
@@ -116,152 +107,184 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
       done();
     };
 
-
-    async.series([
-
-      function newContext(newContext1Done) {
-        zaproxy.context.newContext('NodeGoat Context', zapApiKey, (err, resp) => {
-          console.log(`Response from newContext: ${resp}`); // eslint-disable-line no-console
-          newContext1Done(state.error);
+    (async () => {
+      await (function newContext() {
+        return new Promise((resolve, reject) => {
+          zaproxy.context.newContext('NodeGoat Context', zapApiKey, (err, resp) => {
+            console.log(`Response from newContext: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
         });
-      },
-      function spider(spiderDone) {
-        zaproxy.spider.scan(zapTargetApp, maxChildren, zapApiKey, (err, resp) => {
-          console.log(`Response from spider: ${resp}`); // eslint-disable-line no-console
-          spiderDone(state.error, state);
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function spider() {
+        return new Promise((resolve, reject) => {
+          zaproxy.spider.scan(zapTargetApp, maxChildren, zapApiKey, (err, resp) => {
+            console.log(`Response from spider: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
         });
-      },
-      function includeInZapContext(includeInZapContextDone) {
-        // Inform Zap how to authenticate itself.
-        zaproxy.context.includeInContext('NodeGoat Context', zapTargetApp, zapApiKey, (err, resp) => {
-          console.log(`Response from includeInContext: ${resp}`); // eslint-disable-line no-console
-          includeInZapContextDone(state.error);
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function includeInZapContext() {
+        return new Promise((resolve, reject) => {
+          // Inform Zap how to authenticate itself.
+          zaproxy.context.includeInContext('NodeGoat Context', zapTargetApp, zapApiKey, (err, resp) => {
+            console.log(`Response from includeInContext: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
         });
-      },
-      function setAuthenticationMethod(setAuthenticationMethodDone) {
-        zaproxy.authentication.setAuthenticationMethod(
-          contextId,
-          'formBasedAuthentication',
-          // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
-          `loginUrl=${zapTargetApp}login&loginRequestData=userName%3D%7B%25username%25%7D%26password%3D%7B%25password%25%7D%26_csrf%3D`,
-          zapApiKey,
-          (err, resp) => {
-            console.log(`Response from setAuthenticationMethod: ${resp}`); // eslint-disable-line no-console
-            setAuthenticationMethodDone(state.error);
-          }
-        );
-      },
-      function setLoggedInIndicator(setLoggedInIndicatorDone) {
-        // contextId, loggedInIndicatorRegex
-        zaproxy.authentication.setLoggedInIndicator(
-          contextId,
-          '<p>Moved Temporarily. Redirecting to <a href="/dashboard">/dashboard</a></p>',
-          zapApiKey,
-          (err, resp) => {
-            console.log(`Response from setLoggedInIndicator: ${resp}`); // eslint-disable-line no-console
-            setLoggedInIndicatorDone(state.error);
-          }
-        );
-      },
-      function setForcedUserModeEnabled(setForcedUserModeEnabledDone) {
-        const enabled = true;
-        zaproxy.forcedUser.setForcedUserModeEnabled(enabled, zapApiKey, (err, resp) => {
-          console.log(`Response from setForcedUserModeEnabled: ${resp}`); // eslint-disable-line no-console
-          setForcedUserModeEnabledDone(state.error);
-        });
-      },
-      function newUser(newUserDone) {
-        zaproxy.users.newUser(contextId, sutUserName, zapApiKey, (err, resp) => {
-          // Todo: check userId.
-          this.userId = resp.userId;
-          console.log(`Response from newUser: ${resp}`); // eslint-disable-line no-console
-          newUserDone(state.error);
-        });
-      },
-      function setForcedUser(setForcedUserDone) {
-        zaproxy.forcedUser.setForcedUser(contextId, userId, zapApiKey, (err, resp) => {
-          console.log(`Response from setForcedUser: ${resp}`); // eslint-disable-line no-console
-          setForcedUserDone(state.error);
-        });
-      },
-      function setAuthenticationCredentials(setAuthenticationCredentialsDone) {
-        zaproxy.users.setAuthenticationCredentials(
-          contextId,
-          userId,
-          `username=${sutUserName}&password=${sutUserPassword}`,
-          zapApiKey,
-          (err, resp) => {
-            console.log(`Response from setAuthenticationCredentials: ${resp}`); // eslint-disable-line no-console
-            setAuthenticationCredentialsDone(state.error);
-          }
-        );
-      },
-      function setUserEnabled(setUserEnabledDone) { // User should already be enabled?
-        const enabled = true;
-        zaproxy.users.setUserEnabled(contextId, userId, enabled, zapApiKey, (err, resp) => {
-          console.log(`Response from setUserEnabled: ${resp}`); // eslint-disable-line no-console
-          setUserEnabledDone(state.error);
-        });
-      },
-      function spiderAsUserForRoot(spiderAsUserForDone) {
-        zaproxy.spider.scanAsUser(zapTargetApp, contextId, userId, maxChildren, zapApiKey, (err, resp) => {
-          console.log(`Response from scanAsUser: ${resp}`); // eslint-disable-line no-console
-          spiderAsUserForDone(state.error);
-        });
-      },
-      function activeScan(activeScanDone) {
-        zaproxy.ascan.scan(
-          zapTargetAppAndRoute,
-          true,
-          false,
-          '',
-          'POST',
-          'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=',
-          zapApiKey,
-          (err, resp) => {
-            let statusValue;
-            let zapError;
-
-            scanId = resp.scan;
-
-            function status() {
-              zaproxy.ascan.status(scanId, (statusErr, statusResp) => {
-                if (statusResp) statusValue = statusResp.status;
-                if (statusErr) zapError = (statusErr.code === 'ECONNREFUSED') ? statusErr : '';
-                zaproxy.core.numberOfAlerts(zapTargetAppAndRoute, (numberOfAlertsErr, numberOfAlertsResp) => {
-                  if (numberOfAlertsResp) {
-                    ({ numberOfAlerts } = numberOfAlertsResp);
-                  }
-                  // else console.log(err);
-                  console.log(`Scan ${scanId} is ${statusValue}% complete with ${numberOfAlerts} alerts.`); // eslint-disable-line no-console
-                });
-              });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function setAuthenticationMethod() {
+        return new Promise((resolve, reject) => {
+          zaproxy.authentication.setAuthenticationMethod(
+            contextId,
+            'formBasedAuthentication',
+            // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
+            `loginUrl=${zapTargetApp}login&loginRequestData=userName%3D%7B%25username%25%7D%26password%3D%7B%25password%25%7D%26_csrf%3D`,
+            zapApiKey,
+            (err, resp) => {
+              console.log(`Response from setAuthenticationMethod: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+              if (err) reject(err);
+              else resolve(resp);
             }
-            zapInProgressIntervalId = setInterval(() => {
-              status();
-              if (zapError && statusValue !== String(100)) {
-                console.log('Canceling test. Zap API is unreachible.'); // eslint-disable-line no-console
-                clearInterval(zapInProgressIntervalId);
-                activeScanDone(zapError);
-              } else if (statusValue === String(100)) {
-                console.log(`We are finishing scan ${scanId}. Please see the report for further details.`); // eslint-disable-line no-console
-                clearInterval(zapInProgressIntervalId);
-                status();
-                console.log('About to write report.'); // eslint-disable-line no-console
-                zaproxy.core.htmlreport(zapApiKey, (htmlreportErr, htmlreportResp) => {
-                  const date = new Date();
-                  const reportPath = `${__dirname}/report_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}.html`;
-                  console.log(`Writing report to ${reportPath}`); // eslint-disable-line no-console
-                  fs.writeFile(reportPath, htmlreportResp, (writeFileErr) => {
-                    if (writeFileErr) console.log(writeFileErr); // eslint-disable-line no-console
-                    activeScanDone(state.error, state);
+          );
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function setLoggedInIndicator() {
+        return new Promise((resolve, reject) => {
+          // contextId, loggedInIndicatorRegex
+          zaproxy.authentication.setLoggedInIndicator(
+            contextId,
+            '<p>Moved Temporarily. Redirecting to <a href="/dashboard">/dashboard</a></p>',
+            zapApiKey,
+            (err, resp) => {
+              console.log(`Response from setLoggedInIndicator: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+              if (err) reject(err);
+              else resolve(resp);
+            }
+          );
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function setForcedUserModeEnabled() {
+        return new Promise((resolve, reject) => {
+          const enabled = true;
+          zaproxy.forcedUser.setForcedUserModeEnabled(enabled, zapApiKey, (err, resp) => {
+            console.log(`Response from setForcedUserModeEnabled: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function newUser() {
+        return new Promise((resolve, reject) => {
+          zaproxy.users.newUser(contextId, sutUserName, zapApiKey, (err, resp) => {
+            ({ userId } = resp);
+            console.log(`Response from newUser: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function setForcedUser() {
+        return new Promise((resolve, reject) => {
+          zaproxy.forcedUser.setForcedUser(contextId, userId, zapApiKey, (err, resp) => {
+            console.log(`Response from setForcedUser: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function setAuthenticationCredentials() {
+        return new Promise((resolve, reject) => {
+          zaproxy.users.setAuthenticationCredentials(
+            contextId,
+            userId,
+            `username=${sutUserName}&password=${sutUserPassword}`,
+            zapApiKey,
+            (err, resp) => {
+              console.log(`Response from setAuthenticationCredentials: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+              if (err) reject(err);
+              else resolve(resp);
+            }
+          );
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function setUserEnabled() { // User should already be enabled?
+        return new Promise((resolve, reject) => {
+          const enabled = true;
+          zaproxy.users.setUserEnabled(contextId, userId, enabled, zapApiKey, (err, resp) => {
+            console.log(`Response from setUserEnabled: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function spiderAsUserForRoot() {
+        return new Promise((resolve, reject) => {
+          zaproxy.spider.scanAsUser(zapTargetApp, contextId, userId, maxChildren, zapApiKey, (err, resp) => {
+            console.log(`Response from scanAsUser: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+            if (err) reject(err);
+            else resolve(resp);
+          });
+        });
+      }()).catch(error => console.log(`Error: ${JSON.stringify(error)}`)); // eslint-disable-line no-console
+      await (function activeScan() {
+        return new Promise((resolve, reject) => {
+          zaproxy.ascan.scan(
+            zapTargetAppAndRoute,
+            true,
+            false,
+            '',
+            'POST',
+            'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=',
+            zapApiKey,
+            (err, resp) => {
+              let statusValue;
+              let zapError;
+              console.log(`Response from scan: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+              scanId = resp.scan;
+
+              function status() {
+                zaproxy.ascan.status(scanId, (statusErr, statusResp) => {
+                  if (statusResp) statusValue = statusResp.status;
+                  if (statusErr) zapError = (statusErr.code === 'ECONNREFUSED') ? statusErr : '';
+                  zaproxy.core.numberOfAlerts(zapTargetAppAndRoute, (numberOfAlertsErr, numberOfAlertsResp) => {
+                    if (numberOfAlertsResp) {
+                      ({ numberOfAlerts } = numberOfAlertsResp);
+                    }
+                    // else console.log(err);
+                    console.log(`Scan ${scanId} is ${statusValue}% complete with ${numberOfAlerts} alerts.`); // eslint-disable-line no-console
                   });
                 });
               }
-            }, config.get('zap.apiFeedbackSpeed'));
-          }
-        );
-      }
-    ], onCompletion);
+              zapInProgressIntervalId = setInterval(() => {
+                status();
+                if (zapError && statusValue !== String(100)) {
+                  console.log('Canceling test. Zap API is unreachible.'); // eslint-disable-line no-console
+                  clearInterval(zapInProgressIntervalId);
+                  reject(zapError);
+                } else if (statusValue === String(100)) {
+                  console.log(`We are finishing scan ${scanId}. Please see the report for further details.`); // eslint-disable-line no-console
+                  clearInterval(zapInProgressIntervalId);
+                  status();
+                  console.log('About to write report.'); // eslint-disable-line no-console
+                  zaproxy.core.htmlreport(zapApiKey, (htmlreportErr, htmlreportResp) => {
+                    const date = new Date();
+                    const reportPath = `${__dirname}/report_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}.html`;
+                    console.log(`Writing report to ${reportPath}`); // eslint-disable-line no-console
+                    fs.writeFile(reportPath, htmlreportResp, (writeFileErr) => {
+                      if (writeFileErr) console.log(`Error writing report file to disk: ${writeFileErr}`); // eslint-disable-line no-console
+                    });
+                    resolve('Done writing report file.');
+                  });
+                }
+              }, config.get('zap.apiFeedbackSpeed'));
+            }
+          );
+        });
+      }()).then(outcome => onCompletion(outcome));
+    })();
   });
 });

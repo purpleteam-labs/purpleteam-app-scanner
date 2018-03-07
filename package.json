@@ -31,7 +31,6 @@
   },
   "homepage": "https://github.com/binarymist/purpleteam-app-scanner#readme",
   "dependencies": {
-    "async": "^2.0.0-rc.4",
     "chai": "^4.1.2",
     "chromedriver": "^2.35.0",
     "convict": "^4.0.2",
