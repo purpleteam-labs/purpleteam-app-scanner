@@ -10,7 +10,9 @@
     "test": "echo \"Todo: Create tests.\" && exit 0",
     "pretest": "npm run lint",
     "testsecurity": "mocha ./test/security --recursive",
-    "debug:testsecurity": "mocha --inspect-brk ./test/security --recursive"
+    "debug:testsecurity": "mocha --inspect-brk ./test/security --recursive",
+    "dev:debug": "node --inspect-brk ./index.js",
+    "start": "node ./index.js"
   },
   "pre-commit": [
     "test"
@@ -34,6 +36,7 @@
     "chai": "^4.1.2",
     "chromedriver": "^2.35.0",
     "convict": "^4.0.2",
+    "hapi": "^17.2.2",
     "mocha": "^5.0.1",
     "path": "^0.12.7",
     "selenium-webdriver": "^3.6.0",
