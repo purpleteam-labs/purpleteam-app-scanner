@@ -14,9 +14,9 @@ const service = new chrome.ServiceBuilder(path).build();
 
 // SUT is an acronym for System Under Test.
 const sutProtocol = 'http://';
-const zapTargetApp = `${sutProtocol}${config.get('sut.hostIp')}:${config.get('sut.port')}/`;
+const zapTargetApp = `${sutProtocol}${config.get('sut.iP')}:${config.get('sut.port')}/`;
 const zapOptions = {
-  proxy: (`${sutProtocol}${config.get('zap.hostIp')}:${config.get('zap.port')}/`),
+  proxy: (`${sutProtocol}${config.get('zap.iP')}:${config.get('zap.port')}/`),
   targetApp: zapTargetApp
 };
 const ZapClient = require('zaproxy');
@@ -46,7 +46,7 @@ test.before(function beforeProfile() {
     // Proxy all requests through Zap before using Zap to find vulnerabilities,
     // otherwise Zap will say: "URL not found in the scan tree".
     .setProxy(proxy.manual({
-      http: `${config.get('zap.hostIp')}:${config.get('zap.port')}`
+      http: `${config.get('zap.iP')}:${config.get('zap.port')}`
     }))
     .build();
   webDriver.getWindowHandle();

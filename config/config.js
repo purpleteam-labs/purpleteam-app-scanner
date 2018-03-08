@@ -8,6 +8,19 @@ const schema = {
     default: 'development',
     env: 'NOE_ENV'
   },
+  host: {
+    port: {
+      doc: 'The port of this host.',
+      format: 'port',
+      default: 3000,
+      env: 'PORT'
+    },
+    iP: {
+      doc: 'The IP address of this host.',
+      format: 'ipaddress',
+      default: '240.0.0.0'
+    }
+  },
   sut: {
     port: {
       doc: 'The port of the system under test.',
@@ -15,14 +28,14 @@ const schema = {
       default: 4000,
       env: 'PORT'
     },
-    hostIp: {
+    iP: {
       doc: 'The IP address of the system under test.',
       format: 'ipaddress',
       default: '240.0.0.0'
     }
   },
   zap: {
-    hostIp: {
+    iP: {
       doc: 'The IP address of the Zap host.',
       format: 'ipaddress',
       default: '240.0.0.0'

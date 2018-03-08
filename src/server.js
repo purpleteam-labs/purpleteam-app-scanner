@@ -1,6 +1,7 @@
+const config = require('../config/config');
 const Hapi = require('hapi');
 
-const server = Hapi.server({ port: 3000, host: 'localhost' });
+const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.iP') });
 
 server.route({
   method: 'GET',
