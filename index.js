@@ -1,8 +1,9 @@
 const server = require('./src/server');
 
 const init = async () => {
-  await server.start();
-  console.log(`purpleteam-app-scanner running at: ${server.info.uri}`); // eslint-disable-line no-console
+  await server.registerPlugins();
+  const serverResponse = await server.start();
+  console.log(`purpleteam-app-scanner running at: ${serverResponse.info.uri}`); // eslint-disable-line no-console
 };
 
 process.on('unhandledRejection', (err) => {

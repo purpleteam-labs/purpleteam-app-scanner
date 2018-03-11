@@ -1,18 +1,29 @@
 const config = require('../config/config');
 const Hapi = require('hapi');
+const routeTest = require('./api/route-test');
 
 const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.iP') });
 
-server.route({
-  method: 'GET',
-  path: '/',
-  handler: (request, respToolkit) => 'Hello, world!' // eslint-disable-line no-unused-vars
-});
+const infrastructuralPlugins = [];
+const domainPlugins = [
+  {
+    plugin: routeTest,
+    options: 'Options for route-test'
+  }
+];
 
-server.route({
-  method: 'GET',
-  path: '/{name}',
-  handler: (request, respToolkit) => `Hello, ${encodeURIComponent(request.params.name)}!` // eslint-disable-line no-unused-vars
-});
 
-module.exports = server;
+module.exports = {
+
+  registerPlugins: async () => {
+    // Todo: KC: Add host header as `vhost` to the routes of the optional options object passed to `server.register`.
+    // https://hapijs.com/tutorials/plugins#user-content-registration-options
+
+    await server.register(infrastructuralPlugins.concat(domainPlugins));
+  },
+  start: async () => {
+    await server.start();
+    return server;
+  }
+
+};
