@@ -8,42 +8,35 @@ module.exports = {
     // Todo: KC: Pass config to model..
     model.initialise('I am a dummy config');
 
-    let cucumber = require('cucumber');
+    const cucumber = require('cucumber');
+
+    const clearRequireCache = function clearRequireCache() {
+      Object.keys(require.cache).forEach(key => delete require.cache[key])
+    }
+
+    // https://github.com/cucumber/cucumber-js/issues/786
+    // Details for forking and spawning are:
+    //    https://nodejs.org/api/child_process.html
+    //    https://medium.freecodecamp.org/node-js-child-processes-everything-you-need-to-know-e69498fe970a
+    //    And this one for debugging the additional child process: https://github.com/nodejs/node/issues/8690
 
     let args = []
-      .concat(['/home/kim/.nvm/versions/node/v8.9.4/bin/node'])
-      .concat(['/home/kim/Source/purpleteam-app-scanner/node_modules/.bin/cucumber-js']);
+      .concat(['node'])
+      .concat([`${process.cwd}/node_modules/.bin/cucumber-js`]);
+    
+    let cucumberCli = new cucumber.Cli({argv: args.concat(['src/features', '-r', 'src/steps', '--exit', `--format=json:${process.cwd()}/test/security/report.txt`]), cwd: process.cwd(), stdout: process.stdout});
 
-    let cucumberCli = new cucumber.Cli({argv: args.concat(['src/features', '-r', 'src/steps', '--exit']), cwd: process.cwd(), stdout: process.stdout});
-
-    // Todo: KC: Need to limit the nuuber of child node.js processes. 
-
-    const pipeStdinStdoutStderrFromChildToParent = true;
-
-    // fork provides not only the ability to receive but also send messages to the child process.    
-    const { fork } = require('child_process');
-    const cucCli = fork('./node_modules/.bin/cucumber-js', ['src/features', '-r', 'src/steps'], {silent: pipeStdinStdoutStderrFromChildToParent, execArgv: ['--inspect=9223']});
-
-    //const { spawn } = require('child_process');
-    //const cucCli = spawn('node', ['./node_modules/.bin/cucumber-js', 'src/features', '-r', 'src/steps']);
-
-    cucCli.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);      
-    })
-
-    cucCli.on('message', (msg) => {
-      console.log(`message from child: ${msg}`);
-    })
-
-    cucCli.stderr.on('data', (data) => {
-      console.log(`stderr: ${data}`);
-    })
-
-    cucCli.on('close', (code) => {
-      console.log(`child process exited with code ${code}`)
-    })
+    cucumberCli.run()
+      .then((succeeded) => {
+        console.log(succeeded);
+        // clearSupportCodeFns();
+        clearRequireCache();
+      }).catch((error) => {
+      console.log(error);
+      });
 
     return 'test-route handler';
   }
 };
+
 
