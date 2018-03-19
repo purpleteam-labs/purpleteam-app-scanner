@@ -18,6 +18,7 @@ module.exports = {
       .concat(['node'])
       .concat([`${process.cwd}/node_modules/.bin/cucumber-js`]);
     
+    // Todo: KC: Convert existing profile test to cucumber. 
     let cucumberCli = new cucumber.Cli({argv: args.concat(['src/features', '-r', 'src/steps', '--exit', `--format=json:${process.cwd()}/test/security/report.txt`]), cwd: process.cwd(), stdout: process.stdout});
 
     let resp;
