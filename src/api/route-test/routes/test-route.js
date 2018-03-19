@@ -1,7 +1,7 @@
 
 
 module.exports = {
-  method: 'PUT',
+  method: 'POST',
   path: '/test-route',
   handler: async (request, respToolkit) => { // eslint-disable-line no-unused-vars
     const { model } = request.server.app;
