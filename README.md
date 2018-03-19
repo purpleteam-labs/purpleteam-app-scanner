@@ -24,8 +24,13 @@ This currently just runs dummy cucumber tests
   
     In one terminal: `npm start`
   
+    In order to debug instead:
+  
+    1. `npm run dev:debug`
+    2. Open the chromium debugger
+  
 2. Hit the route:
   
-    In second terminal: `curl -X POST http://localhost:3000/test-route`
+    In second terminal: `curl -X PUT http://localhost:3000/test-route`
 
     This should give you back the test results, currently in JSON, and the first terminal should display the cucumber summary on each route request.
