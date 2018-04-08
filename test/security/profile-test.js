@@ -13,6 +13,7 @@ const { path } = chromeDriver;
 const service = new chrome.ServiceBuilder(path).build();
 
 // SUT is an acronym for System Under Test.
+// Todo: KC: Put protocol in config, but seperate out seperator.
 const sutProtocol = 'http://';
 const zapTargetApp = `${sutProtocol}${config.get('sut.iP')}:${config.get('sut.port')}/`;
 const zapOptions = {

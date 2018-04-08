@@ -12,7 +12,7 @@ Along with the other components in the PurpleTeam solution:
 * purpleteam-tls-checker (TLS checker)
 * etc
 
-### Real Test
+## Real Test
 
 1. Once cloned, from the terminal run:
   
@@ -26,7 +26,7 @@ Along with the other components in the PurpleTeam solution:
   
     `npm run testsecurity`
 
-### Exercising the `/test-route`
+## Exercising the `/test-route`
 
 This currently just runs dummy cucumber tests
 
@@ -36,11 +36,11 @@ This currently just runs dummy cucumber tests
   
     In order to debug instead:
   
-    1. `npm run dev:debug`
+    1. `npm run debug`
     2. Open the chromium debugger
   
 2. Hit the route:
   
     In second terminal: `curl -X POST http://localhost:3000/test-route`
 
-    This should give you back the test results, currently in JSON, and the first terminal should display the cucumber summary on each route request.
+    This should give you back the test plan, and the first terminal should display the cucumber summary on each route request.

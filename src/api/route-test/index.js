@@ -3,7 +3,7 @@ const routes = require('./routes');
 
 const applyRoutes = (server) => {
   // Plugin with multiple routes.
-  server.route([...routes]);
+  server.route(routes);
 };
 
 module.exports = {

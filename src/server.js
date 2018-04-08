@@ -4,7 +4,9 @@ const routeTest = require('./api/route-test');
 
 const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.iP') });
 
-const infrastructuralPlugins = [];
+const infrastructuralPlugins = [
+  require('susie')
+];
 const domainPlugins = [
   {
     plugin: routeTest,

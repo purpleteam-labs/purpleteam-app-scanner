@@ -11,7 +11,7 @@
     "pretest": "npm run lint",
     "testsecurity": "mocha ./test/security --recursive",
     "debug:testsecurity": "mocha --inspect-brk ./test/security --recursive",
-    "dev:debug": "node --inspect-brk ./index.js",
+    "debug": "node --inspect-brk ./index.js",
     "start": "node ./index.js"
   },
   "pre-commit": [
@@ -42,6 +42,7 @@
     "path": "^0.12.7",
     "selenium-webdriver": "^3.6.0",
     "should": "^13.2.1",
+    "susie": "^3.0.0-alpha",
     "zaproxy": "^0.2.0"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
