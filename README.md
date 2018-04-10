@@ -26,7 +26,7 @@ Along with the other components in the PurpleTeam solution:
   
     `npm run testsecurity`
 
-## Exercising the `/test-route`
+## Exercising the `/run-job`
 
 This currently just runs dummy cucumber tests
 
@@ -41,6 +41,6 @@ This currently just runs dummy cucumber tests
   
 2. Hit the route:
   
-    In second terminal: `curl -X POST http://localhost:3000/test-route`
+    In second terminal: `curl -X POST http://localhost:3000/run-job`
 
     This should give you back the test plan, and the first terminal should display the cucumber summary on each route request.
