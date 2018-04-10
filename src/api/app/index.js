@@ -1,4 +1,4 @@
-const RouteTest = require('./models/route-test');
+const App = require('./models/app');
 const routes = require('./routes');
 
 const applyRoutes = (server) => {
@@ -7,14 +7,14 @@ const applyRoutes = (server) => {
 };
 
 module.exports = {
-  name: 'routeTestDomainPlugin',
+  name: 'appDomainPlugin',
   version: '1.0.0',
   register: async (server, options) => {
     // Todo: KC: Configure model.
-    const model = new RouteTest();
+    const model = new App();
     server.app.model = model; // eslint-disable-line no-param-reassign
     applyRoutes(server);
-    console.log(`The options passed to routeTestDomainPlugin were: ${options}.`); // eslint-disable-line no-console
+    console.log(`The options passed to appDomainPlugin were: ${options}.`); // eslint-disable-line no-console
   }
 
 };

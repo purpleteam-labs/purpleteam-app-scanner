@@ -1,6 +1,6 @@
 const config = require('../config/config');
 const Hapi = require('hapi');
-const routeTest = require('./api/route-test');
+const app = require('./api/app');
 
 const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.iP') });
 
@@ -9,8 +9,8 @@ const infrastructuralPlugins = [
 ];
 const domainPlugins = [
   {
-    plugin: routeTest,
-    options: 'Options for route-test'
+    plugin: app,
+    options: 'Options for app'
   }
 ];
 
