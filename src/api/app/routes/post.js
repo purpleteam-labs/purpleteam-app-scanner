@@ -9,7 +9,7 @@ module.exports = {
     // Todo: check for planOnly.
 
 
-    let planOnly = true;
+    let planOnly = false;
 
     return planOnly ? respToolkit.response(await model.testPlan()) : respToolkit.response(await model.runJob());
 
