@@ -48,7 +48,7 @@ class App {
 
 
 
-    await cucumberCli.run()
+    cucumberCli.run()
     .then((succeeded) => {
       console.log(succeeded);
       // clearSupportCodeFns();
