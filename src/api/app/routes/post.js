@@ -6,14 +6,8 @@ module.exports = {
   handler: async (request, respToolkit) => { // eslint-disable-line no-unused-vars
     const { model } = request.server.app;
     
-    // Todo: check for planOnly.
-
-
-    let planOnly = false;
-
-    return planOnly ? respToolkit.response(await model.testPlan()) : respToolkit.response(await model.runJob());
-
-     
+    return request.payload.data.attributes.planOnly ? respToolkit.response(await model.testPlan()) : respToolkit.response(await model.runJob());
+ 
 
 
 
