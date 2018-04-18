@@ -242,7 +242,7 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
             'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=',
             zapApiKey,
             (err, resp) => {
-              let statusValue;
+              let statusValue = 'no status yet';
               let zapError;
               console.log(`Response from scan: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
               scanId = resp.scan;
@@ -250,6 +250,7 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
               function status() {
                 zaproxy.ascan.status(scanId, (statusErr, statusResp) => {
                   if (statusResp) statusValue = statusResp.status;
+                  else statusValue = undefined;
                   if (statusErr) zapError = (statusErr.code === 'ECONNREFUSED') ? statusErr : '';
                   zaproxy.core.numberOfAlerts(zapTargetAppAndRoute, (numberOfAlertsErr, numberOfAlertsResp) => {
                     if (numberOfAlertsResp) {
@@ -262,10 +263,10 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
               }
               zapInProgressIntervalId = setInterval(() => {
                 status();
-                if (zapError && statusValue !== String(100)) {
-                  console.log('Canceling test. Zap API is unreachible.'); // eslint-disable-line no-console
+                if ( (zapError && statusValue !== String(100)) || (statusValue === undefined) ) {
+                  console.log(`Canceling test. Zap API is unreachible. ${zapError ? 'Zap Error: ${zapError}' : 'No status value available, may be due to incorrect api key.'}`); // eslint-disable-line no-console
                   clearInterval(zapInProgressIntervalId);
-                  reject(zapError);
+                  reject(`Test failure: ${zapError}`);
                 } else if (statusValue === String(100)) {
                   console.log(`We are finishing scan ${scanId}. Please see the report for further details.`); // eslint-disable-line no-console
                   clearInterval(zapInProgressIntervalId);
