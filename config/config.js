@@ -34,14 +34,14 @@ const schema = {
       default: '240.0.0.0'
     }
   },
-  zap: {
+  slave: {
     iP: {
-      doc: 'The IP address of the Zap host.',
+      doc: 'The IP address of the slave host.',
       format: 'ipaddress',
       default: '240.0.0.0'
     },
     port: {
-      doc: 'The port that Zap is listening on.',
+      doc: 'The port that the slave is listening on.',
       format: 'port',
       default: 8080
     },
@@ -54,6 +54,18 @@ const schema = {
       doc: 'The speed to poll the Zap API for feedback of test progress',
       format: 'duration',
       default: 5000
+    }
+  },
+  cucumber: {
+    features: {
+      doc: 'The location of the feature files.',
+      format: String,
+      default: 'src/features'
+    },
+    steps: {
+      doc: 'The location of the step files.',
+      format: String,
+      default: 'src/steps'
     }
   }
 };

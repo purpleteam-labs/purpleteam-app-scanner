@@ -10,7 +10,11 @@ const infrastructuralPlugins = [
 const domainPlugins = [
   {
     plugin: app,
-    options: 'Options for app'
+    options: {
+      sut: config.get('sut'),
+      slave: config.get('slave'),
+      cucumber: config.get('cucumber')
+    }
   }
 ];
 

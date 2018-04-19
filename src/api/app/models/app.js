@@ -2,7 +2,10 @@
 
 class App {
   constructor(config) {
-    this.config = config;
+    const { sut, slave, cucumber } = config;
+    this.sut = sut;
+    this.slave = slave;
+    this.cucumber = cucumber;
 
 
   }
@@ -36,7 +39,7 @@ class App {
     // Run tests
 
     // Todo: KC: Convert existing profile test to cucumber. 
-    let cucumberCli = new cucumber.Cli({argv: args.concat(['src/features', '-r', 'src/steps', '--exit', `--format=json:${process.cwd()}/test/security/report.txt`]), cwd: process.cwd(), stdout: process.stdout});
+    let cucumberCli = new cucumber.Cli({argv: args.concat([this.cucumber.features, '-r', this.cucumber.steps, '--exit', `--format=json:${process.cwd()}/test/security/report.txt`]), cwd: process.cwd(), stdout: process.stdout});
 
 
 
