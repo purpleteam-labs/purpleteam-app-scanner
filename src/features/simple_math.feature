@@ -1,4 +1,4 @@
-# features/simple_math.feature
+@simple_math
 Feature: Simple maths
   In order to do maths
   As a developer

@@ -49,3 +49,12 @@ This currently just runs dummy cucumber tests
     In second terminal: `curl -X POST http://localhost:3000/run-job`
 
     This should give you back the test plan, and the first terminal should display the cucumber summary on each route request.
+
+## OWASP ZapProxy Details
+
+* [What does Zap test for](https://github.com/zaproxy/zaproxy/wiki/FAQzaptests)
+* [Scanner Rules](https://github.com/zaproxy/zaproxy/wiki/ScannerRules)
+
+Passive scanning occurs [all the time automatically](https://groups.google.com/d/msg/zaproxy-develop/IZ98opaayRg/u8eFqaAZBgAJ) on a background thread.
+
+* Fuzzing support [progress](https://github.com/zaproxy/zaproxy/issues/1689)

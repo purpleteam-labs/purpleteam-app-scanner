@@ -21,20 +21,12 @@ const schema = {
       default: '240.0.0.0'
     }
   },
-  sut: {
-    port: {
-      doc: 'The port of the system under test.',
-      format: 'port',
-      default: 4000,
-      env: 'PORT'
-    },
-    iP: {
-      doc: 'The IP address of the system under test.',
-      format: 'ipaddress',
-      default: '240.0.0.0'
-    }
-  },
   slave: {
+    protocol: {
+      doc: 'The protocol that the slave is listening as.',
+      format: ['https', 'http'],
+      default: 'https'
+    },
     iP: {
       doc: 'The IP address of the slave host.',
       format: 'ipaddress',
@@ -66,6 +58,28 @@ const schema = {
       doc: 'The location of the step files.',
       format: String,
       default: 'src/steps'
+    },
+    tagExpression: {
+      doc: 'The tag expression without the \'--tag\' to run Cucumber with.',
+      format: String,
+      default: 'not @simple_math'
+    },
+    binary: {
+      doc: 'The location of the Cucumber binary.',
+      format: String,
+      default: `${process.cwd()}/node_modules/.bin/cucumber-js`
+    },
+    timeOut: {
+      doc: 'The value used to set the timeout (https://github.com/cucumber/cucumber-js/blob/master/docs/support_files/timeouts.md)',
+      format: 'duration',
+      default: 5000
+    }
+  },
+  report: {
+    uri: {
+      doc: 'The location of the report.',
+      format: String,
+      default: `${process.cwd()}/reports/report.txt`
     }
   }
 };

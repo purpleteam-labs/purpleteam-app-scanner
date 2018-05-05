@@ -11,9 +11,9 @@ const domainPlugins = [
   {
     plugin: app,
     options: {
-      sut: config.get('sut'),
       slave: config.get('slave'),
-      cucumber: config.get('cucumber')
+      cucumber: config.get('cucumber'),
+      report: config.get('report')
     }
   }
 ];

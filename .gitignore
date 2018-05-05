@@ -16,3 +16,9 @@ test/security/report*
 *.rar
 *.tar
 *.zip
+
+src/features/*.*
+!src/features/*.feature
+
+reports/*
+

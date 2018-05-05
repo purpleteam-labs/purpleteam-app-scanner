@@ -17,7 +17,7 @@ const service = new chrome.ServiceBuilder(path).build();
 const sutProtocol = 'http://';
 const zapTargetApp = `${sutProtocol}${config.get('sut.iP')}:${config.get('sut.port')}/`;
 const zapOptions = {
-  proxy: (`${sutProtocol}${config.get('zap.iP')}:${config.get('zap.port')}/`),
+  proxy: (`${sutProtocol}${config.get('slave.iP')}:${config.get('slave.port')}/`),
   targetApp: zapTargetApp
 };
 const ZapClient = require('zaproxy');
@@ -25,7 +25,7 @@ const ZapClient = require('zaproxy');
 const zaproxy = new ZapClient(zapOptions);
 const zapTargetAppRoute = 'profile';
 const zapTargetAppAndRoute = zapTargetApp + zapTargetAppRoute;
-const zapApiKey = config.get('zap.apiKey');
+const zapApiKey = config.get('slave.apiKey');
 const fs = require('fs');
 
 const sutUserName = 'user1';
@@ -47,7 +47,7 @@ test.before(function beforeProfile() {
     // Proxy all requests through Zap before using Zap to find vulnerabilities,
     // otherwise Zap will say: "URL not found in the scan tree".
     .setProxy(proxy.manual({
-      http: `${config.get('zap.iP')}:${config.get('zap.port')}`
+      http: `${config.get('slave.iP')}:${config.get('slave.port')}`
     }))
     .build();
   webDriver.getWindowHandle();
@@ -239,7 +239,7 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
             false,
             '',
             'POST',
-            'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=',
+            'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', // http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.
             zapApiKey,
             (err, resp) => {
               let statusValue = 'no status yet';
@@ -282,7 +282,7 @@ test.describe(`${zapTargetAppRoute} regression test suite`, function profileSuit
                     resolve('Done writing report file.');
                   });
                 }
-              }, config.get('zap.apiFeedbackSpeed'));
+              }, config.get('slave.apiFeedbackSpeed'));
             }
           );
         });

@@ -5,8 +5,13 @@ module.exports = {
   path: '/run-job',
   handler: async (request, respToolkit) => { // eslint-disable-line no-unused-vars
     const { model } = request.server.app;
+    const { payload: testJob } = request;
+    const { data: { attributes: { planOnly } } } = testJob;
     
-    return request.payload.data.attributes.planOnly ? respToolkit.response(await model.testPlan()) : respToolkit.response(await model.runJob());
+
+
+    
+    return planOnly ? respToolkit.response(await model.testPlan(testJob)) : respToolkit.response(await model.runJob(testJob));
  
 
 
