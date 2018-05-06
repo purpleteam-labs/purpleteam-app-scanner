@@ -108,8 +108,8 @@ When('the active scanner is run', async function () {
     if (numberOfAlerts > alertThreshold) {
       // eslint-disable-next-line no-console
       console.log(`Search the generated report for "/${this.getSutRoutes[0]}" to see the ${numberOfAlerts - alertThreshold} vulnerabilities that exceed the user defined threshold of: ${alertThreshold}`);
-    }
-    numberOfAlerts.should.be.lessThanOrEqual(alertThreshold);
+    }    
+    expect(numberOfAlerts).to.be.at.most(alertThreshold);
     
   };
 
