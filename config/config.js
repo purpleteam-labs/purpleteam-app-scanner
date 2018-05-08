@@ -15,7 +15,7 @@ const schema = {
       default: 3000,
       env: 'PORT'
     },
-    iP: {
+    ip: {
       doc: 'The IP address of this host.',
       format: 'ipaddress',
       default: '240.0.0.0'
@@ -27,7 +27,7 @@ const schema = {
       format: ['https', 'http'],
       default: 'https'
     },
-    iP: {
+    ip: {
       doc: 'The IP address of the slave host.',
       format: 'ipaddress',
       default: '240.0.0.0'
@@ -46,6 +46,13 @@ const schema = {
       doc: 'The speed to poll the Zap API for feedback of test progress',
       format: 'duration',
       default: 5000
+    },
+    report: {
+      dir: {
+        doc: 'The location of the report.',
+        format: String,
+        default: `${process.cwd()}/outcomes/`
+      }
     }
   },
   cucumber: {
@@ -75,11 +82,11 @@ const schema = {
       default: 5000
     }
   },
-  report: {
+  results: {
     uri: {
-      doc: 'The location of the report.',
+      doc: 'The location of the results.',
       format: String,
-      default: `${process.cwd()}/reports/report.txt`
+      default: `${process.cwd()}/outcomes/results.txt`
     }
   }
 };

@@ -3,21 +3,23 @@
 const fs = require('fs');
 const { promisify } = require('util');
 const readFileAsync = promisify(fs.readFile);
+const sut = require('../do/sut');
+const zap = require('../../../slaves/zap');
 
 class App {
   constructor(config) {
-    const { slave, cucumber, report } = config;
+    const { slave, cucumber, results } = config;
     
     this.slave = slave;
     this.cucumber = cucumber;
-    this.report = report;
+    this.results = results;
 
   }
 
   async runJob(testJob) {
 
     // Need to return configured cucumberCli as well
-    const { cucumberCli, activeTestCases } = await configureCucumberCli(testJob);
+    const { cucumberCli, activeTestCases } = await this.configureCucumberCli(testJob);
     const testPlan = await this.testPlanText(activeTestCases);
 
     cucumberCli.run()
@@ -35,7 +37,7 @@ class App {
 
 
   async testPlan(testJob) {
-    const { activeTestCases } = await configureCucumberCli(testJob);
+    const { activeTestCases } = await this.configureCucumberCli(testJob);
     return await testPlanText(activeTestCases);
   }
 
@@ -48,18 +50,40 @@ class App {
     }
 
 
+    const sutProperties = {
+      protocol: testJob.data.attributes.sutProtocol,
+      ip: testJob.data.attributes.sutIp,
+      port: testJob.data.attributes.sutPort,
+      browser: testJob.data.attributes.browser[0],
+      authentication: testJob.data.attributes.sutAuthentication,
+      route: testJob.data.included[0].relationships.data[0].id,
+      routeFields: testJob.data.included[2].attributes
+    };
+
+    sut.validateProperties(sutProperties);
+
+    const slaveProperties = {
+      protocol: this.slave.protocol,
+      ip: this.slave.ip,
+      port: this.slave.port,
+      apiKey: this.slave.apiKey,
+      apiFeedbackSpeed: this.slave.apiFeedbackSpeed,
+      reportDir: this.report.dir
+    };
+
+    zap.validateProperties(slaveProperties);
+
     // Todo: KC: probably best to weed out the unnecessary testJob properties.
     const cucumberParameters = {
-      testJob,
+      sutProperties,
+      slaveProperties,      
       cucumber: {
         timeOut: this.cucumber.timeOut
-      },
-      slave: this.slave,        
-      report: this.report
+      }
     };
 
 
-    parameters = JSON.stringify(cucumberParameters);
+    const parameters = JSON.stringify(cucumberParameters);
 
     const cucumberArgs = [
       'node',
@@ -68,7 +92,7 @@ class App {
       '--require',
       this.cucumber.steps,
       /*'--exit',*/
-      `--format=json:${this.report}`,
+      `--format=json:${this.results.uri}`,
       '--tags',
       this.cucumber.tagExpression,
       '--world-parameters',
@@ -131,7 +155,7 @@ class App {
     let result;
 
     try {
-      result = await readFileAsync(this.report.uri, {encoding: 'utf8'})
+      result = await readFileAsync(this.results.uri, {encoding: 'utf8'})
     }
     catch (err) {
       // Todo: use proper logger.

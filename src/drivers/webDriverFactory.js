@@ -13,17 +13,17 @@ class WebDriverFactory {
     
 
   async webDriver(options) {
-
+    debugger;
     if (webDriver)
       return webDriver;
     else {
       // Builder API: https://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_Builder.html
       webDriver = await new seleniumWebdriver.Builder()
-        .forBrowser(options.browserName)
+        .forBrowser(options.browser)
         .setChromeOptions(/* add any options */)
         .setFirefoxOptions(/* add any options */)
         .setProxy(proxy.manual({
-          [options.slave.protocol]: `${options.slave.iP}:${options.slave.port}`
+          [options.slave.protocol]: `${options.slave.ip}:${options.slave.port}`
         }))
         .build();
       return webDriver;

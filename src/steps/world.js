@@ -1,8 +1,10 @@
 // features/support/world.js
 const cucumber = require('cucumber');
 const { setWorldConstructor, setDefaultTimeout } = cucumber;
-const Browser = require('../api/app/clients/browser');
-const WebDriveFactory = require('../api/app/drivers/webDriverFactory');
+
+const Browser = require('../clients/browser');
+const sut = require('../api/app/do/sut');
+const zap = require('../slaves/zap');
 
 
 
@@ -20,60 +22,24 @@ class CustomWorld {
     debugger;
     this.variable = 0;
     this.attach = attach;
-    this.parameters = parameters;
-    this.testJob = parameters.testJob;
-    this.sutBaseUrl = `${parameters.testJob.data.attributes.sutProtocol}${parameters.testJob.data.attributes.sutIp}:${parameters.testJob.data.attributes.sutPort}`;
-    this.slave = parameters.slave;
-
-    this.webDriver = await (new WebDriverFactory().webDriver({
-        browserName: this.testJob.data.attributes.browser[0],
-        slave: this.parameters.slave
-      }
-    ));
- 
-    this.browser = new Browser(this.WebDriver);
 
     setDefaultTimeout(parameters.cucumber.timeOut);
 
-    const zapOptions = {
-      proxy: (`${parameters.slave.protocol}${config.get('slave.iP')}:${config.get('slave.port')}/`),
-      targetApp: this.sutBaseUrl
-    };
-
-    this.zaproxy = new ZapClient(zapOptions);
-
-    this.testSlave = { ...parameters.slave, zaproxy: this.zaproxy };
-
-
+    this.sut = sut;
+    this.sut.initialiseProperties(parameters.sutProperties);
+    this.zap = zap;
+    this.zap.initialiseProperties({ ...parameters.slaveProperties, sut.baseUrl });
   }
 
-  getWebDriver() {
-    return this.webDriver;
+
+  async initialiseBrowser() {
+    await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser());
   }
 
-  getSutBaseUrl() {
-    return this.sutBaseUrl;
-  }
 
-  getSutRoutes() {
-    // Todo: KC: This needs to be more extensible and do more cvhecking. It'll also only work for one case currently (profile route with low priv user).
-    return [this.testJob.data.included[0].relationships.data[0].id];
-  }
-
-  // Todo: KC: Needs to take the route name.
-  getSutRouteFields() {
-    // Todo: KC: That's right, hard coding the index will need some work.
-    return  this.testJob.data.included[2].attributes;
-  }
-
-  getTestSlave() {
-    return this.testSlave;
-  }
-
-  getSutAuthentication() {
-    return this.testJob.data.attributes.sutAuthentication;
-  }
-
+  
+  
+  
 
   // simple_math related stuff.
 

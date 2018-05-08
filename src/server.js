@@ -2,7 +2,7 @@ const config = require('../config/config');
 const Hapi = require('hapi');
 const app = require('./api/app');
 
-const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.iP') });
+const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.ip') });
 
 const infrastructuralPlugins = [
   require('susie')
@@ -13,7 +13,7 @@ const domainPlugins = [
     options: {
       slave: config.get('slave'),
       cucumber: config.get('cucumber'),
-      report: config.get('report')
+      report: config.get('results')
     }
   }
 ];

@@ -1,9 +1,9 @@
 {
   "host": {
-    "iP": "127.0.0.1"
+    "ip": "127.0.0.1"
   },
   "slave": {
-    "iP": "172.17.0.2",
+    "ip": "172.17.0.2",
     "apiKey": "your api key that the slave is configured to accept."
   }
 }
