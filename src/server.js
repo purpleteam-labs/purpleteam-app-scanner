@@ -13,7 +13,7 @@ const domainPlugins = [
     options: {
       slave: config.get('slave'),
       cucumber: config.get('cucumber'),
-      report: config.get('results')
+      results: config.get('results')
     }
   }
 ];

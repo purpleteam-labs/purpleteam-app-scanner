@@ -2,30 +2,24 @@ const Joi = require('joi');
 const WebDriveFactory = require('../../../drivers/webDriverFactory');
 const browser = require('../../../clients/browser');
 
-
-
-let browser; 
-let webDriver;
-
-
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {
   protocol: Joi.string().required().valid('https', 'http'),
-  ip: Joi.string().required().ip(),
-  port: Joi.number().required().port(),
+  ip: Joi.string().ip().required(),
+  port: Joi.number().port().required(),
   browser: Joi.string().required().valid("chrome", "firefox"),
-  sutAuthentication: Joi.object({
-    route: Joi.string().min(2).regex(^\/[a-z]+),
+  authentication: Joi.object({
+    route: Joi.string().min(2).regex(/^\/[a-z]+/),
     usernameFieldLocater: Joi.string().min(2).required(),
     passwordFieldLocater: Joi.string().min(2).required(),
     username: Joi.string().min(2).required(),
     password: Joi.string().min(2).required()
   }),
-  route: Joi.string().min(2).regex(^\/[a-z]+),
+  route: Joi.string().min(2).regex(/^\/[a-z]+/),
   routeFields: Joi.object({
     alertThreshold: Joi.number().integer().positive(),
     attackFields: Joi.array().items(Joi.object({
-      name: Joi.string().required()
+      name: Joi.string().required(),
       value: Joi.string()
     })),
     submit: Joi.string()
@@ -34,21 +28,19 @@ const sutSchema = {
 
 
 let properties;
-
+let webDriver;
 
 
 const validateProperties = (sutProperties) => {
-  if(Joi.validate(sutProperties, sutSchema).error)
-    throw result;
+  const result = Joi.validate(sutProperties, sutSchema);
+  debugger;
+  if(result.error) throw result;
 };
 
 
 const initialiseProperties = (sutProperties) => {
   validateProperties(sutProperties);
-
   properties = sutProperties;
-
-
 };
 
 
@@ -62,12 +54,6 @@ const getProperties = (selecter) => {
 };
 
 
-const baseUrl = () => {
-  return `${sut.protocol}://${sut.ip}:${sut.port}`;
-
-};
-
-
 
 const initialiseBrowser = async (slaveProperties) => {
   const webDriverFactory = new WebDriverFactory();
@@ -76,20 +62,18 @@ const initialiseBrowser = async (slaveProperties) => {
   webDriver = await webDriverFactory.webDriver({
     browser: properties.browser,
     slave: slaveProperties
- });
+  });
 
   browser.setWebDriver(webDriver);
 };
-
-
 
 
 module.exports = {
   validateProperties,
   initialiseProperties,
   properties,
-  baseUrl,
   initialiseBrowser,
-  getBrowser,
-  getProperties
+  getProperties,
+  baseUrl: () => `${properties.protocol}://${properties.ip}:${properties.port}`,
+  getBrowser: () => browser
 };

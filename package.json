@@ -39,6 +39,7 @@
     "convict": "^4.1.0",
     "cucumber": "^4.0.0",
     "hapi": "^17.2.3",
+    "joi": "^13.2.0",
     "mocha": "^5.0.4",
     "path": "^0.12.7",
     "selenium-webdriver": "^3.6.0",

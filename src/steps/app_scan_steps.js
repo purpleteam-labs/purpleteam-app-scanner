@@ -18,7 +18,7 @@ Before(() => {
 Given('a new test session based on each build user supplied testSession', async function () {
 
   const sutBaseUrl = this.sut.baseUrl();
-  const { route, usernameFieldLocater, passwordFieldLocater, username, password } = this.sut.getProperties('sutAuthentication');
+  const { route, usernameFieldLocater, passwordFieldLocater, username, password } = this.sut.getProperties('authentication');
   await this.initialiseBrowser();
   const webDriver = this.sut.getBrowser().getWebDriver();
 
@@ -74,7 +74,7 @@ Given('the following scanners are enabled', (dataTable) => {
 When('the active scanner is run', async function () {
 
   const sutBaseUrl = this.sut.baseUrl();
-  const { route, username, password, alertThreshold } = this.sut.getProperties(['sutAuthentication', 'routeFields']);
+  const { route, username, password, alertThreshold } = this.sut.getProperties(['authentication', 'routeFields']);
 
   const { apiFeedbackSpeed, apiKey } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey']);
   const zaproxy = this.zap.getZaproxy();
@@ -82,7 +82,6 @@ When('the active scanner is run', async function () {
 
   const contextId = 1;
   const maxChildren = 1;
-  const alertThreshold = 3;
   let numberOfAlerts;
   let userId;
   let scanId;

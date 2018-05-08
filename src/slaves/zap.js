@@ -1,4 +1,4 @@
-const Joy = require('joi');
+const Joi = require('joi');
 const ZapClient = require('zaproxy');
 const config = require('../../config/config');
 
@@ -7,7 +7,7 @@ const zapSchema = {
   protocol: Joi.string().required().valid('https', 'http'),
   ip: Joi.string().required().ip(),
   port: Joi.number().required().port(),
-  apiKey: Joi.string().reqired(),
+  apiKey: Joi.string().required(),
   apiFeedbackSpeed: Joi.number().integer().positive(),
   reportDir: Joi.string().required().valid(config.get('slave.report.dir')),
   sutBaseUrl: Joi.string().uri()
@@ -18,8 +18,9 @@ let properties;
 let zaproxy;
 
 const validateProperties = (slaveProperties) => {
-  if(Joi.validate(slaveProperties, zapSchema).error)
-    throw result;
+  const result = Joi.validate(slaveProperties, zapSchema)
+  debugger;
+  if(result.error) throw result;
 };
 
 
@@ -33,8 +34,6 @@ const initialiseProperties = (slaveProperties) => {
   };
 
   zaproxy = new ZapClient(zapOptions);
-
-
 };
 
 
@@ -48,20 +47,10 @@ const getProperties = (selecter) => {
 };
 
 
-const getPropertiesForBrowser = () => {  
-  return getProperties(['protocol', 'ip', 'port']);
-};
-
-
-const getZaproxy = () => {
-  return zaproxy;
-};
-
-
 module.exports = {
-  validateProperties
+  validateProperties,
   initialiseProperties,
-  getZaproxy,
   getProperties,
-  getPropertiesForBrowser
+  getZaproxy: () => zaproxy,
+  getPropertiesForBrowser: () => getProperties(['protocol', 'ip', 'port'])
 };

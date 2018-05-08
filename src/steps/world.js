@@ -28,7 +28,8 @@ class CustomWorld {
     this.sut = sut;
     this.sut.initialiseProperties(parameters.sutProperties);
     this.zap = zap;
-    this.zap.initialiseProperties({ ...parameters.slaveProperties, sut.baseUrl });
+
+    this.zap.initialiseProperties({ ...parameters.slaveProperties, sutBaseUrl: this.sut.baseUrl() });
   }
 
 

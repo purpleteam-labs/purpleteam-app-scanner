@@ -22,6 +22,10 @@ class App {
     const { cucumberCli, activeTestCases } = await this.configureCucumberCli(testJob);
     const testPlan = await this.testPlanText(activeTestCases);
 
+    const clearRequireCache = function clearRequireCache() {
+      Object.keys(require.cache).forEach(key => delete require.cache[key])
+    };
+
     cucumberCli.run()
     .then((succeeded) => {
       console.log(succeeded);
@@ -45,10 +49,6 @@ class App {
   async configureCucumberCli(testJob) {
     const cucumber = require('cucumber');
 
-    const clearRequireCache = function clearRequireCache() {
-      Object.keys(require.cache).forEach(key => delete require.cache[key])
-    }
-
 
     const sutProperties = {
       protocol: testJob.data.attributes.sutProtocol,
@@ -56,8 +56,8 @@ class App {
       port: testJob.data.attributes.sutPort,
       browser: testJob.data.attributes.browser[0],
       authentication: testJob.data.attributes.sutAuthentication,
-      route: testJob.data.included[0].relationships.data[0].id,
-      routeFields: testJob.data.included[2].attributes
+      route: testJob.included[0].relationships.data[0].id,
+      routeFields: testJob.included[2].attributes
     };
 
     sut.validateProperties(sutProperties);
@@ -68,7 +68,7 @@ class App {
       port: this.slave.port,
       apiKey: this.slave.apiKey,
       apiFeedbackSpeed: this.slave.apiFeedbackSpeed,
-      reportDir: this.report.dir
+      reportDir: this.slave.report.dir
     };
 
     zap.validateProperties(slaveProperties);
