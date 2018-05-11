@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const WebDriveFactory = require('../../../drivers/webDriverFactory');
+const WebDriverFactory = require('../../../drivers/webDriverFactory');
 const browser = require('../../../clients/browser');
 
 // Todo: KC: Will need quite a bit of testing around schemas.
@@ -15,8 +15,9 @@ const sutSchema = {
     username: Joi.string().min(2).required(),
     password: Joi.string().min(2).required()
   }),
-  route: Joi.string().min(2).regex(/^\/[a-z]+/),
-  routeFields: Joi.object({
+  testSessionId: Joi.string(),
+  testRoute: Joi.string().min(2).regex(/^\/[a-z]+/),
+  routeAttributes: Joi.object({
     alertThreshold: Joi.number().integer().positive(),
     attackFields: Joi.array().items(Joi.object({
       name: Joi.string().required(),
@@ -50,14 +51,13 @@ const getProperties = (selecter) => {
   if(typeof selecter === 'string')
     return properties[selecter];
   if(Array.isArray(selecter))
-    return selecter.reduce((accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName]}), {});  
+    return selecter.reduce( (accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName] }), {});  
 };
 
 
 
 const initialiseBrowser = async (slaveProperties) => {
   const webDriverFactory = new WebDriverFactory();
-
 
   webDriver = await webDriverFactory.webDriver({
     browser: properties.browser,

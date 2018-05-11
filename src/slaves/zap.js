@@ -16,10 +16,10 @@ const zapSchema = {
 
 let properties;
 let zaproxy;
+let alertCount;
 
 const validateProperties = (slaveProperties) => {
-  const result = Joi.validate(slaveProperties, zapSchema)
-  debugger;
+  const result = Joi.validate(slaveProperties, zapSchema);
   if(result.error) throw result;
 };
 
@@ -43,8 +43,17 @@ const getProperties = (selecter) => {
   if(typeof selecter === 'string')
     return properties[selecter];
   if(Array.isArray(selecter))
-    return selecter.reduce((accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName]}), {});  
+    return selecter.reduce((accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName] }), {});  
 };
+
+
+const numberOfAlerts = (alertCnt) => {
+  if(alertCnt)
+    alertCount = alertCnt;
+  else
+    return alertCount;
+};
+
 
 
 module.exports = {
@@ -52,5 +61,6 @@ module.exports = {
   initialiseProperties,
   getProperties,
   getZaproxy: () => zaproxy,
-  getPropertiesForBrowser: () => getProperties(['protocol', 'ip', 'port'])
+  getPropertiesForBrowser: () => getProperties(['protocol', 'ip', 'port']),
+  numberOfAlerts
 };

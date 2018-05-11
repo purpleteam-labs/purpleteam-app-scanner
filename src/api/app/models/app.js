@@ -56,8 +56,9 @@ class App {
       port: testJob.data.attributes.sutPort,
       browser: testJob.data.attributes.browser[0],
       authentication: testJob.data.attributes.sutAuthentication,
-      route: testJob.included[0].relationships.data[0].id,
-      routeFields: testJob.included[2].attributes
+      testSessionId: testJob.data.relationships.data[0].id, // lowPrivUser for the first one
+      testRoute: testJob.included[0].relationships.data[0].id,
+      routeAttributes: testJob.included[2].attributes
     };
 
     sut.validateProperties(sutProperties);

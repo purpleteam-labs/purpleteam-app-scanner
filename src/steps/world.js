@@ -14,12 +14,13 @@ const zap = require('../slaves/zap');
 // Todo: KC: Move zap/slave stuff into it's own file.
 const ZapClient = require('zaproxy');
 
-
+let testStepResult;
 
 
 class CustomWorld {
   constructor({attach, parameters}) {
     debugger;
+    console.log('Constructing the cucumber world.');
     this.variable = 0;
     this.attach = attach;
 
@@ -37,8 +38,14 @@ class CustomWorld {
     await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser());
   }
 
-
   
+
+  outputOfTestStep(result) {
+    if(result)
+      testStepResult = result;
+    else
+      return testStepResult;
+  }
   
   
 
