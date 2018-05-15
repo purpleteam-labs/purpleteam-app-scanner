@@ -30,7 +30,7 @@ const initialiseProperties = (slaveProperties) => {
 
   const zapOptions = {
     proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`,
-    targetApp: properties.subBaseUrl
+    targetApp: properties.sutBaseUrl
   };
 
   zaproxy = new ZapClient(zapOptions);

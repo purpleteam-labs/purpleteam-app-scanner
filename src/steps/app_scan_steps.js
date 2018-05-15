@@ -20,7 +20,7 @@ Given('a new test session based on each build user supplied testSession', async 
   const { route: loginRoute, usernameFieldLocater, passwordFieldLocater, username, password } = this.sut.getProperties('authentication');
   await this.initialiseBrowser();
   const webDriver = this.sut.getBrowser().getWebDriver();
-  debugger;
+
   await webDriver.getWindowHandle();
   await webDriver.get(`${sutBaseUrl}${loginRoute}`);
   await webDriver.sleep(1000);
@@ -36,7 +36,7 @@ Given('a new test session based on each build user supplied testSession', async 
 
 
 Given('each build user supplied route of each testSession is navigated', async function () {
-  debugger;
+
   // Todo: KC: Obviously need to iterate the array
   const sutAttackUrl = `${this.sut.baseUrl()}${this.sut.getProperties('testRoute')}`;
   const routeAttributes = this.sut.getProperties('routeAttributes');
@@ -72,109 +72,123 @@ Given('the following scanners are enabled', (dataTable) => {
 When('the active scanner is run', async function () {
 
   const sutBaseUrl = this.sut.baseUrl();
-  debugger;
   const { authentication: { route: loginRoute, username, password }, testRoute } = this.sut.getProperties(['authentication', 'testRoute']);
 
   const { apiFeedbackSpeed, apiKey } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey']);
   const zaproxy = this.zap.getZaproxy();
   const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
-
   const contextId = 1;
   const maxChildren = 1;
   let numberOfAlerts;
   let userId;
   let scanId;
-  let zapInProgressIntervalId;
+  
 
-  let outerResolve;
-  let outerReject;
+  const enabled = true;
 
 
-  const zapApiGenericFuncCallback = (err, resp) => {
-    console.log('In zapApiFuncCallback.')
-    if(err) {
-      console.log(`Error occured calling the Zap API: ${JSON.stringify(err)}`);
-      outerReject(err);
+  const callbacks = {
+    zapCallback(result) {
+      debugger;
+      console.log('In zapApiGenericFuncCallback.');
+      if(result && result.userId) userId = result.userId; 
+      console.log(`Response from the Zap API: ${JSON.stringify(result)}`);
+      return;
+    },
+    zapErrorHandler(error) {
+      debugger;
+      console.log('In zapApiErrorHandler.');
+      console.log(`Error occured calling the Zap API: ${error.message}`);
+      return;
     }
-    console.log(`Response from the Zap API: ${JSON.stringify(resp)}`);
-    outerResolve(resp);
   };
 
 
-  const zapApiAscanScanFuncCallback = (err, resp) => {
-    let statusValue = 'no status yet';
-    let zapError;
-    console.log(`Response from scan: ${JSON.stringify(resp)}`); // eslint-disable-line no-console
+  const zapApiAscanScanFuncCallback = (result) => {
     debugger;
-    scanId = resp.scan;
-    function status() {
-      zaproxy.ascan.status(scanId, (statusErr, statusResp) => {
-        if (statusResp) statusValue = statusResp.status;
-        else statusValue = undefined;
-        if (statusErr) zapError = (statusErr.code === 'ECONNREFUSED') ? statusErr : '';
-        zaproxy.core.numberOfAlerts(sutAttackUrl, (numberOfAlertsErr, numberOfAlertsResp) => {
-          if (numberOfAlertsResp) {
-            ({ numberOfAlerts } = numberOfAlertsResp);
+    return new Promise((resolve, reject) => {
+      let statusValue = 'no status yet';
+      let zapError;
+      let zapInProgressIntervalId;
+      debugger;
+      console.log(`Response from scan: ${JSON.stringify(result)}`); // eslint-disable-line no-console
+
+      scanId = result.scan;
+      async function status() {
+        await zaproxy.ascan.status(scanId, {
+          zapCallback: result => {
+            debugger;
+            if (result) statusValue = result.status;
+            else statusValue = undefined;
+          },
+          zapErrorHandler: error => {
+            debugger;
+            if (error) zapError = (error.error.code === 'ECONNREFUSED') ? error.message : '';
           }
-          // else console.log(err);
-          console.log(`Scan ${scanId} is ${statusValue}% complete with ${numberOfAlerts} alerts.`); // eslint-disable-line no-console
         });
-      });
-    }
-    zapInProgressIntervalId = setInterval(() => {
-      status();
-      if ( (zapError && statusValue !== String(100)) || (statusValue === undefined) ) {
-        console.log(`Canceling test. Zap API is unreachible. ${zapError ? 'Zap Error: ${zapError}' : 'No status value available, may be due to incorrect api key.'}`); // eslint-disable-line no-console
-        clearInterval(zapInProgressIntervalId);
-        reject(`Test failure: ${zapError}`);
-      } else if (statusValue === String(100)) {
-        console.log(`We are finishing scan ${scanId}. Please see the report for further details.`); // eslint-disable-line no-console
-        clearInterval(zapInProgressIntervalId);
-        status();
+        await zaproxy.core.numberOfAlerts(sutAttackUrl, {
+          zapCallback: result => {
+            debugger;
+            if(result) {
+              ({ numberOfAlerts } = result);
+            }
+            console.log(`Scan ${scanId} is ${statusValue}% complete with ${numberOfAlerts} alerts.`); // eslint-disable-line no-console
+          },
+          zapErrorHandler: error => {
+            debugger;
+            zapError = error.message;
+          }
+        });
       }
-    }, apiFeedbackSpeed);
+      zapInProgressIntervalId = setInterval(() => {
+        status();
+        if ( (zapError && statusValue !== String(100)) || (statusValue === undefined) ) {
+          console.log(`Canceling test. Zap API is unreachible. ${zapError ? 'Zap Error: ${zapError}' : 'No status value available, may be due to incorrect api key.'}`); // eslint-disable-line no-console
+          clearInterval(zapInProgressIntervalId);
+          debugger;
+          reject(`Test failure: ${zapError}`);          
+        } else if (statusValue === String(100)) {
+          console.log(`We are finishing scan ${scanId}. Please see the report for further details.`); // eslint-disable-line no-console
+          clearInterval(zapInProgressIntervalId);
+          debugger;
+          resolve(`We are finishing scan ${scanId}. Please see the report for further details.`);
+          status();
+        }
+      }, apiFeedbackSpeed);
+    });
   };
+
+
+
+
 
   // Details around automated authentication detection and configuration: https://github.com/zaproxy/zaproxy/issues/4105
-  const zaproxyFuncsAndParams = [
-    {func: zaproxy.context.newContext,                     args: ['NodeGoat Context', apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.spider.scan,                            args: [sutBaseUrl, maxChildren, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.context.includeInContext,               args: ['NodeGoat Context', sutBaseUrl, apiKey, zapApiGenericFuncCallback]},
+debugger;
+  await zaproxy.context.newContext('NodeGoat Context', apiKey, callbacks);
+  
+  debugger;
+  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, callbacks);
+  await zaproxy.context.includeInContext('NodeGoat Context', sutBaseUrl, apiKey, callbacks);
     // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
-    {func: zaproxy.authentication.setAuthenticationMethod, args: [contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}/login&loginRequestData=userName%3D%7B%25username%25%7D%26password%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.authentication.setLoggedInIndicator,    args: [contextId, '<p>Moved Temporarily. Redirecting to <a href="/dashboard">/dashboard</a></p>', apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.forcedUser.setForcedUserModeEnabled,    args: [enabled, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.users.newUser,                          args: [contextId, username, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.forcedUser.setForcedUser,               args: [contextId, userId, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.users.setAuthenticationCredentials,     args: [contextId, userId, `username=${username}&password=${password}`, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.users.setUserEnabled,                   args: [contextId, userId, enabled, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.spider.scanAsUser,                      args: [sutBaseUrl, contextId, userId, maxChildren, apiKey, zapApiGenericFuncCallback]},
-    {func: zaproxy.ascan.scan,                             args: [sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, zapApiAscanScanFuncCallback]}
-  ];
-
-
-  const promiseOfZaproxyFunctions = zaproxyFuncsAndParams.map((funcAndParams) => {
-    return new Promise((resolve, reject) => {
-      outerReject = resolve;
-      outerResolve = resolve;
-      console.log(`Processing element with function ${funcAndParams.func}.`);
-      funcAndParams.func(...funcAndParams.args)
-      console.log(`Executed element with function ${funcAndParams.func}.`);
-    })
-  });
-
-  await Promise.all(promiseOfZaproxyFunctions).then(outcome => this.outputOfTestStep(outcome));
+  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}/login&loginRequestData=userName%3D%7B%25username%25%7D%26password%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, callbacks);
+  await zaproxy.authentication.setLoggedInIndicator(contextId, '<p>Moved Temporarily. Redirecting to <a href="/dashboard">/dashboard</a></p>', apiKey, callbacks);
+  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, callbacks);
+  await zaproxy.users.newUser(contextId, username, apiKey, callbacks);
+  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, callbacks);
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, callbacks);
+  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, callbacks);
+  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, callbacks);
+  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback});
+debugger;
   this.zap.numberOfAlerts(numberOfAlerts);
 });
 
 
 Then('the vulnerability count should not exceed the build user decided threshold of vulnerabilities known to Zap', () => {
-  const resultsOfPreviousStep = this.outputOfTestStep();
   const numberOfAlerts = this.zap.numberOfAlerts();
   const { testRoute, routeAttributes: { alertThreshold } } = this.sut.getProperties(['testRoute', 'routeAttributes']);
   
-  debugger
-  console.log(resultsOfPreviousStep); // eslint-disable-line no-console
+  debugger  
   if (numberOfAlerts > alertThreshold) {
     // eslint-disable-next-line no-console
     console.log(`Search the generated report for "/${testRoute}" to see the ${numberOfAlerts - alertThreshold} vulnerabilities that exceed the Build User defined threshold of: ${alertThreshold}`);

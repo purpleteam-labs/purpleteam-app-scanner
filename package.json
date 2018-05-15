@@ -45,7 +45,7 @@
     "selenium-webdriver": "^3.6.0",
     "should": "^13.2.1",
     "susie": "^3.0.0-alpha",
-    "zaproxy": "^0.2.0"
+    "zaproxy": "git+ssh://github.com/binarymist/zaproxy-wip.git"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {

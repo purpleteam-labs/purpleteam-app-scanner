@@ -40,12 +40,6 @@ class CustomWorld {
 
   
 
-  outputOfTestStep(result) {
-    if(result)
-      testStepResult = result;
-    else
-      return testStepResult;
-  }
   
   
 
