@@ -7,7 +7,7 @@ Background:
   Given a new test session based on each build user supplied testSession
   And each build user supplied route of each testSession is navigated
   And a new scanning session based on each build user supplied testSession
-  And each build user supplied route of each testSession is spidered
+  And the application is spidered for each testSession
   And all scanners are disabled
 
 Scenario: The application should not contain any vulnerabilities known to Zap

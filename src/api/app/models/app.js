@@ -49,12 +49,14 @@ class App {
   async configureCucumberCli(testJob) {
     const cucumber = require('cucumber');
 
-
+    debugger;
     const sutProperties = {
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
       port: testJob.data.attributes.sutPort,
       browser: testJob.data.attributes.browser[0],
+      loggedInIndicator: testJob.data.attributes.loggedInIndicator,
+      context: {name: 'NodeGoat_Context'},
       authentication: testJob.data.attributes.sutAuthentication,
       testSessionId: testJob.data.relationships.data[0].id, // lowPrivUser for the first one
       testRoute: testJob.included[0].relationships.data[0].id,
@@ -69,7 +71,8 @@ class App {
       port: this.slave.port,
       apiKey: this.slave.apiKey,
       apiFeedbackSpeed: this.slave.apiFeedbackSpeed,
-      reportDir: this.slave.report.dir
+      reportDir: this.slave.report.dir,
+      spider: this.slave.spider
     };
 
     zap.validateProperties(slaveProperties);

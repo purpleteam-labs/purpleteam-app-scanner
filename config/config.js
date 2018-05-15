@@ -53,6 +53,23 @@ const schema = {
         format: String,
         default: `${process.cwd()}/outcomes/`
       }
+    },
+    spider: {
+      maxDepth: {
+        doc: 'Sets the maximum depth the spider can crawl, 0 for unlimited depth.',
+        format: 'int',
+        default: 10
+      },
+      threadCount: {
+        doc: 'Number of threads allocated to the Zap spider.',
+        format: 'int',
+        default: 10
+      },
+      maxChildren: {
+        doc: 'limit the number of children scanned. 0 is interpreted as unlimited.',
+        format: 'int',
+        default: 0
+      }
     }
   },
   cucumber: {

@@ -4,10 +4,16 @@ const browser = require('../../../clients/browser');
 
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {
+
   protocol: Joi.string().required().valid('https', 'http'),
   ip: Joi.string().ip().required(),
   port: Joi.number().port().required(),
   browser: Joi.string().required().valid("chrome", "firefox"),
+  loggedInIndicator: Joi.string(),
+  context: Joi.object({
+    iD: Joi.number().integer().positive(),
+    name: Joi.string().token()
+  }),
   authentication: Joi.object({
     route: Joi.string().min(2).regex(/^\/[a-z]+/),
     usernameFieldLocater: Joi.string().min(2).required(),
@@ -34,12 +40,15 @@ let webDriver;
 
 const validateProperties = (sutProperties) => {
   const result = Joi.validate(sutProperties, sutSchema);
-  debugger;
-  if(result.error) throw result;
+  if(result.error) {
+    console.log(result.error);
+    throw new Error(result.error);
+  }
 };
 
 
 const initialiseProperties = (sutProperties) => {
+  debugger;
   validateProperties(sutProperties);
   properties = sutProperties;
 };

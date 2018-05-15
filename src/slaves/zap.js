@@ -10,6 +10,11 @@ const zapSchema = {
   apiKey: Joi.string().required(),
   apiFeedbackSpeed: Joi.number().integer().positive(),
   reportDir: Joi.string().required().valid(config.get('slave.report.dir')),
+  spider: Joi.object({
+    maxDepth: Joi.number().integer().positive(),
+    threadCount: Joi.number().integer().min(0).max(20),
+    maxChildren: Joi.number().integer().min(0).max(20)
+  }),
   sutBaseUrl: Joi.string().uri()
 };
 
@@ -19,8 +24,13 @@ let zaproxy;
 let alertCount;
 
 const validateProperties = (slaveProperties) => {
+
   const result = Joi.validate(slaveProperties, zapSchema);
-  if(result.error) throw result;
+
+  if(result.error) {
+    console.log(result.error);
+    throw new Error(result.error);
+  }
 };
 
 

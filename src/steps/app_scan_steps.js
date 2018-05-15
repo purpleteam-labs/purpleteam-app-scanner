@@ -36,7 +36,7 @@ Given('a new test session based on each build user supplied testSession', async 
 
 
 Given('each build user supplied route of each testSession is navigated', async function () {
-
+  debugger;
   // Todo: KC: Obviously need to iterate the array
   const sutAttackUrl = `${this.sut.baseUrl()}${this.sut.getProperties('testRoute')}`;
   const routeAttributes = this.sut.getProperties('routeAttributes');
@@ -52,11 +52,84 @@ Given('each build user supplied route of each testSession is navigated', async f
 });
 
 
+let contextId;
+let userId;
+let scanId;
 
 
-Given('a new scanning session based on each build user supplied testSession', () => {});
-Given('each build user supplied route of each testSession is spidered', () => {});
-Given('all scanners are disabled', () => {});
+const callbacks = {
+  zapCallback(result) {
+    debugger;
+    console.log('In zapApiGenericFuncCallback.');
+    if(result && result.contextId) contextId = result.contextId;
+    if(result && result.userId) userId = result.userId; 
+    console.log(`Response from the Zap API: ${JSON.stringify(result)}`);
+    return;
+  },
+  zapErrorHandler(error) {
+    debugger;
+    console.log('In zapApiErrorHandler.');
+    console.log(`Error occured calling the Zap API: ${error.message}`);
+    return;
+  }
+};
+
+
+Given('a new scanning session based on each build user supplied testSession', async function () {
+  debugger;
+  const sutBaseUrl = this.sut.baseUrl();
+  const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, username, password }, loggedInIndicator, testRoute, context: { name: contextName} } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testRoute', 'context']);
+  const { apiKey, spider: { maxDepth, threadCount, maxChildren } } = this.zap.getProperties(['apiKey', 'spider']);
+  const zaproxy = this.zap.getZaproxy();
+  const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
+  // Closed over, so that the callbacks can access the variables in the outer scope.
+  const closedOverCallbacks = callbacks;
+  const enabled = true;
+
+
+    // Details around automated authentication detection and configuration: https://github.com/zaproxy/zaproxy/issues/4105
+debugger;
+  // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsContexts
+  // Todo: KC: The context and it's Id should probably be set in conjunction with the purpleteam authenticated build user and their specific SUT url. This information will need to also be in requests for auditing.
+  await zaproxy.context.newContext(contextName, apiKey, closedOverCallbacks);
+  debugger;
+  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey, closedOverCallbacks);
+  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey, closedOverCallbacks);
+
+  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, closedOverCallbacks);
+  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey, closedOverCallbacks);
+  // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
+  // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
+  debugger;
+  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, closedOverCallbacks);
+  // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
+  debugger;
+  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey, closedOverCallbacks);
+  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, closedOverCallbacks);
+  await zaproxy.users.newUser(contextId, username, apiKey, closedOverCallbacks);
+  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, closedOverCallbacks);
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, closedOverCallbacks);
+  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, closedOverCallbacks);
+  debugger;
+
+});
+
+
+
+
+Given('the application is spidered for each testSession', async function () {
+
+});
+
+
+
+
+Given('all scanners are disabled', async function () {
+
+});
+
+
+
 
 Given('the following scanners are enabled', (dataTable) => {
 
@@ -74,34 +147,20 @@ When('the active scanner is run', async function () {
   const sutBaseUrl = this.sut.baseUrl();
   const { authentication: { route: loginRoute, username, password }, testRoute } = this.sut.getProperties(['authentication', 'testRoute']);
 
-  const { apiFeedbackSpeed, apiKey } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey']);
+  const { apiFeedbackSpeed, apiKey, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey', 'spider']);
   const zaproxy = this.zap.getZaproxy();
-  const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
-  const contextId = 1;
-  const maxChildren = 1;
+  const sutAttackUrl = `${sutBaseUrl}${testRoute}`;  
+
   let numberOfAlerts;
-  let userId;
-  let scanId;
+  // Closed over, so that the callbacks can access the variables in the outer scope.
+  const closedOverCallbacks = callbacks;
+  
   
 
-  const enabled = true;
+  
 
 
-  const callbacks = {
-    zapCallback(result) {
-      debugger;
-      console.log('In zapApiGenericFuncCallback.');
-      if(result && result.userId) userId = result.userId; 
-      console.log(`Response from the Zap API: ${JSON.stringify(result)}`);
-      return;
-    },
-    zapErrorHandler(error) {
-      debugger;
-      console.log('In zapApiErrorHandler.');
-      console.log(`Error occured calling the Zap API: ${error.message}`);
-      return;
-    }
-  };
+
 
 
   const zapApiAscanScanFuncCallback = (result) => {
@@ -162,24 +221,11 @@ When('the active scanner is run', async function () {
 
 
 
-  // Details around automated authentication detection and configuration: https://github.com/zaproxy/zaproxy/issues/4105
-debugger;
-  await zaproxy.context.newContext('NodeGoat Context', apiKey, callbacks);
-  
   debugger;
-  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, callbacks);
-  await zaproxy.context.includeInContext('NodeGoat Context', sutBaseUrl, apiKey, callbacks);
-    // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
-  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}/login&loginRequestData=userName%3D%7B%25username%25%7D%26password%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, callbacks);
-  await zaproxy.authentication.setLoggedInIndicator(contextId, '<p>Moved Temporarily. Redirecting to <a href="/dashboard">/dashboard</a></p>', apiKey, callbacks);
-  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, callbacks);
-  await zaproxy.users.newUser(contextId, username, apiKey, callbacks);
-  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, callbacks);
-  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, callbacks);
-  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, callbacks);
-  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, callbacks);
+  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, closedOverCallbacks);
+  debugger;
   await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback});
-debugger;
+  debugger;
   this.zap.numberOfAlerts(numberOfAlerts);
 });
 
