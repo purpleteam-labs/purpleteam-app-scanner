@@ -77,14 +77,12 @@ const callbacks = {
 
 Given('a new scanning session based on each build user supplied testSession', async function () {
   debugger;
-  const sutBaseUrl = this.sut.baseUrl();
-  const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, username, password }, loggedInIndicator, testRoute, context: { name: contextName} } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testRoute', 'context']);
-  const { apiKey, spider: { maxDepth, threadCount, maxChildren } } = this.zap.getProperties(['apiKey', 'spider']);
-  const zaproxy = this.zap.getZaproxy();
-  const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
+
+  const contextName = this.sut.getProperties('context').name;
+  const apiKey = this.zap.getProperties('apiKey');
+  const zaproxy = this.zap.getZaproxy();  
   // Closed over, so that the callbacks can access the variables in the outer scope.
   const closedOverCallbacks = callbacks;
-  const enabled = true;
 
 
     // Details around automated authentication detection and configuration: https://github.com/zaproxy/zaproxy/issues/4105
@@ -93,24 +91,7 @@ debugger;
   // Todo: KC: The context and it's Id should probably be set in conjunction with the purpleteam authenticated build user and their specific SUT url. This information will need to also be in requests for auditing.
   await zaproxy.context.newContext(contextName, apiKey, closedOverCallbacks);
   debugger;
-  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey, closedOverCallbacks);
-  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey, closedOverCallbacks);
-
-  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, closedOverCallbacks);
-  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey, closedOverCallbacks);
-  // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
-  // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
-  debugger;
-  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, closedOverCallbacks);
-  // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
-  debugger;
-  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey, closedOverCallbacks);
-  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, closedOverCallbacks);
-  await zaproxy.users.newUser(contextId, username, apiKey, closedOverCallbacks);
-  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, closedOverCallbacks);
-  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, closedOverCallbacks);
-  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, closedOverCallbacks);
-  debugger;
+  
 
 });
 
@@ -118,7 +99,31 @@ debugger;
 
 
 Given('the application is spidered for each testSession', async function () {
+  debugger;
+  const sutBaseUrl = this.sut.baseUrl();
+  const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, username, password }, loggedInIndicator, testRoute, context: { name: contextName} } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testRoute', 'context']);
+  const { apiKey, spider: { maxDepth, threadCount, maxChildren } } = this.zap.getProperties(['apiKey', 'spider']);
+  const zaproxy = this.zap.getZaproxy();
+  
+  // Closed over, so that the callbacks can access the variables in the outer scope.
+  const closedOverCallbacks = callbacks;
+  const enabled = true;
 
+
+  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey, closedOverCallbacks);
+  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey, closedOverCallbacks);
+  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey, closedOverCallbacks);
+  // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
+  // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
+  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, closedOverCallbacks);
+  // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
+  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey, closedOverCallbacks);
+  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, closedOverCallbacks);
+  await zaproxy.users.newUser(contextId, username, apiKey, closedOverCallbacks);
+  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, closedOverCallbacks);
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, closedOverCallbacks);
+  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, closedOverCallbacks);
+  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, closedOverCallbacks);
 });
 
 
@@ -224,42 +229,57 @@ When('the active scanner is run', async function () {
   debugger;
   await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, closedOverCallbacks);
   debugger;
-  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback});
+  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: closedOverCallbacks.zapErrorHandler});
   debugger;
   this.zap.numberOfAlerts(numberOfAlerts);
 });
 
 
-Then('the vulnerability count should not exceed the build user decided threshold of vulnerabilities known to Zap', () => {
+Then('the vulnerability count should not exceed the build user decided threshold of vulnerabilities known to Zap', function () {
+  debugger;
   const numberOfAlerts = this.zap.numberOfAlerts();
   const { testRoute, routeAttributes: { alertThreshold } } = this.sut.getProperties(['testRoute', 'routeAttributes']);
   
   debugger  
   if (numberOfAlerts > alertThreshold) {
     // eslint-disable-next-line no-console
-    console.log(`Search the generated report for "/${testRoute}" to see the ${numberOfAlerts - alertThreshold} vulnerabilities that exceed the Build User defined threshold of: ${alertThreshold}`);
+    console.log(`Search the generated report for "${testRoute}" to see the ${numberOfAlerts - alertThreshold} vulnerabilities that exceed the Build User defined threshold of: ${alertThreshold}`);
   }    
   expect(numberOfAlerts).to.be.at.most(alertThreshold);  
 });
 
 
 // Todo: KC: Should promisify the fs.writeFile along with wrapping the zap call in a promise
-Then('the Zap report is written to file', () => {
-
+Then('the Zap report is written to file', async function () {
+  debugger;
   const zaproxy = this.zap.getZaproxy();
   const { apiKey, reportDir } = this.zap.getProperties(['apiKey', 'reportDir']);
   const { testSessionId, testRoute } = this.sut.getProperties(['testSessionId', 'testRoute']);
+  const closedOverCallbacks = callbacks;
+
+  const zapApiHtmlReportFuncCallback = (result) => {
+    debugger;
+    return new Promise((resolve, reject) => {
+      debugger;
+      const date = new Date();
+      const reportPath = `${reportDir}testSessionId-${testSessionId}_testRouteId${testRoute.split('/')[0]}_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}.html`;
+      console.log(`Writing report to ${reportPath}`); // eslint-disable-line no-console
+      fs.writeFile(reportPath, result, (writeFileErr) => {
+        debugger;
+        if (writeFileErr) {
+          console.log(`Error writing report file to disk: ${writeFileErr}`); // eslint-disable-line no-console
+          reject(`Error writing report file to disk: ${writeFileErr}`);
+        }
+      });
+      //resolve('Done writing report file.');
+      debugger;
+      console.log('Done writing report file.');
+      resolve('Done writing report file.');
+    });
+  };
+
 
   console.log('About to write report.'); // eslint-disable-line no-console
-  zaproxy.core.htmlreport(apiKey, (htmlreportErr, htmlreportResp) => {
-    const date = new Date();
-    const reportPath = `${reportDir}testSessionId-${testSessionId}_testRouteId${testRoute.split('/')[0]}_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}.html`;
-    console.log(`Writing report to ${reportPath}`); // eslint-disable-line no-console
-    fs.writeFile(reportPath, htmlreportResp, (writeFileErr) => {
-      if (writeFileErr) console.log(`Error writing report file to disk: ${writeFileErr}`); // eslint-disable-line no-console
-    });
-    //resolve('Done writing report file.');
-    console.log('Done writing report file.');
-  });
-
+  await zaproxy.core.htmlreport(apiKey, {zapCallback: zapApiHtmlReportFuncCallback, zapErrorHandler: closedOverCallbacks.zapErrorHandler});
+  debugger;
 });

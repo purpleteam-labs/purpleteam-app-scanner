@@ -68,7 +68,7 @@ const schema = {
       maxChildren: {
         doc: 'limit the number of children scanned. 0 is interpreted as unlimited.',
         format: 'int',
-        default: 0
+        default: 10
       }
     }
   },
