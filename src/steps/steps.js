@@ -1,6 +1,6 @@
 // features/support/steps.js
-const { Given, When, Then } = require('cucumber')
-const { expect } = require('chai')
+const { Given, When, Then } = require('cucumber');
+const { expect } = require('code');
 
 Given('a variable set to {int}', function(number) {
   this.setTo(number)
@@ -11,5 +11,5 @@ When('I increment the variable by {int}', function(number) {
 })
 
 Then('the variable should contain {int}', function(number) {
-  expect(this.variable).to.eql(number)
+  expect(this.variable).to.equal(number);
 })
