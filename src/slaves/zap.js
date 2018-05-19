@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const ZapClient = require('zaproxy');
-const config = require('../../config/config');
+const config = require('config/config');
 
 
 const zapSchema = {

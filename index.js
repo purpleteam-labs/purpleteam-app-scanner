@@ -1,3 +1,4 @@
+require('app-module-path/register');
 const server = require('./src/server');
 
 const init = async () => {

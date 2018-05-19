@@ -3,8 +3,8 @@
 const fs = require('fs');
 const { promisify } = require('util');
 const readFileAsync = promisify(fs.readFile);
-const sut = require('../do/sut');
-const zap = require('../../../slaves/zap');
+const sut = require('src/api/app/do/sut');
+const zap = require('src/slaves/zap');
 
 class App {
   constructor(config) {

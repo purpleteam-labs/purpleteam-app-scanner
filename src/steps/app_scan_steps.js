@@ -1,6 +1,3 @@
-
-
-const config = require('../../config/config');
 const { Before, Given, When, Then } = require('cucumber');
 const { expect } = require('code');
 const { By } = require('selenium-webdriver');

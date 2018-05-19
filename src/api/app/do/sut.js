@@ -1,7 +1,7 @@
 const Joi = require('joi');
-const WebDriverFactory = require('../../../drivers/webDriverFactory');
-const browser = require('../../../clients/browser');
-const config = require('../../../../config/config');
+const WebDriverFactory = require('src/drivers/webDriverFactory');
+const browser = require('src/clients/browser');
+const config = require('config/config');
 
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {

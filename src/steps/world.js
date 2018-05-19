@@ -2,9 +2,8 @@
 const cucumber = require('cucumber');
 const { setWorldConstructor, setDefaultTimeout } = cucumber;
 
-const Browser = require('../clients/browser');
-const sut = require('../api/app/do/sut');
-const zap = require('../slaves/zap');
+const sut = require('src/api/app/do/sut');
+const zap = require('src/slaves/zap');
 
 
 
