@@ -66,7 +66,6 @@ const numberOfAlerts = (alertCnt) => {
 };
 
 
-
 module.exports = {
   validateProperties,
   initialiseProperties,

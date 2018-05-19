@@ -1,6 +1,6 @@
-const config = require('../config/config');
 const Hapi = require('hapi');
-const app = require('./api/app');
+const config = require('config/config');
+const app = require('src/api/app');
 
 const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.ip') });
 
