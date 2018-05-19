@@ -25,14 +25,15 @@ const sutSchema = {
   testSessionId: Joi.string(),
   testRoute: Joi.string().min(2).regex(/^\/[a-z]+/),
   routeAttributes: Joi.object({
-    aScannerAttackStrength: Joi.string().valid(config.get('sut.aScannerAttackStrength')).insensitive().default(config.get('sut.aScannerAttackStrength')),
-    aScannerAlertThreshold: Joi.string().valid(config.get('sut.aScannerAlertThreshold')).insensitive().default(config.get('sut.aScannerAlertThreshold')),
+    aScannerAttackStrength: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')),
+    aScannerAlertThreshold: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')),
     // Todo: KC: Test the default.
     alertThreshold: Joi.number().integer().positive().default(0),
     attackFields: Joi.array().items(Joi.object({
       name: Joi.string().required(),
       value: Joi.string()
     })),
+    method: Joi.string().valid(config.getSchema().properties.sut.properties.method.format).uppercase().default(config.get('sut.method')),
     submit: Joi.string()
   })
 };

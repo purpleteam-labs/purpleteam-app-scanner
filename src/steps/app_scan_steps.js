@@ -88,7 +88,7 @@ Given('a new scanning session based on each build user supplied testSession', as
   // Todo: KC: The context and it's Id should probably be set in conjunction with the purpleteam authenticated build user and their specific SUT url. This information will need to also be in requests for auditing.
   await zaproxy.context.newContext(contextName, apiKey, callbacks);
 
-// Todo: KC: Start with thenifying the zap client and my calls to it, at the same time tidy up the callbacks and get them ready for logging to PT Admin and PT Build User.
+// Todo: KC: Start with thenifying the zap client and my calls to it.
 // .....................................................................................................................................................................
 
 
@@ -178,7 +178,7 @@ Given('all active scanners are enabled', async function () {
 
 When('the active scan is run', async function () {
   const sutBaseUrl = this.sut.baseUrl();
-  const { authentication: { route: loginRoute, username, password }, testRoute } = this.sut.getProperties(['authentication', 'testRoute']);
+  const { authentication: { route: loginRoute, username, password }, testRoute, routeAttributes: { method } } = this.sut.getProperties(['authentication', 'testRoute', 'routeAttributes']);
   const { apiFeedbackSpeed, apiKey, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey', 'spider']);
   const zaproxy = this.zap.getZaproxy();
   const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
@@ -238,7 +238,8 @@ When('the active scan is run', async function () {
   debugger;
   // Todo: Add the method to the test route requested by the build user. Default to POST
   console.log('\n');
-  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: callbacks.zapErrorHandler});
+  
+  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', method, 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: callbacks.zapErrorHandler});
   debugger;
   this.zap.numberOfAlerts(numberOfAlerts);
 });

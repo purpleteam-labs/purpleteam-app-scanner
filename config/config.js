@@ -75,13 +75,18 @@ const schema = {
   sut: {
     aScannerAttackStrength: {
       doc: 'The attack strength of the active scanner.',
-      format: ['low', 'medium', 'high', 'insane'],
-      default: "high"
+      format: ['LOW', 'MEDIUM', 'HIGH', 'INSANE'],
+      default: 'HIGH'
     },
     aScannerAlertThreshold: {
       doc: "The alert threshold of the active scanner.",
-      format: ['low', 'medium', 'high'],
-      default: "low"
+      format: ['LOW', 'MEDIUM', 'HIGH'],
+      default: 'LOW'
+    },
+    method: {
+      doc: "The method used to attack the build user supplied route.",
+      format: ['GET', 'POST', 'PUT'],
+      default: 'POST'
     }
   },  
   cucumber: {
