@@ -17,6 +17,6 @@ module.exports = {
     'function-paren-newline': ['error', 'multiline'],
   },
   env: {
-    'mocha': true
+
   }
 };

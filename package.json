@@ -9,8 +9,6 @@
     "update:deps": "npm-check -u",
     "test": "echo \"Todo: Create tests.\" && exit 0",
     "pretest": "npm run lint",
-    "testsecurity": "mocha ./test/security --recursive",
-    "debug:testsecurity": "mocha --inspect-brk ./test/security --recursive",
     "debug": "node --inspect-brk ./index.js",
     "start": "node ./index.js"
   },
@@ -40,7 +38,6 @@
     "cucumber": "^4.0.0",
     "hapi": "^17.2.3",
     "joi": "^13.2.0",
-    "mocha": "^5.0.4",
     "path": "^0.12.7",
     "selenium-webdriver": "^3.6.0",
     "should": "^13.2.1",
