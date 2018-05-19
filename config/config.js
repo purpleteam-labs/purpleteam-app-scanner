@@ -72,6 +72,18 @@ const schema = {
       }
     }
   },
+  sut: {
+    aScannerAttackStrength: {
+      doc: 'The attack strength of the active scanner.',
+      format: ['low', 'medium', 'high', 'insane'],
+      default: "high"
+    },
+    aScannerAlertThreshold: {
+      doc: "The alert threshold of the active scanner.",
+      format: ['low', 'medium', 'high'],
+      default: "low"
+    }
+  },  
   cucumber: {
     features: {
       doc: 'The location of the feature files.',

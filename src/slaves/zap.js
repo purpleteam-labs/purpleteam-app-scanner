@@ -31,13 +31,14 @@ const validateProperties = (slaveProperties) => {
     console.log(result.error);
     throw new Error(result.error);
   }
+  return result.value;
 };
 
 
 const initialiseProperties = (slaveProperties) => {
-  validateProperties(slaveProperties);
-  properties = slaveProperties;
 
+  properties = validateProperties(slaveProperties);
+  
   const zapOptions = {
     proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`,
     targetApp: properties.sutBaseUrl

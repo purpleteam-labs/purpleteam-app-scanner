@@ -49,7 +49,7 @@ class App {
   async configureCucumberCli(testJob) {
     const cucumber = require('cucumber');
 
-    debugger;
+
     const sutProperties = {
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,

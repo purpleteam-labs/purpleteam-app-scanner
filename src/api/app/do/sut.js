@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const WebDriverFactory = require('../../../drivers/webDriverFactory');
 const browser = require('../../../clients/browser');
+const config = require('../../../../config/config');
 
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {
@@ -24,7 +25,10 @@ const sutSchema = {
   testSessionId: Joi.string(),
   testRoute: Joi.string().min(2).regex(/^\/[a-z]+/),
   routeAttributes: Joi.object({
-    alertThreshold: Joi.number().integer().positive(),
+    aScannerAttackStrength: Joi.string().valid(config.get('sut.aScannerAttackStrength')).insensitive().default(config.get('sut.aScannerAttackStrength')),
+    aScannerAlertThreshold: Joi.string().valid(config.get('sut.aScannerAlertThreshold')).insensitive().default(config.get('sut.aScannerAlertThreshold')),
+    // Todo: KC: Test the default.
+    alertThreshold: Joi.number().integer().positive().default(0),
     attackFields: Joi.array().items(Joi.object({
       name: Joi.string().required(),
       value: Joi.string()
@@ -44,13 +48,14 @@ const validateProperties = (sutProperties) => {
     console.log(result.error);
     throw new Error(result.error);
   }
+  return result.value;
 };
 
 
 const initialiseProperties = (sutProperties) => {
-  debugger;
-  validateProperties(sutProperties);
-  properties = sutProperties;
+
+  properties = validateProperties(sutProperties);
+  
 };
 
 

@@ -13,7 +13,7 @@ class WebDriverFactory {
     
 
   async webDriver(options) {
-    debugger;
+
     if (webDriver)
       return webDriver;
     else {
