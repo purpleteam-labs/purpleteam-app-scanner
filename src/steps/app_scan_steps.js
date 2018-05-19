@@ -82,21 +82,17 @@ Given('a new scanning session based on each build user supplied testSession', as
 
   const contextName = this.sut.getProperties('context').name;
   const apiKey = this.zap.getProperties('apiKey');
-  const zaproxy = this.zap.getZaproxy();  
-  // Closed over, so that the callbacks can access the variables in the outer scope.
-  const closedOverCallbacks = callbacks;
-
-
-    // Details around automated authentication detection and configuration: https://github.com/zaproxy/zaproxy/issues/4105
-
+  const zaproxy = this.zap.getZaproxy();
+  // Details around automated authentication detection and configuration: https://github.com/zaproxy/zaproxy/issues/4105
   // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsContexts
   // Todo: KC: The context and it's Id should probably be set in conjunction with the purpleteam authenticated build user and their specific SUT url. This information will need to also be in requests for auditing.
-  await zaproxy.context.newContext(contextName, apiKey, closedOverCallbacks);
-
-  
+  await zaproxy.context.newContext(contextName, apiKey, callbacks);
 
 // Todo: KC: Start with thenifying the zap client and my calls to it, at the same time tidy up the callbacks and get them ready for logging to PT Admin and PT Build User.
 // .....................................................................................................................................................................
+
+
+
 
 
 
@@ -114,48 +110,34 @@ Given('a new scanning session based on each build user supplied testSession', as
 
 
 Given('the application is spidered for each testSession', async function () {
-
   const sutBaseUrl = this.sut.baseUrl();
   const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, username, password }, loggedInIndicator, testRoute, context: { name: contextName} } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testRoute', 'context']);
   const { apiKey, spider: { maxDepth, threadCount, maxChildren } } = this.zap.getProperties(['apiKey', 'spider']);
-  const zaproxy = this.zap.getZaproxy();
-  
-  // Closed over, so that the callbacks can access the variables in the outer scope.
-  const closedOverCallbacks = callbacks;
+  const zaproxy = this.zap.getZaproxy();  
   const enabled = true;
-
-  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey, closedOverCallbacks);
-  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey, closedOverCallbacks);
-  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey, closedOverCallbacks);
+  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey, callbacks);
+  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey, callbacks);
+  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey, callbacks);
   // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
   // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
-  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, closedOverCallbacks);
+  await zaproxy.authentication.setAuthenticationMethod(contextId, 'formBasedAuthentication', `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey, callbacks);
   // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
-  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey, closedOverCallbacks);
-  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, closedOverCallbacks);
-  await zaproxy.users.newUser(contextId, username, apiKey, closedOverCallbacks);
-  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, closedOverCallbacks);
-  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, closedOverCallbacks);
-  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, closedOverCallbacks);
-  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, closedOverCallbacks);
+  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey, callbacks);
+  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey, callbacks);
+  await zaproxy.users.newUser(contextId, username, apiKey, callbacks);
+  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey, callbacks);
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey, callbacks);
+  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey, callbacks);
+  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey, callbacks);
 });
 
 
 Given('all active scanners are disabled', async function () {
   const apiKey = this.zap.getProperties('apiKey');
-  const zaproxy = this.zap.getZaproxy();
-  const closedOverCallbacks = callbacks;
+  const zaproxy = this.zap.getZaproxy();  
   const scanPolicyName = null;
-
-  //await zaproxy.pscan.disableAllScanners(apiKey, closedOverCallbacks)
-  //await zaproxy.pscan.enableAllScanners(apiKey, closedOverCallbacks)
-
-
-  await zaproxy.ascan.disableAllScanners(scanPolicyName, apiKey, closedOverCallbacks)
-
+  await zaproxy.ascan.disableAllScanners(scanPolicyName, apiKey, callbacks)
 });
-
-
 
 
 Given('all active scanners are enabled', async function () {
@@ -166,69 +148,41 @@ Given('all active scanners are enabled', async function () {
   const scanPolicyName = null;
   const policyid = null;
 
-
-  const zapApiPrintEnabledAScanersFuncCallback = (result) => {
-    debugger;
-
-    console.log('In zapApiPrintEnabledAScanersFuncCallback.');
-
-    const scannersStateForBuildUser = result.scanners.reduce((all, each) => `${all}\nname: ${each.name}, id: ${each.id}, enabled: ${each.enabled}, attackStrength: ${each.attackStrength}, alertThreshold: ${each.alertThreshold}`, '');
-    
-    // This is for the build user and the purpleteam admin:
-    console.log(`PT Build User: The following are all the active scanners available with their current state:\n${scannersStateForBuildUser}`);
-    // This is for the purpleteam admin only:
-    console.log(`PT Admin: The following are all the active scanners available with their current state: ${JSON.stringify(result)}`);
-    
-    return;
-  };
-
-  debugger;
-  await zaproxy.ascan.enableAllScanners(scanPolicyName, apiKey, closedOverCallbacks);
-  debugger;
-
-  await zaproxy.ascan.scanners(scanPolicyName, policyid, closedOverCallbacks);
-  debugger;
-
-
+  console.log('\nEnabling active scanners...\n');
+  await zaproxy.ascan.enableAllScanners(scanPolicyName, apiKey, callbacks);
+  await zaproxy.ascan.scanners(scanPolicyName, policyid, callbacks);
+  console.log('\n');
 
   for (const ascanner of aScanners) {
+    await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName, apiKey, {
+      zapCallback: result => console.log(`Attack strength has been set ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}.`),
+      zapErrorHandler: error => console.log(`Error occured while attempting to set the attack strength for active scanner: { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}`)
+    });
+    await zaproxy.ascan.setScannerAlertThreshold(ascanner.id, aScannerAlertThreshold, scanPolicyName, apiKey, {
+      zapCallback: result => console.log(`Alert threshold has been set ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}.`),
+      zapErrorHandler: error => console.log(`Error occured while attempting to set the alert threshold for active scanner: { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}`)
+    });
+  }  
 
-    await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName, apiKey, callbacks);
-    await zaproxy.ascan.setScannerAlertThreshold(ascanner.id, aScannerAlertThreshold, scanPolicyName, apiKey, callbacks);
-  }
-  debugger;
-
-
-
-  await zaproxy.ascan.scanners(scanPolicyName, policyid, { zapCallback: zapApiPrintEnabledAScanersFuncCallback, zapErrorHandler: closedOverCallbacks.zapErrorHandler });
-  debugger;
-
+  const zapApiPrintEnabledAScanersFuncCallback = (result) => {
+    const scannersStateForBuildUser = result.scanners.reduce((all, each) => `${all}\nname: ${each.name.padEnd(50)}, id: ${each.id.padEnd(6)}, enabled: ${each.enabled}, attackStrength: ${each.attackStrength.padEnd(6)}, alertThreshold: ${each.alertThreshold.padEnd(6)}`, '');    
+    // This is for the build user and the purpleteam admin:
+    console.log(`\n\nPT Build User: The following are all the active scanners available with their current state:\n${scannersStateForBuildUser}`);
+    // This is for the purpleteam admin only:
+    console.log(`\n\nPT Admin: The following are all the active scanners available with their current state:\n\n${JSON.stringify(result)}\n\n`);    
+    return;
+  };
+  await zaproxy.ascan.scanners(scanPolicyName, policyid, { zapCallback: zapApiPrintEnabledAScanersFuncCallback, zapErrorHandler: callbacks.zapErrorHandler });
 });
 
 
-
-
-
 When('the active scan is run', async function () {
-
   const sutBaseUrl = this.sut.baseUrl();
   const { authentication: { route: loginRoute, username, password }, testRoute } = this.sut.getProperties(['authentication', 'testRoute']);
-
   const { apiFeedbackSpeed, apiKey, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey', 'spider']);
   const zaproxy = this.zap.getZaproxy();
-  const sutAttackUrl = `${sutBaseUrl}${testRoute}`;  
-
+  const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
   let numberOfAlerts;
-  // Closed over, so that the callbacks can access the variables in the outer scope.
-  const closedOverCallbacks = callbacks;
-  
-  
-
-  
-
-
-
-
 
   const zapApiAscanScanFuncCallback = (result) => {
     return new Promise((resolve, reject) => {
@@ -278,15 +232,13 @@ When('the active scan is run', async function () {
     });
   };
 
-
-
-
-
   debugger;
-  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, closedOverCallbacks);
+
+  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, callbacks);
   debugger;
   // Todo: Add the method to the test route requested by the build user. Default to POST
-  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: closedOverCallbacks.zapErrorHandler});
+  console.log('\n');
+  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', 'POST', 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: callbacks.zapErrorHandler});
   debugger;
   this.zap.numberOfAlerts(numberOfAlerts);
 });

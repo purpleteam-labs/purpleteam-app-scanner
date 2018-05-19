@@ -20,7 +20,7 @@ let testStepResult;
 class CustomWorld {
   constructor({attach, parameters}) {
 
-    console.log('Constructing the cucumber world.');
+    console.log('Constructing the cucumber world.\n');
     this.variable = 0;
     this.attach = attach;
 
