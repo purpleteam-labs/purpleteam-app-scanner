@@ -178,7 +178,7 @@ Given('all active scanners are enabled', async function () {
 
 When('the active scan is run', async function () {
   const sutBaseUrl = this.sut.baseUrl();
-  const { authentication: { route: loginRoute, username, password }, testRoute, routeAttributes: { method } } = this.sut.getProperties(['authentication', 'testRoute', 'routeAttributes']);
+  const { authentication: { route: loginRoute, username, password }, testRoute, routeAttributes: { attackFields, method } } = this.sut.getProperties(['authentication', 'testRoute', 'routeAttributes']);
   const { apiFeedbackSpeed, apiKey, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey', 'spider']);
   const zaproxy = this.zap.getZaproxy();
   const sutAttackUrl = `${sutBaseUrl}${testRoute}`;
@@ -232,15 +232,10 @@ When('the active scan is run', async function () {
     });
   };
 
-  debugger;
-
-  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, callbacks);
-  debugger;
-  // Todo: Add the method to the test route requested by the build user. Default to POST
+  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey, callbacks);  
   console.log('\n');
-  
-  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', method, 'firstName=JohnseleniumJohn&lastName=DoeseleniumDoe&ssn=seleniumSSN&dob=12/23/5678&bankAcc=seleniumBankAcc&bankRouting=0198212#&address=seleniumAddress&_csrf=&submit=', /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: callbacks.zapErrorHandler});
-  debugger;
+  const qs = `${ attackFields.reduce((queryString, queryParameterObject) => `${queryString}${queryString === '' ? '' : '&'}${queryParameterObject.name}=${queryParameterObject.value}`, '') }&_csrf=&submit=`;
+  await zaproxy.ascan.scan(sutAttackUrl, true, false, '', method, qs, /* http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.*/ apiKey, {zapCallback: zapApiAscanScanFuncCallback, zapErrorHandler: callbacks.zapErrorHandler});
   this.zap.numberOfAlerts(numberOfAlerts);
 });
 
