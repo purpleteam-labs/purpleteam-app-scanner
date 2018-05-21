@@ -40,7 +40,6 @@
     "joi": "^13.2.0",
     "path": "^0.12.7",
     "selenium-webdriver": "^3.6.0",
-    "should": "^13.2.1",
     "susie": "^3.0.0-alpha",
     "zaproxy": "git+ssh://github.com/binarymist/zaproxy-wip.git"
   },
