@@ -9,7 +9,7 @@ const sutSchema = {
   protocol: Joi.string().required().valid('https', 'http'),
   ip: Joi.string().ip().required(),
   port: Joi.number().port().required(),
-  browser: Joi.string().required().valid("chrome", "firefox"),
+  browser: Joi.string().valid(config.getSchema().properties.sut.properties.browser.format).lowercase().default(config.get('sut.browser')),
   loggedInIndicator: Joi.string(),
   context: Joi.object({
     iD: Joi.number().integer().positive(),
@@ -22,6 +22,7 @@ const sutSchema = {
     username: Joi.string().min(2).required(),
     password: Joi.string().min(2).required()
   }),
+  reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
   testSessionId: Joi.string(),
   testRoute: Joi.string().min(2).regex(/^\/[a-z]+/),
   routeAttributes: Joi.object({
@@ -46,17 +47,15 @@ let webDriver;
 const validateProperties = (sutProperties) => {
   const result = Joi.validate(sutProperties, sutSchema);
   if(result.error) {
-    console.log(result.error);
-    throw new Error(result.error);
+    console.log(result.error.message);
+    throw new Error(result.error.message);
   }
   return result.value;
 };
 
 
 const initialiseProperties = (sutProperties) => {
-
-  properties = validateProperties(sutProperties);
-  
+  properties = validateProperties(sutProperties);  
 };
 
 
@@ -68,7 +67,6 @@ const getProperties = (selecter) => {
   if(Array.isArray(selecter))
     return selecter.reduce( (accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName] }), {});  
 };
-
 
 
 const initialiseBrowser = async (slaveProperties) => {

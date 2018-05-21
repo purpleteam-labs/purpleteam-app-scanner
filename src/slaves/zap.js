@@ -28,8 +28,8 @@ const validateProperties = (slaveProperties) => {
   const result = Joi.validate(slaveProperties, zapSchema);
 
   if(result.error) {
-    console.log(result.error);
-    throw new Error(result.error);
+    console.log(result.error.message);
+    throw new Error(result.error.message);
   }
   return result.value;
 };

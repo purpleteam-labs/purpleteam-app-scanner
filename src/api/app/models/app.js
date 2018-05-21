@@ -49,15 +49,15 @@ class App {
   async configureCucumberCli(testJob) {
     const cucumber = require('cucumber');
 
-
     const sutProperties = {
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
       port: testJob.data.attributes.sutPort,
-      browser: testJob.data.attributes.browser[0],
+      browser: testJob.data.attributes.browser,
       loggedInIndicator: testJob.data.attributes.loggedInIndicator,
       context: {name: 'NodeGoat_Context'},
       authentication: testJob.data.attributes.sutAuthentication,
+      reportFormats: testJob.data.attributes.reportFormats,
       testSessionId: testJob.data.relationships.data[0].id, // lowPrivUser for the first one
       testRoute: testJob.included[0].relationships.data[0].id,
       routeAttributes: testJob.included[2].attributes
@@ -76,8 +76,7 @@ class App {
     };
 
     zap.validateProperties(slaveProperties);
-
-    // Todo: KC: probably best to weed out the unnecessary testJob properties.
+    
     const cucumberParameters = {
       sutProperties,
       slaveProperties,      
@@ -85,7 +84,6 @@ class App {
         timeOut: this.cucumber.timeOut
       }
     };
-
 
     const parameters = JSON.stringify(cucumberParameters);
 

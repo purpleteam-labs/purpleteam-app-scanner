@@ -62,7 +62,7 @@ Given('a new scanning session based on each build user supplied testSession', fu
       console.log(`Created new Zap context with a contextId of: ${contextId}.`);
     },
       error => console.log(`Error occured while attempting to create a new Zap context, message was: ${error.message}`)
-    );    
+    );
 });
 
 
@@ -217,26 +217,32 @@ Then('the vulnerability count should not exceed the build user defined threshold
 Then('the Zap report is written to file', async function () {  
   const zaproxy = this.zap.getZaproxy();
   const { apiKey, reportDir } = this.zap.getProperties(['apiKey', 'reportDir']);
-  const { testSessionId, testRoute } = this.sut.getProperties(['testSessionId', 'testRoute']);
+  const { testSessionId, testRoute, reportFormats } = this.sut.getProperties(['testSessionId', 'testRoute', 'reportFormats']);
   
-  const zapApiHtmlReportFuncCallback = (result) => {
+  const zapApiReportFuncCallback = (resp) => {
+    const toPrint = (resp => {
+      debugger;
+      if(typeof(resp) === 'object') return {format: 'json', text: JSON.stringify(resp)};
+      if(typeof(resp) === 'string' && resp.startsWith('<html>')) return {format: 'html', text: resp};
+      if(typeof(resp) === 'string' && resp.includes('# ZAP Scanning Report')) return {format: 'md', text: resp};
+    })(resp);
+
     return new Promise((resolve, reject) => {
       const date = new Date();
-      const reportPath = `${reportDir}testSessionId-${testSessionId}_testRouteId${testRoute.split('/')[0]}_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}.html`;
-      console.log(`Writing report to ${reportPath}`); // eslint-disable-line no-console
-      fs.writeFile(reportPath, result, (writeFileErr) => {
+      const reportPath = `${reportDir}testSessionId-${testSessionId}_testRouteId-${testRoute.substr(1)}_${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}.${toPrint.format}`;
+      console.log(`Writing ${toPrint.format}report to ${reportPath}`); // eslint-disable-line no-console
+      fs.writeFile(reportPath, toPrint.text, writeFileErr => {
         if (writeFileErr) {
-          console.log(`Error writing report file to disk: ${writeFileErr}`); // eslint-disable-line no-console
-          reject(`Error writing report file to disk: ${writeFileErr}`);
+          console.log(`Error writing ${toPrint.format}report file to disk: ${writeFileErr}`); // eslint-disable-line no-console
+          reject(`Error writing ${toPrint.format}report file to disk: ${writeFileErr}`);
         }
-      });
-      console.log('Done writing report file.');
-      resolve('Done writing report file.');
+        console.log(`Done writing ${toPrint.format}report file.`);
+        resolve(`Done writing ${toPrint.format}report file.`);
+      });      
     });
   };
 
-  console.log('About to write report.'); // eslint-disable-line no-console
-  debugger
-  await zaproxy.core.htmlreport(apiKey).then(zapApiHtmlReportFuncCallback, err => `Error occured while attempting to create Zap html report. Error was: ${err.message}`);
-  debugger;
+  console.log(`About to write report in the following formats: ${[...reportFormats]}`); // eslint-disable-line no-console
+  const reportPromises = reportFormats.map(format => zaproxy.core[`${format}report`](apiKey).then(zapApiReportFuncCallback, err => `Error occured while attempting to create Zap ${format} report. Error was: ${err.message}`) );
+  await Promise.all(reportPromises);
 });

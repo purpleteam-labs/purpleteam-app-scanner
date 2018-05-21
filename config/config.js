@@ -79,14 +79,24 @@ const schema = {
       default: 'HIGH'
     },
     aScannerAlertThreshold: {
-      doc: "The alert threshold of the active scanner.",
+      doc: 'The alert threshold of the active scanner.',
       format: ['LOW', 'MEDIUM', 'HIGH'],
       default: 'LOW'
     },
     method: {
-      doc: "The method used to attack the build user supplied route.",
+      doc: 'The method used to attack the build user supplied route.',
       format: ['GET', 'POST', 'PUT'],
       default: 'POST'
+    },
+    browser: {
+      doc: 'The type of browser to run tests through.',
+      format: ['chrome', 'firefox'],
+      default: 'chrome'
+    },
+    reportFormat: {
+      doc: 'The supported formats that reports may be written in.',
+      format: ['html', 'json', 'md'],
+      default: 'html'
     }
   },  
   cucumber: {
