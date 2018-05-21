@@ -10,9 +10,9 @@ Background:
   And the application is spidered for each testSession
   And all active scanners are disabled
 
-Scenario: The application should not contain any vulnerabilities known to Zap
+Scenario: The application should not contain vulnerabilities known to Zap that exceed the build user defined threshold
   Given all active scanners are enabled 
   When the active scan is run
-  Then the vulnerability count should not exceed the build user decided threshold of vulnerabilities known to Zap
+  Then the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap
   And the Zap report is written to file
   

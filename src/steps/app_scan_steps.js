@@ -201,7 +201,7 @@ When('the active scan is run', async function () {
 });
 
 
-Then('the vulnerability count should not exceed the build user decided threshold of vulnerabilities known to Zap', function () {
+Then('the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap', function () {
   const numberOfAlerts = this.zap.numberOfAlerts();
   const { testRoute, routeAttributes: { alertThreshold } } = this.sut.getProperties(['testRoute', 'routeAttributes']);  
   
