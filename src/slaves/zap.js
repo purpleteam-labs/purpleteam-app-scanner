@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const ZapClient = require('zaproxy');
-const config = require('config/config');
+const config = require(`${process.cwd()}/config/config`);
 
 
 const zapSchema = {
@@ -58,7 +58,7 @@ const getProperties = (selecter) => {
 };
 
 
-const numberOfAlerts = (alertCnt) => {
+const numberOfAlertsForSesh = (alertCnt) => {
   if(alertCnt)
     alertCount = alertCnt;
   else
@@ -72,5 +72,5 @@ module.exports = {
   getProperties,
   getZaproxy: () => zaproxy,
   getPropertiesForBrowser: () => getProperties(['protocol', 'ip', 'port']),
-  numberOfAlerts
+  numberOfAlertsForSesh
 };

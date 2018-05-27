@@ -1,17 +1,10 @@
 // features/support/world.js
 const cucumber = require('cucumber');
 const { setWorldConstructor, setDefaultTimeout } = cucumber;
-
-const sut = require('src/api/app/do/sut');
-const zap = require('src/slaves/zap');
-
-
-
-// Todo: KC: let's make the instance variables private and only accessible via accessors.
-
-// Todo: KC: Move sut stuff into it's own file.
-// Todo: KC: Move zap/slave stuff into it's own file.
 const ZapClient = require('zaproxy');
+const sut = require(`${process.cwd()}/src/api/app/do/sut`);
+const zap = require(`${process.cwd()}/src/slaves/zap`);
+
 
 let testStepResult;
 
@@ -19,7 +12,7 @@ let testStepResult;
 class CustomWorld {
   constructor({attach, parameters}) {
 
-    console.log('Constructing the cucumber world.\n');
+    console.log(`Constructing the cucumber world for session with id "${parameters.sutProperties.testSession.id}".\n`);
     this.variable = 0;
     this.attach = attach;
 
@@ -28,7 +21,6 @@ class CustomWorld {
     this.sut = sut;
     this.sut.initialiseProperties(parameters.sutProperties);
     this.zap = zap;
-
     this.zap.initialiseProperties({ ...parameters.slaveProperties, sutBaseUrl: this.sut.baseUrl() });
   }
 
@@ -37,10 +29,6 @@ class CustomWorld {
     await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser());
   }
 
-  
-
-  
-  
 
   // simple_math related stuff.
 
@@ -54,8 +42,3 @@ class CustomWorld {
 }
 
 setWorldConstructor(CustomWorld)
-
-
-
-
-

@@ -83,6 +83,11 @@ const schema = {
       format: ['LOW', 'MEDIUM', 'HIGH'],
       default: 'LOW'
     },
+    alertThreshold: {
+      doc: 'The number of alerts specified by the build user that the alerts found by Zap should not exceed.',
+      format: 'int',
+      default: 0
+    },
     method: {
       doc: 'The method used to attack the build user supplied route.',
       format: ['GET', 'POST', 'PUT'],

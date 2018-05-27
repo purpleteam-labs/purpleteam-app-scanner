@@ -3,53 +3,29 @@
 const fs = require('fs');
 const { promisify } = require('util');
 const readFileAsync = promisify(fs.readFile);
+const cucumber = require('cucumber');
 const sut = require('src/api/app/do/sut');
 const zap = require('src/slaves/zap');
 
 class App {
   constructor(config) {
-    const { slave, cucumber, results } = config;
+    const { slave, cucumber: cucumberConfig, results } = config;
     
     this.slave = slave;
-    this.cucumber = cucumber;
+    this.cucumber = cucumberConfig;
     this.results = results;
 
   }
 
   async runJob(testJob) {
 
-    // Need to return configured cucumberCli as well
-    const { cucumberCli, activeTestCases } = await this.configureCucumberCli(testJob);
-    const testPlan = await this.testPlanText(activeTestCases);
+    const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
+    const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
 
-    const clearRequireCache = function clearRequireCache() {
-      Object.keys(require.cache).forEach(key => delete require.cache[key])
-    };
+    debugger;
 
-    cucumberCli.run()
-    .then((succeeded) => {
-      console.log(succeeded);
-      // clearSupportCodeFns();
-      clearRequireCache();
-        
-    }).catch((error) => {
-      console.log(error);
-    });
-
-    return testPlan;
-  }
-
-
-  async testPlan(testJob) {
-    const { activeTestCases } = await this.configureCucumberCli(testJob);
-    return await testPlanText(activeTestCases);
-  }
-
-
-  async configureCucumberCli(testJob) {
-    const cucumber = require('cucumber');
-
-    const sutProperties = {
+    const sessionsProps = testSessions.map(sesh => ({
+      testRoutes,  
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
       port: testJob.data.attributes.sutPort,
@@ -58,12 +34,149 @@ class App {
       context: {name: 'NodeGoat_Context'},
       authentication: testJob.data.attributes.sutAuthentication,
       reportFormats: testJob.data.attributes.reportFormats,
-      testSessionId: testJob.data.relationships.data[0].id, // lowPrivUser for the first one
-      testRoute: testJob.included[0].relationships.data[0].id,
-      routeAttributes: testJob.included[2].attributes
-    };
+      testSession: sesh      // The data array contains the relationshops to the testSessions      
+    }));
+    debugger;
 
-    sut.validateProperties(sutProperties);
+
+
+
+    // Get help with cucumber cli:
+    // node ./node_modules/.bin/cucumber-js --help
+
+    // Debug cucumber cli without actually running the tests (--dry-run). --dry-run to check that all glue code exists: https://github.com/cucumber/cucumber-jvm/issues/907
+    // node --inspect-brk ./node_modules/.bin/cucumber-js --dry-run src/features --require src/steps --tags "not @simple_math"
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+    // For testing single session. Cucumber won't run twice in the same process.
+/*
+    debugger;
+    let cucumberArgs = this.createCucumberArgs(sessionsProps[1]);
+      
+    const cucumberCliInstance = new cucumber.Cli({
+      argv: ['node', ...cucumberArgs],
+      cwd: process.cwd(),
+      stdout: process.stdout
+    });
+    debugger;
+    await cucumberCliInstance.run()
+    .then(async succeeded => {
+      debugger;
+      console.log(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`);              
+    }).catch((error) => {
+      debugger;
+      return console.log(error);
+    });
+
+    debugger;
+    const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
+    debugger;
+    const testPlan = await this.testPlanText(activeTestCases);
+    debugger;
+    return testPlan;
+*/    
+    // End of testing single session.
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+    // For complete sessionsProps
+    // https://github.com/cucumber/cucumber-js/issues/786#issuecomment-372928596
+
+      // paste this before your require child_process at the beginning of your main index file.
+      /*
+      (function() {
+        var childProcess = require("child_process");
+        var oldSpawn = childProcess.spawn;
+        function mySpawn() {
+            console.log('spawn called');
+            console.log(arguments);
+            var result = oldSpawn.apply(this, arguments);
+            return result;
+        }
+        childProcess.spawn = mySpawn;
+      })();
+      */
+
+    for (let sessionProps of sessionsProps) {
+
+      let cucumberArgs = this.createCucumberArgs(sessionProps);
+      debugger;
+
+     // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
+     // Currently reports for all test sessions will be the same.
+     // Setting aScannerAttackStrength, aScannerAlertThreshold with single instance Zap will simply be a last one wins scenario.
+      
+      const { spawn } = require('child_process');
+      const cucCli = spawn('node', cucumberArgs, {cwd: process.cwd(), env: process.env, argv0: process.argv[0]});
+
+      cucCli.stdout.on('data', (data) => {
+        debugger;
+        //console.log(`stdout: ${data}`);
+        process.stdout.write(`stdout: ${data}`);
+      })
+
+      cucCli.stderr.on('data', (data) => {
+        debugger;
+        //console.log(`stderr: ${data}`);
+        process.stdout.write(`stderr: ${data}`);
+      })
+
+      cucCli.on('close', (code) => {
+        debugger;
+        //console.log(`child process "cucumber Cli" exited with code ${code}`);
+        process.stdout.write(`child process "cucumber Cli" exited with code ${code}`);
+      })
+
+      cucCli.on('error', (err) => {
+        debugger;
+        //console.log('Failed to start subprocess.');
+        process.stdout.write('Failed to start subprocess.');
+      });        
+
+      debugger;
+      //console.log(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`);        
+
+    }
+
+    let cucumberArgs = this.createCucumberArgs(sessionsProps[0]);
+    const cucumberCliInstance = new cucumber.Cli({
+      argv: ['node', ...cucumberArgs],
+      cwd: process.cwd(),
+      stdout: process.stdout
+    });
+
+    const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
+    const testPlan = await this.testPlanText(activeTestCases);
+    return testPlan;
+
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+  }
+
+
+  async testPlan(testJob) {
+    // Todo: KC: Test.
+    const cucumberArgs = this.createCucumberArgs();
+
+    const cucumberCliInstance = new cucumber.Cli({
+      argv: ['node', ...cucumberArgs],
+      cwd: process.cwd(),
+      stdout: process.stdout
+    });
+
+
+    const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
+    const testPlan = await this.testPlanText(activeTestCases);
+    return testPlan;
+  }
+
+
+  createCucumberArgs(sutProps) {
+
+    //sut.validateProperties(sutProperties);
 
     const slaveProperties = {
       protocol: this.slave.protocol,
@@ -75,11 +188,11 @@ class App {
       spider: this.slave.spider
     };
 
-    zap.validateProperties(slaveProperties);
+    //zap.validateProperties(slaveProperties);
     
     const cucumberParameters = {
-      sutProperties,
-      slaveProperties,      
+      slaveProperties,
+      sutProperties: sutProps ? sutProps : {},
       cucumber: {
         timeOut: this.cucumber.timeOut
       }
@@ -88,7 +201,6 @@ class App {
     const parameters = JSON.stringify(cucumberParameters);
 
     const cucumberArgs = [
-      'node',
       this.cucumber.binary,
       this.cucumber.features,
       '--require',
@@ -101,30 +213,12 @@ class App {
       parameters
     ];
 
-   
 
-    // Todo: KC: Use passed config to work out which route, etc, to test
-
-    // Todo: Keep record of how each test session is doing, if we are testing. This is in next PBI.
+    return cucumberArgs;
+  }
 
 
-    // Todo: KC: I think we need to run Zap [session] times.
-
-
-
-
-    // Get help with cucumber cli:
-    // node ./node_modules/.bin/cucumber-js --help
-
-    // Debug cucumber cli without actually running the tests (--dry-run). --dry-run to check that all glue code exists: https://github.com/cucumber/cucumber-jvm/issues/907
-    // node --inspect-brk ./node_modules/.bin/cucumber-js --dry-run src/features --require src/steps --tags "not @simple_math"
-
-    const cucumberCli = new cucumber.Cli({
-      argv: cucumberArgs,
-      cwd: process.cwd(),
-      stdout: process.stdout
-    });
-
+  async getActiveTestCases(cucumberCli) {
     // Files to work the below out where in:
     // https://github.com/cucumber/cucumber-js/blob/master/src/cli/index.js
     // https://github.com/cucumber/cucumber-js/blob/master/src/cli/helpers.js#L20
@@ -138,8 +232,7 @@ class App {
       order: configuration.order,  
       pickleFilter: ( () => new (require('cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions) )()
     });
-
-    return {cucumberCli, activeTestCases};
+    return activeTestCases;
   }
 
 

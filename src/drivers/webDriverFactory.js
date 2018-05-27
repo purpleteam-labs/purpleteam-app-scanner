@@ -18,14 +18,19 @@ class WebDriverFactory {
       return webDriver;
     else {
       // Builder API: https://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_Builder.html
-      webDriver = await new seleniumWebdriver.Builder()
-        .forBrowser(options.browser)
-        .setChromeOptions(/* add any options */)
-        .setFirefoxOptions(/* add any options */)
-        .setProxy(proxy.manual({
-          [options.slave.protocol]: `${options.slave.ip}:${options.slave.port}`
-        }))
-        .build();
+      try {
+        webDriver = await new seleniumWebdriver.Builder()
+          .forBrowser(options.browser)
+          .setChromeOptions(/* add any options */)
+          .setFirefoxOptions(/* add any options */)
+          .setProxy(proxy.manual({
+            [options.slave.protocol]: `${options.slave.ip}:${options.slave.port}`
+          }))
+          .build();
+      } catch(error) {
+        debugger;
+        console.log(error);
+      }
       return webDriver;
     }  
   }

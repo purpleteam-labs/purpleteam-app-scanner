@@ -1,7 +1,7 @@
 const Joi = require('joi');
-const WebDriverFactory = require('src/drivers/webDriverFactory');
-const browser = require('src/clients/browser');
-const config = require('config/config');
+const WebDriverFactory = require(`${process.cwd()}/src/drivers/webDriverFactory`);
+const browser = require(`${process.cwd()}/src/clients/browser`);
+const config = require(`${process.cwd()}/config/config`);
 
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {
@@ -16,27 +16,42 @@ const sutSchema = {
     name: Joi.string().token()
   }),
   authentication: Joi.object({
-    route: Joi.string().min(2).regex(/^\/[a-z]+/),
+    route: Joi.string().min(2).regex(/^\/[a-z]+/i),
     usernameFieldLocater: Joi.string().min(2).required(),
     passwordFieldLocater: Joi.string().min(2).required(),
-    username: Joi.string().min(2).required(),
-    password: Joi.string().min(2).required()
+    submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required()
   }),
-  reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
-  testSessionId: Joi.string(),
-  testRoute: Joi.string().min(2).regex(/^\/[a-z]+/),
-  routeAttributes: Joi.object({
-    aScannerAttackStrength: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')),
-    aScannerAlertThreshold: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')),
-    // Todo: KC: Test the default.
-    alertThreshold: Joi.number().integer().positive().default(0),
-    attackFields: Joi.array().items(Joi.object({
-      name: Joi.string().required(),
-      value: Joi.string()
-    })),
-    method: Joi.string().valid(config.getSchema().properties.sut.properties.method.format).uppercase().default(config.get('sut.method')),
-    submit: Joi.string()
-  })
+  reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),  
+  testSession: Joi.object({
+    type: Joi.string().valid('testSession').required(),
+    id: Joi.string().alphanum(),
+    attributes: Joi.object({
+      username: Joi.string().min(2),
+      password: Joi.string().min(2),
+      aScannerAttackStrength: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')),
+      aScannerAlertThreshold: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')),
+      alertThreshold: Joi.number().integer().positive().default(config.get('sut.alertThreshold'))
+    }),
+    relationships: Joi.object({
+      data: Joi.array().items(Joi.object({
+        type: Joi.string().valid('route').required(),
+        id: Joi.string().min(2).regex(/^\/[a-z]+/i).required()
+      }))
+    })
+  }),
+  testRoutes: Joi.array().items(Joi.object({
+    type: Joi.string().valid('route').required(),
+    id: Joi.string().min(2).regex(/^\/[a-z]+/i).required(),
+    attributes: Joi.object({      
+      attackFields: Joi.array().items(Joi.object({
+        name: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
+        value: Joi.string().empty('').default(''),
+        visible: Joi.boolean()
+      })),
+      method: Joi.string().valid(config.getSchema().properties.sut.properties.method.format).uppercase().default(config.get('sut.method')),
+      submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i)
+    })
+  }))
 };
 
 

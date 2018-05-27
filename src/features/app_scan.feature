@@ -14,5 +14,5 @@ Scenario: The application should not contain vulnerabilities known to Zap that e
   Given all active scanners are enabled 
   When the active scan is run
   Then the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap
-  And the Zap report is written to file
+
   
