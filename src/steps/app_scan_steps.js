@@ -194,7 +194,7 @@ When('the active scan is run', async function () {
       console.log(`Active scan initiated for test session with id: "${id}", route: "${routeResourceObjectForAscanCallback.id}". Response was: ${JSON.stringify(zapResult)}`); // eslint-disable-line no-console
 
       
-      let numberOfAlertsForRoute = 0;    
+      let numberOfAlertsForRoute = 0;
       async function status() {
         //debugger;
         if(!runStatus) return;
@@ -262,12 +262,11 @@ When('the active scan is run', async function () {
       .catch(err => {
         debugger;
         console.log(`Error occured while attempting to initiate active scan of route: ${routeResourceObject.id}. Error was: ${err.message ? err.message : err}`);
+        // The following error means we haven't got the query string right.
         //Error occured while attempting to initiate active scan. Error was: 400 - {"code":"url_not_found","message":"URL Not Found in the Scan Tree"}
         //400 - {"code":"url_not_found","message":"URL Not Found in the Scan Tree"}
-
         reject(err)
       });
-    //debugger;
   }
 
   debugger;

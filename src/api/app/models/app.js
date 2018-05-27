@@ -106,6 +106,7 @@ class App {
      // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
      // Currently reports for all test sessions will be the same.
      // Setting aScannerAttackStrength, aScannerAlertThreshold with single instance Zap will simply be a last one wins scenario.
+     // We could also look at using spawnSync, but then, Zap would need to be restarted, which defeats the point of creating a process, other thn the fact that the Cucumber Cli won't run twice.
       
       const { spawn } = require('child_process');
       const cucCli = spawn('node', cucumberArgs, {cwd: process.cwd(), env: process.env, argv0: process.argv[0]});
@@ -124,8 +125,8 @@ class App {
 
       cucCli.on('close', (code) => {
         debugger;
-        //console.log(`child process "cucumber Cli" exited with code ${code}`);
-        process.stdout.write(`child process "cucumber Cli" exited with code ${code}`);
+        //console.log(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
+        process.stdout.write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
       })
 
       cucCli.on('error', (err) => {
@@ -158,16 +159,12 @@ class App {
 
 
   async testPlan(testJob) {
-    // Todo: KC: Test.
     const cucumberArgs = this.createCucumberArgs();
-
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
       cwd: process.cwd(),
       stdout: process.stdout
     });
-
-
     const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
     const testPlan = await this.testPlanText(activeTestCases);
     return testPlan;
