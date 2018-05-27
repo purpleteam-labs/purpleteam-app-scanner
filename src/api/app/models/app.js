@@ -125,8 +125,8 @@ class App {
 
       cucCli.on('close', (code) => {
         debugger;
-        //console.log(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
-        process.stdout.write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
+        console.log(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
+        //process.stdout.write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
       })
 
       cucCli.on('error', (err) => {
