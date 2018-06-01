@@ -1,3 +1,5 @@
+const config = require(`${process.cwd()}/config/config`);
+const logger = require('purpleteam-logger').init(config.get('logger'));
 // features/support/world.js
 const cucumber = require('cucumber');
 const { setWorldConstructor, setDefaultTimeout } = cucumber;
@@ -11,15 +13,18 @@ let testStepResult;
 
 class CustomWorld {
   constructor({attach, parameters}) {
+    const { sutProperties } = parameters;
 
-    console.log(`Constructing the cucumber world for session with id "${parameters.sutProperties.testSession.id}".\n`);
+    this.logger = logger;
+    this.logger.notice(`Constructing the cucumber world for session with id "${parameters.sutProperties.testSession.id}".\n`, {tags: ['testing']});
+
     this.variable = 0;
     this.attach = attach;
 
     setDefaultTimeout(parameters.cucumber.timeOut);
 
     this.sut = sut;
-    this.sut.initialiseProperties(parameters.sutProperties);
+    this.sut.init({logger, sutProperties});
     this.zap = zap;
     this.zap.initialiseProperties({ ...parameters.slaveProperties, sutBaseUrl: this.sut.baseUrl() });
   }

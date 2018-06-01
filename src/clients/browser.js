@@ -1,26 +1,26 @@
 const { By } = require('selenium-webdriver');
+let logger;
 let driver;
-
 
 
 const findElementThenClick = async searchText => {
   try {    
     await driver.findElement(By.id(searchText)).click();
-    return console.log(`Located element using id="${searchText}", and clicked it.`);    
+    return logger.notice(`Located element using id="${searchText}", and clicked it.`, {tags: ['browser']});
   } catch(e) {
-    console.log(`Unable to locate element using id="${searchText}".`);
+    logger.notice(`Unable to locate element using id="${searchText}".`, {tags: ['browser']})
   }
   try {
     await driver.findElement(By.className(searchText)).click();
-    return console.log(`Located element using className="${searchText}", and clicked it.`);
+    return logger.notice(`Located element using className="${searchText}", and clicked it.`, {tags: ['browser']});
   } catch(e) {
-    console.log(`Unable to locate element using className="${searchText}".`);
+    logger.notice(`Unable to locate element using className="${searchText}".`, {tags: ['browser']});
   }
   try {
     await driver.findElement(By.name(searchText)).click();
-    return console.log(`Located element using name="${searchText}", and clicked it.`);    
+    return logger.notice(`Located element using name="${searchText}", and clicked it.`, {tags: ['browser']});
   } catch(e) {
-    console.log(`Unable to locate element using name="${searchText}".`);
+    logger.notice(`Unable to locate element using name="${searchText}".`, {tags: ['browser']});
     throw new Error(`Unable to locate element using id, className, or name of "${searchText}".`);
   }
 };
@@ -31,31 +31,27 @@ const findElementThenSendKeys = async (attackField) => {
     
     if(attackField && attackField.visible) {
       await driver.findElement(By.id(attackField.name)).sendKeys(attackField.value);
-      return console.log(`Located element using id="${attackField.name}", and sent keys.`);
+      return logger.notice(`Located element using id="${attackField.name}", and sent keys.`, {tags: ['browser']});
     }
   } catch(e) {
-    
-    console.log(`Unable to locate element using id="${attackField.name}".`);
-  }
+    logger.notice(`Unable to locate element using id="${attackField.name}".`, {tags: ['browser']});  }
   try {
     
     if(attackField && attackField.visible) {
       await driver.findElement(By.className(attackField.name)).sendKeys(attackField.value);
-      return console.log(`Located element using className="${attackField.name}", and sent keys.`);
+      return logger.notice(`Located element using className="${attackField.name}", and sent keys.`, {tags: ['browser']});
     }
   } catch(e) {
-    
-    console.log(`Unable to locate element using className="${attackField.name}".`);
+    logger.notice(`Unable to locate element using className="${attackField.name}".`, {tags: ['browser']});
   }
   try {
     
     if(attackField && attackField.visible) {
       await driver.findElement(By.name(attackField.name)).sendKeys(attackField.value);
-      return console.log(`Located element using name="${attackField.name}", and sent keys.`);
+      return logger.notice(`Located element using name="${attackField.name}", and sent keys.`, {tags: ['browser']});
     }
   } catch(e) {
-    
-    console.log(`Unable to locate element using name="${attackField.name}".`);
+    logger.notice(`Unable to locate element using name="${attackField.name}".`, {tags: ['browser']});
     throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}".`);
   }
 };
@@ -64,8 +60,9 @@ const findElementThenSendKeys = async (attackField) => {
 module.exports = {
   findElementThenClick,
   findElementThenSendKeys,
-  setWebDriver(webDriver) {
-    driver = webDriver;
+  init(options) {
+    logger = options.logger;
+    driver = options.webDriver;
   },
   getWebDriver() {
     return driver;
