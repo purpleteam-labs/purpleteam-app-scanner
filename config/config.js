@@ -5,8 +5,15 @@ const schema = {
   env: {
     doc: 'The application environment.',
     format: ['production', 'development', 'test'],
-    default: 'development',
-    env: 'NOE_ENV'
+    default: 'production',
+    env: 'NODE_ENV'
+  },
+  logger: {
+    level: {
+      doc: 'Write all log events with this level and below. Syslog levels used: https://github.com/winstonjs/winston#logging-levels',
+      format: ['emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug'],
+      default: 'notice'
+    }
   },
   host: {
     port: {
@@ -141,7 +148,7 @@ const schema = {
 };
 
 const config = convict(schema);
-config.loadFile(path.join(__dirname, `config.${config.get('env')}.json`));
+config.loadFile(path.join(__dirname, `config.${process.env.NODE_ENV}.json`));
 config.validate();
 
 module.exports = config;

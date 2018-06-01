@@ -14,7 +14,6 @@ module.exports = {
     const model = new App(options);
     server.app.model = model; // eslint-disable-line no-param-reassign
     applyRoutes(server);
-    console.log(`The options passed to appDomainPlugin were: ${options}.`); // eslint-disable-line no-console
   }
 
 };

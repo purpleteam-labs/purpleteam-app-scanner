@@ -8,9 +8,10 @@ const sut = require('src/api/app/do/sut');
 const zap = require('src/slaves/zap');
 
 class App {
-  constructor(config) {
-    const { slave, cucumber: cucumberConfig, results } = config;
+  constructor(options) {
+    const { logger, slave, cucumber: cucumberConfig, results } = options;
     
+    this.logger = logger;
     this.slave = slave;
     this.cucumber = cucumberConfig;
     this.results = results;
@@ -18,7 +19,7 @@ class App {
   }
 
   async runJob(testJob) {
-
+    this.logger.info('running testJob', {tags: ['testing']});
     const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
     const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
 
@@ -242,16 +243,13 @@ class App {
 
   async testResult() {
 
-
-
     let result;
 
     try {
       result = await readFileAsync(this.results.uri, {encoding: 'utf8'})
     }
     catch (err) {
-      // Todo: use proper logger.
-      console.log('ERROR:', err);
+      this.logger.log(`Could not read test results file, the error was: ${err}.`, {tags: ['testing', 'testResult()']});
     }
 
     return result;
