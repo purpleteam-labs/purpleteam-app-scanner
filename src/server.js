@@ -4,47 +4,32 @@ const app = require('src/api/app');
 const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.ip') });
 const logger = require('purpleteam-logger').init(config.get('logger'));
 
+// hapi-good-winstone: https://github.com/alexandrebodin/hapi-good-winston
+//    default levels: https://github.com/alexandrebodin/hapi-good-winston/blob/master/lib/index.js
 const reporters = {
   development: {
-    consoleReporter: [{
-      module: 'good-squeeze',
-      name: 'Squeeze',
-      args: [{
-        log: '*',
-        request: '*',
-        response: '*',
-        error: '*'
-      }]}, {
-        module: 'good-console'
-      },
-      'stdout'
-    ]
+    winstonReporter: [{
+      module: 'hapi-good-winston',
+      name: 'goodWinston',
+      args: [logger, {levels: {ops: 'debug'}}]
+    }]
   },
   production: {
-    consoleReporter: [{
-      module: 'good-squeeze',
-      name: 'Squeeze',
-      args: [{
-        log: {include: '*', exclude: ['debug', 'info']}, // Using tags as log levels, checkout the syslog levels we use for Winston in the config.
-        request: '*',
-        response: '*',
-        error: '*'
-      }]}, {
-        module: 'good-squeeze',
-        name: 'SafeJson'
-      },
-      'stdout'
-    ]
+    winstonReporter: [{
+      module: 'hapi-good-winston',
+      name: 'goodWinston',
+      args: [logger, {levels: {ops: 'notice', response: 'notice', log: 'notice', request: 'notice'}}]
+    }]
   }
 };
+
 
 const infrastructuralPlugins = [
   require('susie'),
   {
     plugin: require('good'),
-      options: {
-        reporters: reporters[process.env.NODE_ENV] 
-    }
+    options: { reporters: reporters[process.env.NODE_ENV]}
+    
   }
 ];
 
