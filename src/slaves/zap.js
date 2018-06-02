@@ -18,7 +18,7 @@ const zapSchema = {
   sutBaseUrl: Joi.string().uri()
 };
 
-
+let log;
 let properties;
 let zaproxy;
 let alertCount;
@@ -28,16 +28,16 @@ const validateProperties = (slaveProperties) => {
   const result = Joi.validate(slaveProperties, zapSchema);
 
   if(result.error) {
-    console.log(result.error.message);
+    log.error(result.error.message, {tags: ['zap']});
     throw new Error(result.error.message);
   }
   return result.value;
 };
 
 
-const initialiseProperties = (slaveProperties) => {
-
-  properties = validateProperties(slaveProperties);
+const init = (options) => {
+  log = options.log;
+  properties = validateProperties(options.slaveProperties);
   
   const zapOptions = {
     proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`,
@@ -68,7 +68,7 @@ const numberOfAlertsForSesh = (alertCnt) => {
 
 module.exports = {
   validateProperties,
-  initialiseProperties,
+  init,
   getProperties,
   getZaproxy: () => zaproxy,
   getPropertiesForBrowser: () => getProperties(['protocol', 'ip', 'port']),
