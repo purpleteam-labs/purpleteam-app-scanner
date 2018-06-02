@@ -4,7 +4,7 @@ const server = require('src/server');
 const init = async () => {
   await server.registerPlugins();
   const startedServer = await server.start();
-  startedServer.log(['notice'], `purpleteam-app-scanner running at: ${startedServer.info.uri} in ${process.env.NODE_ENV} mode.`);
+  startedServer.log(['startup'], `purpleteam-app-scanner running at: ${startedServer.info.uri} in ${process.env.NODE_ENV} mode.`);
 };
 
 process.on('unhandledRejection', (err) => {

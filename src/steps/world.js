@@ -16,7 +16,7 @@ class CustomWorld {
     const { sutProperties } = parameters;
 
     this.logger = logger;
-    this.logger.notice(`Constructing the cucumber world for session with id "${parameters.sutProperties.testSession.id}".\n`, {tags: ['testing']});
+    this.logger.notice(`Constructing the cucumber world for session with id "${parameters.sutProperties.testSession.id}".\n`, {tags: ['world']});
 
     this.variable = 0;
     this.attach = attach;

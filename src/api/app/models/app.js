@@ -19,7 +19,7 @@ class App {
   }
 
   async runJob(testJob) {
-    this.logger.info('running testJob', {tags: ['testing']});
+    this.logger.info('running testJob', {tags: ['app']});
     const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
     const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
 
