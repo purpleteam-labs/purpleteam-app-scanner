@@ -82,7 +82,7 @@ Given('a new scanning session based on each build user supplied testSession', fu
       contextId = resp.contextId;
       this.log.notice(`Created new Zap context with a contextId of: ${contextId}.`, {tags: ['app_scan_steps']});
     },
-      error => this.log.error(`Error occured while attempting to create a new Zap context, message was: ${error.message}`, {tags: ['app_scan_steps']})
+      error => this.log.notice(`Error occured while attempting to create a new Zap context, message was: ${error.message}`, {tags: ['app_scan_steps']})
     );
 });
 
