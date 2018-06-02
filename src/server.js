@@ -29,7 +29,6 @@ const infrastructuralPlugins = [
   {
     plugin: require('good'),
     options: { reporters: reporters[process.env.NODE_ENV]}
-    
   }
 ];
 
