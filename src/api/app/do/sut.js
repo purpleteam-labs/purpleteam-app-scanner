@@ -2,7 +2,7 @@ const Joi = require('joi');
 const WebDriverFactory = require(`${process.cwd()}/src/drivers/webDriverFactory`);
 const browser = require(`${process.cwd()}/src/clients/browser`);
 const config = require(`${process.cwd()}/config/config`);
-let logger;
+let log;
 
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {
@@ -63,7 +63,7 @@ let webDriver;
 const validateProperties = (sutProperties) => {
   const result = Joi.validate(sutProperties, sutSchema);
   if(result.error) {
-    logger.error(result.error.message, {tags: ['testing', 'validation']});
+    log.error(result.error.message, {tags: ['testing', 'validation']});
     throw new Error(result.error.message);
   }
   return result.value;
@@ -76,7 +76,7 @@ const initialiseProperties = (sutProperties) => {
 
 
 const init = (options) => {
-  logger = options.logger;
+  log = options.log;
   initialiseProperties(options.sutProperties);
 };
 
@@ -99,7 +99,7 @@ const initialiseBrowser = async (slaveProperties) => {
     slave: slaveProperties
   });
 
-  browser.init({logger, webDriver});
+  browser.init({log, webDriver});
 };
 
 
