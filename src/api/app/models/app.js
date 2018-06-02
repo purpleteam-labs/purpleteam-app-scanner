@@ -64,10 +64,10 @@ class App {
     await cucumberCliInstance.run()
     .then(async succeeded => {
       debugger;
-      console.log(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`);              
+      log.notice(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, {tags: ['app']});
     }).catch((error) => {
       debugger;
-      return console.log(error);
+      return log.error(error, {tags: ['app']});
     });
 
     debugger;
@@ -114,31 +114,23 @@ class App {
 
       cucCli.stdout.on('data', (data) => {
         debugger;
-        //console.log(`stdout: ${data}`);
-        process.stdout.write(`stdout: ${data}`);
+        process.stdout.write(data);
       })
 
       cucCli.stderr.on('data', (data) => {
         debugger;
-        //console.log(`stderr: ${data}`);
-        process.stdout.write(`stderr: ${data}`);
+        process.stdout.write(data);
       })
 
       cucCli.on('close', (code) => {
         debugger;
-        console.log(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
-        //process.stdout.write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`);
+        process.stdout.write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`, {tags: ['app']});        
       })
 
       cucCli.on('error', (err) => {
         debugger;
-        //console.log('Failed to start subprocess.');
-        process.stdout.write('Failed to start subprocess.');
-      });        
-
-      debugger;
-      //console.log(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`);        
-
+        process.stdout.write('Failed to start subprocess.', {tags: ['app']});
+      });
     }
 
     let cucumberArgs = this.createCucumberArgs(sessionsProps[0]);
