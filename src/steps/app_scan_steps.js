@@ -45,7 +45,7 @@ Given('each build user supplied route of each testSession is navigated', async f
       // Todo: KC: Fix hard coded sleeps.
       await webDriver.sleep(1000)
         .then(() => {
-          console.log(`Navigating route id "${routeResourceObject.id}" of test session id "${id}".`);
+          this.log.notice(`Navigating route id "${routeResourceObject.id}" of test session id "${id}".`, {tags: ['app_scan_steps']});
           return webDriver.get(`${baseUrl}${routeResourceObject.id}`); } )
         .then(() => { return webDriver.sleep(1000); } )
         .then(() => { return Promise.all(routeResourceObject.attributes.attackFields.map( attackField => {
@@ -56,12 +56,12 @@ Given('each build user supplied route of each testSession is navigated', async f
         .then(() => { return webDriver.sleep(1000); } )
         .then(() => { resolve(`Done ${routeResourceObject}`); } )
         .catch(err => {
-          console.log(err.message);
+          this.log.error(err.message, {tags: ['app_scan_steps']});
           reject(err)
         });
     });
   });
-  await Promise.all(promiseOfRouteFetchPopulateSubmit).catch(reason => console.log(reason.message));
+  await Promise.all(promiseOfRouteFetchPopulateSubmit).catch(reason => this.log.error(reason.message, {tags: ['app_scan_steps']}));
 
 });
 
@@ -80,9 +80,9 @@ Given('a new scanning session based on each build user supplied testSession', fu
   return zaproxy.context.newContext(contextName, apiKey).then(
     resp => {
       contextId = resp.contextId;
-      console.log(`Created new Zap context with a contextId of: ${contextId}.`);
+      this.log.notice(`Created new Zap context with a contextId of: ${contextId}.`, {tags: ['app_scan_steps']});
     },
-      error => console.log(`Error occured while attempting to create a new Zap context, message was: ${error.message}`)
+      error => this.log.error(`Error occured while attempting to create a new Zap context, message was: ${error.message}`, {tags: ['app_scan_steps']})
     );
 });
 
@@ -96,26 +96,26 @@ Given('the application is spidered for each testSession', async function () {
   const enabled = true;
   const authenticationMethod = 'formBasedAuthentication';
 
-  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey).then(resp => console.log(`Set the spider max depth. Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set the spider max depth. Error was: ${err.message}`);
-  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey).then(resp => console.log(`Set the spider thread count. Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set the spider thread count. Error was: ${err.message}`);
-  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey).then(resp => console.log(`Added context "${sutBaseUrl}" to Zap. Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to add context "${sutBaseUrl}" to Zap. Error was: ${err.message}`);
+  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey).then(resp => this.log.notice(`Set the spider max depth. Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set the spider max depth. Error was: ${err.message}`);
+  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey).then(resp => this.log.notice(`Set the spider thread count. Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set the spider thread count. Error was: ${err.message}`);
+  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey).then(resp => this.log.notice(`Added context "${sutBaseUrl}" to Zap. Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to add context "${sutBaseUrl}" to Zap. Error was: ${err.message}`);
   // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
   // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
-  await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey).then(resp => console.log(`Set authentication method to "${authenticationMethod}". Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set authentication method to "${authenticationMethod}". Error was: ${err.message}`);
+  await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey).then(resp => this.log.notice(`Set authentication method to "${authenticationMethod}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set authentication method to "${authenticationMethod}". Error was: ${err.message}`);
   // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
-  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey).then(resp => console.log(`Set logged in indicator "${loggedInIndicator}". Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set logged in indicator to "${loggedInIndicator}". Error was: ${err.message}`);  
-  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey).then(resp => console.log(`Set forced user mode enabled to "${enabled}". Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set forced user mode enabled to "${enabled}". Error was: ${err.message}`);  
+  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey).then(resp => this.log.notice(`Set logged in indicator "${loggedInIndicator}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set logged in indicator to "${loggedInIndicator}". Error was: ${err.message}`);  
+  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey).then(resp => this.log.notice(`Set forced user mode enabled to "${enabled}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set forced user mode enabled to "${enabled}". Error was: ${err.message}`);  
   await zaproxy.users.newUser(contextId, username, apiKey)
     .then(resp => {
       userId = resp.userId;
-      console.log(`Set the newUser "${username}". Response was: ${JSON.stringify(resp)}`)
+      this.log.notice(`Set the newUser "${username}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']})
     },
       err => `Error occured while attempting to set the newUser "${username}". Error was: ${err.message}`
     );
-  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey).then(resp => console.log(`Set forced user with Id "${userId}". Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set forced user "${userId}". Error was: ${err.message}`);
-  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey).then(resp => console.log(`Set authentication credentials. Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set authentication credentials. Error was: ${err.message}`);
-  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey).then(resp => console.log(`Set user enabled on user with id "${userId}". Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to set user enabled with id "${userId}". Error was: ${err.message}`);
-  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey).then(resp => console.log(`Spider scan initiated for "${sutBaseUrl}". Response was: ${JSON.stringify(resp)}`), err => `Error occured while attempting to initiate spider scan for "${sutBaseUrl}". Error was: ${err.message}`);
+  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey).then(resp => this.log.notice(`Set forced user with Id "${userId}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set forced user "${userId}". Error was: ${err.message}`);
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey).then(resp => this.log.notice(`Set authentication credentials. Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set authentication credentials. Error was: ${err.message}`);
+  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey).then(resp => this.log.notice(`Set user enabled on user with id "${userId}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to set user enabled with id "${userId}". Error was: ${err.message}`);
+  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey).then(resp => this.log.notice(`Spider scan initiated for "${sutBaseUrl}". Response was: ${JSON.stringify(resp)}`, {tags: ['app_scan_steps']}), err => `Error occured while attempting to initiate spider scan for "${sutBaseUrl}". Error was: ${err.message}`);
 });
 
 
