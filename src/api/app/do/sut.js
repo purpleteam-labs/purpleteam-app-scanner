@@ -95,6 +95,7 @@ const initialiseBrowser = async (slaveProperties) => {
   const webDriverFactory = new WebDriverFactory();
 
   webDriver = await webDriverFactory.webDriver({
+    log,
     browser: properties.browser,
     slave: slaveProperties
   });

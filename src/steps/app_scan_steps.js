@@ -282,8 +282,6 @@ Then('the vulnerability count should not exceed the build user defined threshold
   const numberOfAlertsForSesh = this.zap.numberOfAlertsForSesh();
   debugger;
   if (numberOfAlertsForSesh > alertThreshold) {
-    //debugger;
-    // eslint-disable-next-line no-console
     this.log.notice(`Search the generated report for the routes: "${routes}", to see the ${numberOfAlertsForSesh - alertThreshold} vulnerabilities that exceed the Build User defined threshold of "${alertThreshold}"" for the session with id "${id}".`, {tags: ['app_scan_steps']});
   }
   debugger;

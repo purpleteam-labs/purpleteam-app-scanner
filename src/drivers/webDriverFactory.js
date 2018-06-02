@@ -7,13 +7,14 @@ const seleniumWebdriver = require('selenium-webdriver');
 
 const proxy = require('selenium-webdriver/proxy');
 
+let log;
 let webDriver;
 
 class WebDriverFactory {
     
 
   async webDriver(options) {
-
+    log = options.log;
     if (webDriver)
       return webDriver;
     else {
@@ -28,8 +29,7 @@ class WebDriverFactory {
           }))
           .build();
       } catch(error) {
-        debugger;
-        console.log(error);
+        log.error(error, {tags: ['webdriver']});
       }
       return webDriver;
     }  
