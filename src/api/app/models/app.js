@@ -9,9 +9,9 @@ const zap = require('src/slaves/zap');
 
 class App {
   constructor(options) {
-    const { logger, slave, cucumber: cucumberConfig, results } = options;
+    const { log, slave, cucumber: cucumberConfig, results } = options;
     
-    this.logger = logger;
+    this.log = log;
     this.slave = slave;
     this.cucumber = cucumberConfig;
     this.results = results;
@@ -19,7 +19,7 @@ class App {
   }
 
   async runJob(testJob) {
-    this.logger.info('running testJob', {tags: ['app']});
+    this.log.info('running testJob', {tags: ['app']});
     const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
     const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
 
@@ -249,7 +249,7 @@ class App {
       result = await readFileAsync(this.results.uri, {encoding: 'utf8'})
     }
     catch (err) {
-      this.logger.log(`Could not read test results file, the error was: ${err}.`, {tags: ['testing', 'testResult()']});
+      this.log.error(`Could not read test results file, the error was: ${err}.`, {tags: ['app', 'testResult()']});
     }
 
     return result;
