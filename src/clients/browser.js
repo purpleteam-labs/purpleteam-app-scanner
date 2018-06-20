@@ -1,5 +1,5 @@
 const { By } = require('selenium-webdriver');
-let log;
+let log; // Todo: KC: Should be provided by an IoC container.
 let driver;
 
 

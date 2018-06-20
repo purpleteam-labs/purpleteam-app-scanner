@@ -7,7 +7,7 @@ const seleniumWebdriver = require('selenium-webdriver');
 
 const proxy = require('selenium-webdriver/proxy');
 
-let log;
+let log; // Todo: KC: Should be provided by an IoC container.
 let webDriver;
 
 class WebDriverFactory {

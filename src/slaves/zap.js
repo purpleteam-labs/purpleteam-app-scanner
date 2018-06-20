@@ -18,7 +18,7 @@ const zapSchema = {
   sutBaseUrl: Joi.string().uri()
 };
 
-let log;
+let log; // Todo: KC: Should be provided by an IoC container.
 let properties;
 let zaproxy;
 let alertCount;
