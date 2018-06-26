@@ -71,11 +71,7 @@ class App {
     });
 
     debugger;
-    const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
-    debugger;
-    const testPlan = await this.testPlanText(activeTestCases);
-    debugger;
-    return testPlan;
+    return 'Tests are now running.';
 */    
     // End of testing single session.
 
@@ -133,16 +129,7 @@ class App {
       });
     }
 
-    let cucumberArgs = this.createCucumberArgs(sessionsProps[0]);
-    const cucumberCliInstance = new cucumber.Cli({
-      argv: ['node', ...cucumberArgs],
-      cwd: process.cwd(),
-      stdout: process.stdout
-    });
-
-    const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
-    const testPlan = await this.testPlanText(activeTestCases);
-    return testPlan;
+    return 'App tests are now running.';
 
 ////////////////////////////////////////////////////////////////////////////////////////
 

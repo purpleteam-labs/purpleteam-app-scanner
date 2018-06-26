@@ -1,6 +1,6 @@
 
 
-module.exports = {
+module.exports = [{
   method: 'GET',
   path: '/test-results',
   handler: async (request, respToolkit) => { // eslint-disable-line no-unused-vars
@@ -35,5 +35,5 @@ module.exports = {
     return response;
 
   }
-};
+}];
 
