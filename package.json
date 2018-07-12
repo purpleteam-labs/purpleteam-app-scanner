@@ -42,6 +42,7 @@
     "joi": "^13.2.0",
     "path": "^0.12.7",
     "purpleteam-logger": "git+ssh://github.com/binarymist/purpleteam-logger.git",
+    "redis": "^2.8.0",
     "selenium-webdriver": "^3.6.0",
     "susie": "^3.0.0-alpha",
     "zaproxy": "git+ssh://github.com/binarymist/zaproxy-wip.git"
