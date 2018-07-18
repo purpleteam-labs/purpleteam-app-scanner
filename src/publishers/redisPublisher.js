@@ -1,10 +1,12 @@
 const redis = require('redis');
 
+let log;
 let client;
 const channel = 'app';
 
 const init = (options) => {
-  client = redis.createClient(options);
+  log = options.log;
+  client = redis.createClient(options.redis);
   return {publish};
 };
 
