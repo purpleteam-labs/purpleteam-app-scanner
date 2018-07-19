@@ -28,6 +28,13 @@ const schema = {
       default: '240.0.0.0'
     }
   },
+  redis: {
+    clientCreationOptions: {
+      doc: 'The options used for creating the redis client.',
+      format: val => typeof val === 'object',
+      default: {}
+    }
+  },
   slave: {
     protocol: {
       doc: 'The protocol that the slave is listening as.',

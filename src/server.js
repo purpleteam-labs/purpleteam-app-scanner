@@ -3,6 +3,7 @@ const config = require('config/config');
 const app = require('src/api/app');
 const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.ip') });
 const log = require('purpleteam-logger').init(config.get('logger'));
+const redisPublisher = require('src/publishers/redisPublisher').init({log, redis: config.get('redis.clientCreationOptions')});
 
 // hapi-good-winstone: https://github.com/alexandrebodin/hapi-good-winston
 //    default levels: https://github.com/alexandrebodin/hapi-good-winston/blob/master/lib/index.js
@@ -39,7 +40,8 @@ const domainPlugins = [
       log,
       slave: config.get('slave'),
       cucumber: config.get('cucumber'),
-      results: config.get('results')
+      results: config.get('results'),
+      publisher: redisPublisher
     }
   }
 ];

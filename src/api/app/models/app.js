@@ -9,13 +9,13 @@ const zap = require('src/slaves/zap');
 
 class App {
   constructor(options) {
-    const { log, slave, cucumber: cucumberConfig, results } = options;
+    const { log, slave, cucumber: cucumberConfig, results, publisher } = options;
     
     this.log = log;
     this.slave = slave;
     this.cucumber = cucumberConfig;
     this.results = results;
-
+    this.publisher = publisher;
   }
 
   async runJob(testJob) {
@@ -95,6 +95,19 @@ class App {
       })();
       */
 
+
+    setInterval( () => {
+      this.log.debug('publishing to redis', {tags: ['app']});
+      try {
+        this.publisher.publish(JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: 'it is raining cats and dogs' } }));
+      }
+      catch (e) {
+        this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, {tags: ['app']});
+      }
+    }, 10000);
+
+    /*
+    // Todo: KC: Need to check whether testers are already running or not.
     for (let sessionProps of sessionsProps) {
 
       let cucumberArgs = this.createCucumberArgs(sessionProps);
@@ -128,7 +141,7 @@ class App {
         process.stdout.write('Failed to start subprocess.', {tags: ['app']});
       });
     }
-
+    */
     return 'App tests are now running.';
 
 ////////////////////////////////////////////////////////////////////////////////////////
