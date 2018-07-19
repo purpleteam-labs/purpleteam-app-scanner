@@ -16,10 +16,12 @@ class App {
     this.cucumber = cucumberConfig;
     this.results = results;
     this.publisher = publisher;
+    this.slavesDeployed = false;
   }
 
   async runJob(testJob) {
-    this.log.info('running testJob', {tags: ['app']});
+    this.log.info(`${this.slavesDeployed ? 'slaves already deployed' : 'running testJob'}`, {tags: ['app']});
+    if (this.slavesDeployed) return 'Request ignored. Slaves already deployed.';
     const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
     const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
 
@@ -54,13 +56,14 @@ class App {
 /*
     debugger;
     let cucumberArgs = this.createCucumberArgs(sessionsProps[1]);
-      
+
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
       cwd: process.cwd(),
       stdout: process.stdout
     });
     debugger;
+    this.slavesDeployed = true;
     await cucumberCliInstance.run()
     .then(async succeeded => {
       debugger;
@@ -97,6 +100,7 @@ class App {
 
 
     setInterval( () => {
+      this.slavesDeployed = true;
       this.log.debug('publishing to redis', {tags: ['app']});
       try {
         this.publisher.publish(JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: 'it is raining cats and dogs' } }));
@@ -104,7 +108,7 @@ class App {
       catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, {tags: ['app']});
       }
-    }, 10000);
+    }, 1000);
 
     /*
     // Todo: KC: Need to check whether testers are already running or not.
@@ -120,6 +124,7 @@ class App {
       
       const { spawn } = require('child_process');
       const cucCli = spawn('node', cucumberArgs, {cwd: process.cwd(), env: process.env, argv0: process.argv[0]});
+      this.slavesDeployed = true;
 
       cucCli.stdout.on('data', (data) => {
         debugger;
