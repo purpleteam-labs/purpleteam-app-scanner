@@ -103,7 +103,7 @@ class App {
       this.slavesDeployed = true;
       this.log.debug('publishing to redis', {tags: ['app']});
       try {
-        this.publisher.publish(JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: 'it is raining cats and dogs' } }));
+        this.publisher.publish(JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}` } }));
       }
       catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, {tags: ['app']});
