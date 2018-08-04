@@ -98,15 +98,31 @@ class App {
       })();
       */
 
-
-    setInterval( () => {
+    //this.publisher.primeChannels(sessionsProps.map(sP => sP.testSession.id));
+    setInterval(() => {
       this.slavesDeployed = true;
-      this.log.debug('publishing to redis', {tags: ['app']});
+      const sessionId = `${sessionsProps[0].testSession.id}`;
+      this.log.debug('publishing to redis', { tags: ['app', sessionId] });
       try {
-        this.publisher.publish(JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}` } }));
+        this.publisher.publish(
+          sessionId,
+          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}` } })          
+        );
+      } catch (e) {
+        this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
       }
-      catch (e) {
-        this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, {tags: ['app']});
+    }, 1000);
+
+    setInterval(() => {
+      const sessionId = `${sessionsProps[1].testSession.id}`;
+      this.log.debug('publishing to redis', { tags: ['app', sessionId] });
+      try {
+        this.publisher.publish(
+          sessionId,
+          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}` } })          
+        );
+      } catch (e) {
+        this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
       }
     }, 1000);
 
@@ -147,7 +163,7 @@ class App {
       });
     }
     */
-    return 'App tests are now running.';
+    return 'App tests are now running.'; // This needs to be per session.
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
