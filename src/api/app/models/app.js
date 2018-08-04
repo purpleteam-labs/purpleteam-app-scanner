@@ -98,7 +98,7 @@ class App {
       })();
       */
 
-    //this.publisher.primeChannels(sessionsProps.map(sP => sP.testSession.id));
+    
     setInterval(() => {
       this.slavesDeployed = true;
       const sessionId = `${sessionsProps[0].testSession.id}`;

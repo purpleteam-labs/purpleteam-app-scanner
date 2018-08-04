@@ -7,7 +7,7 @@ const baseChannel = 'app';
 const init = (options) => {
   log = options.log;
   client = redis.createClient(options.redis);
-  return { publish, primeChannels };
+  return { publish };
 };
 
 
@@ -23,14 +23,7 @@ const publish = (sessionId, data) => {
 };
 
 
-const primeChannels = (sessionIds) => {
-  sessionIds.forEach(sId => publish(sId, 'priming redis channel'));
-  
-};
-
-
 module.exports = {
   init,
-  publish,
-  primeChannels
+  publish
 };
