@@ -15,8 +15,9 @@ module.exports = {
         // enforce consistent line breaks inside function parentheses
     // https://eslint.org/docs/rules/function-paren-newline
     'function-paren-newline': ['error', 'multiline'],
+    'object-curly-newline': ['error', { 'multiline': true }]
   },
   env: {
-
+    'node': true
   }
 };
