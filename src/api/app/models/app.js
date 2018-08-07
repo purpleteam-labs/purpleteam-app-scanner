@@ -106,7 +106,7 @@ class App {
       try {
         this.publisher.publish(
           sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}` } })          
+          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}` } })
         );
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
@@ -119,12 +119,25 @@ class App {
       try {
         this.publisher.publish(
           sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}` } })          
+          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}` } })
         );
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
       }
     }, 1000);
+
+    setInterval(() => {
+      const sessionId = `${sessionsProps[1].testSession.id}`;
+      this.log.debug('publishing to redis', { tags: ['app', sessionId] });
+      try {
+        this.publisher.publish(
+          sessionId,
+          JSON.stringify({ timestamp: Date.now(), event: 'testerPctComplete', data: { pctComplete: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}` } })
+        );
+      } catch (e) {
+        this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerPctComplete". Error was: ${e}`, { tags: ['app', sessionId] });
+      }
+    }, 5000);
 
     /*
     // Todo: KC: Need to check whether testers are already running or not.
