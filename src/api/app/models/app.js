@@ -126,18 +126,37 @@ class App {
       }
     }, 1000);
 
+    let pctComplete = 0;
     setInterval(() => {
       const sessionId = `${sessionsProps[1].testSession.id}`;
       this.log.debug('publishing to redis', { tags: ['app', sessionId] });
+      pctComplete = pctComplete > 99 ? 0 : pctComplete + 1;
+      //pctComplete = pctComplete >= 100 ? 100 : pctComplete + 1;
       try {
         this.publisher.publish(
           sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerPctComplete', data: { pctComplete: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}` } })
+          JSON.stringify({ timestamp: Date.now(), event: 'testerPctComplete', data: { pctComplete } })
         );
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerPctComplete". Error was: ${e}`, { tags: ['app', sessionId] });
       }
-    }, 5000);
+    }, 1000);
+
+    let bugCount = 0;
+    setInterval(() => {
+      const sessionId = `${sessionsProps[0].testSession.id}`;
+      this.log.debug('publishing to redis - bugCount', { tags: ['app', sessionId] });
+      bugCount++;      
+      try {
+        this.publisher.publish(
+          sessionId,
+          JSON.stringify({ timestamp: Date.now(), event: 'testerBugCount', data: { bugCount } })
+        );
+      } catch (e) {
+        this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerBugCount". Error was: ${e}`, { tags: ['app', sessionId] });
+      }
+    }, 2000);
+
 
     /*
     // Todo: KC: Need to check whether testers are already running or not.
