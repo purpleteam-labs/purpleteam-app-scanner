@@ -73,7 +73,7 @@
     "redis": "^2.8.0",
     "selenium-webdriver": "^3.6.0",
     "susie": "^3.0.0-alpha",
-    "zaproxy": "git+ssh://github.com/binarymist/zaproxy-wip.git"
+    "zaproxy": "git+https://github.com/binarymist/zaproxy-wip.git"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {
