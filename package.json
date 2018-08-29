@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/binarymist/purpleteam-app-scanner.git"
+    "url": "git+https://gitlab.com/purpleteam-labs/purpleteam-app-scanner.git"
   },
   "keywords": [
     "agile",
@@ -56,9 +56,9 @@
   "author": "Kim Carter",
   "license": "",
   "bugs": {
-    "url": "https://github.com/binarymist/purpleteam-app-scanner/issues"
+    "url": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/issues"
   },
-  "homepage": "https://github.com/binarymist/purpleteam-app-scanner#readme",
+  "homepage": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/blob/master/README.md",
   "dependencies": {
     "app-module-path": "^2.2.0",
     "chromedriver": "^2.36.0",
