@@ -117,7 +117,7 @@ const schema = {
       format: ['html', 'json', 'md'],
       default: 'html'
     }
-  },  
+  },
   cucumber: {
     features: {
       doc: 'The location of the feature files.',
