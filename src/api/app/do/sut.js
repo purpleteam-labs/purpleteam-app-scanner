@@ -1,7 +1,10 @@
 const Joi = require('joi');
+
+/* eslint-disable import/no-dynamic-require */
 const WebDriverFactory = require(`${process.cwd()}/src/drivers/webDriverFactory`);
 const browser = require(`${process.cwd()}/src/clients/browser`);
 const config = require(`${process.cwd()}/config/config`);
+/* eslint-enable import/no-dynamic-require */
 let log;
 
 // Todo: KC: Will need quite a bit of testing around schemas.
@@ -22,7 +25,7 @@ const sutSchema = {
     passwordFieldLocater: Joi.string().min(2).required(),
     submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required()
   }),
-  reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),  
+  reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
   testSession: Joi.object({
     type: Joi.string().valid('testSession').required(),
     id: Joi.string().alphanum(),
@@ -43,7 +46,7 @@ const sutSchema = {
   testRoutes: Joi.array().items(Joi.object({
     type: Joi.string().valid('route').required(),
     id: Joi.string().min(2).regex(/^\/[a-z]+/i).required(),
-    attributes: Joi.object({      
+    attributes: Joi.object({
       attackFields: Joi.array().items(Joi.object({
         name: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
         value: Joi.string().empty('').default(''),
@@ -62,8 +65,8 @@ let webDriver;
 
 const validateProperties = (sutProperties) => {
   const result = Joi.validate(sutProperties, sutSchema);
-  if(result.error) {
-    log.error(result.error.message, {tags: ['testing', 'validation']});
+  if (result.error) {
+    log.error(result.error.message, { tags: ['testing', 'validation'] });
     throw new Error(result.error.message);
   }
   return result.value;
@@ -71,23 +74,20 @@ const validateProperties = (sutProperties) => {
 
 
 const initialiseProperties = (sutProperties) => {
-  properties = validateProperties(sutProperties);  
+  properties = validateProperties(sutProperties);
 };
 
 
 const init = (options) => {
-  log = options.log;
+  log = options.log; // eslint-disable-line prefer-destructuring
   initialiseProperties(options.sutProperties);
 };
 
 
 const getProperties = (selecter) => {
-  if(!selecter)
-    return properties;
-  if(typeof selecter === 'string')
-    return properties[selecter];
-  if(Array.isArray(selecter))
-    return selecter.reduce( (accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName] }), {});  
+  if (typeof selecter === 'string') return properties[selecter];
+  if (Array.isArray(selecter)) return selecter.reduce((accum, propertyName) => ({ ...accum, [propertyName]: properties[propertyName] }), {});
+  return properties;
 };
 
 
@@ -100,7 +100,7 @@ const initialiseBrowser = async (slaveProperties) => {
     slave: slaveProperties
   });
 
-  browser.init({log, webDriver});
+  browser.init({ log, webDriver });
 };
 
 
