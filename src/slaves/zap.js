@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const ZapClient = require('zaproxy');
-const config = require(`${process.cwd()}/config/config`);
+
+const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
 
 
 const zapSchema = {
@@ -24,11 +25,10 @@ let zaproxy;
 let alertCount;
 
 const validateProperties = (slaveProperties) => {
-
   const result = Joi.validate(slaveProperties, zapSchema);
 
-  if(result.error) {
-    log.error(result.error.message, {tags: ['zap']});
+  if (result.error) {
+    log.error(result.error.message, { tags: ['zap'] });
     throw new Error(result.error.message);
   }
   return result.value;
@@ -36,9 +36,9 @@ const validateProperties = (slaveProperties) => {
 
 
 const init = (options) => {
-  log = options.log;
+  ({ log } = options);
   properties = validateProperties(options.slaveProperties);
-  
+
   const zapOptions = {
     proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`,
     targetApp: properties.sutBaseUrl
@@ -49,20 +49,15 @@ const init = (options) => {
 
 
 const getProperties = (selecter) => {
-  if(!selecter)
-    return properties;
-  if(typeof selecter === 'string')
-    return properties[selecter];
-  if(Array.isArray(selecter))
-    return selecter.reduce((accumulator, propertyName) => ({ ...accumulator, [propertyName]: properties[propertyName] }), {});  
+  if (typeof selecter === 'string') return properties[selecter];
+  if (Array.isArray(selecter)) return selecter.reduce((accum, propertyName) => ({ ...accum, [propertyName]: properties[propertyName] }), {});
+  return properties;
 };
 
-
+// eslint-disable-next-line consistent-return
 const numberOfAlertsForSesh = (alertCnt) => {
-  if(alertCnt)
-    alertCount = alertCnt;
-  else
-    return alertCount;
+  if (alertCnt) alertCount = alertCnt;
+  else return alertCount;
 };
 
 
