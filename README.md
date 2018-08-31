@@ -27,18 +27,18 @@
 
 Along with the other components in the PurpleTeam solution:
 
-* [purpleteam](https://github.com/binarymist/purpleteam) (node.js CLI, driven from CI / nightly build)
-* [purpleteam-orchestrator](https://github.com/binarymist/purpleteam-orchestrator) (hapi.js orchestrator - SaaS interface, this package)
+* [purpleteam](https://gitlab.com/purpleteam-labs/purpleteam) (node.js CLI, driven from CI / nightly build)
+* [purpleteam-orchestrator](https://gitlab.com/purpleteam-labs/purpleteam-orchestrator) (hapi.js orchestrator - SaaS interface, this package)
 * purpleteam-advisor (machine learning module which continuously improves tests, plugs into orchestrator, future roadmap)
 * Testers:
-  * [purpleteam-app-scanner](https://github.com/binarymist/purpleteam-app-scanner) (web app / api scanner)
+  * [purpleteam-app-scanner](https://gitlab.com/purpleteam-labs/purpleteam-app-scanner) (web app / api scanner)
   * purpleteam-server-scanner (web server scanner)
   * purpleteam-tls-checker (TLS checker)
   * etc
 
 ## Definitions
 
-Described [here](https://github.com/binarymist/purpleteam#definitions).
+Described [here](https://gitlab.com/purpleteam-labs/purpleteam#definitions).
 
 ## Real Test
 
