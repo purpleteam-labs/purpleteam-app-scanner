@@ -79,7 +79,7 @@ const initialiseProperties = (sutProperties) => {
 
 
 const init = (options) => {
-  log = options.log; // eslint-disable-line prefer-destructuring
+  ({ log } = options);
   initialiseProperties(options.sutProperties);
 };
 
