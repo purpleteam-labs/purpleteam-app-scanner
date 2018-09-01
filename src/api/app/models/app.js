@@ -2,15 +2,15 @@
 // http://2ality.com/2017/05/util-promisify.html
 const fs = require('fs');
 const { promisify } = require('util');
+
 const readFileAsync = promisify(fs.readFile);
 const cucumber = require('cucumber');
-const sut = require('src/api/app/do/sut');
-const zap = require('src/slaves/zap');
+
 
 class App {
   constructor(options) {
     const { log, slave, cucumber: cucumberConfig, results, publisher } = options;
-    
+
     this.log = log;
     this.slave = slave;
     this.cucumber = cucumberConfig;
@@ -20,28 +20,24 @@ class App {
   }
 
   async runJob(testJob) {
-    this.log.info(`${this.slavesDeployed ? 'slaves already deployed' : 'running testJob'}`, {tags: ['app']});
+    this.log.info(`${this.slavesDeployed ? 'slaves already deployed' : 'running testJob'}`, { tags: ['app'] });
     if (this.slavesDeployed) return 'Request ignored. Slaves already deployed.';
     const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
     const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
 
-    debugger;
 
     const sessionsProps = testSessions.map(sesh => ({
-      testRoutes,  
+      testRoutes,
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
       port: testJob.data.attributes.sutPort,
       browser: testJob.data.attributes.browser,
       loggedInIndicator: testJob.data.attributes.loggedInIndicator,
-      context: {name: 'NodeGoat_Context'},
+      context: { name: 'NodeGoat_Context' },
       authentication: testJob.data.attributes.sutAuthentication,
       reportFormats: testJob.data.attributes.reportFormats,
-      testSession: sesh      // The data array contains the relationshops to the testSessions      
+      testSession: sesh // The data array contains the relationshops to the testSessions
     }));
-    debugger;
-
-
 
 
     // Get help with cucumber cli:
@@ -50,10 +46,10 @@ class App {
     // Debug cucumber cli without actually running the tests (--dry-run). --dry-run to check that all glue code exists: https://github.com/cucumber/cucumber-jvm/issues/907
     // node --inspect-brk ./node_modules/.bin/cucumber-js --dry-run src/features --require src/steps --tags "not @simple_math"
 
-////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////
 
     // For testing single session. Cucumber won't run twice in the same process.
-/*
+    /*
     debugger;
     let cucumberArgs = this.createCucumberArgs(sessionsProps[1]);
 
@@ -75,16 +71,16 @@ class App {
 
     debugger;
     return 'Tests are now running.';
-*/    
+    */
     // End of testing single session.
 
-////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////
 
     // For complete sessionsProps
     // https://github.com/cucumber/cucumber-js/issues/786#issuecomment-372928596
 
-      // paste this before your require child_process at the beginning of your main index file.
-      /*
+    // paste this before your require child_process at the beginning of your main index file.
+    /*
       (function() {
         var childProcess = require("child_process");
         var oldSpawn = childProcess.spawn;
@@ -96,9 +92,9 @@ class App {
         }
         childProcess.spawn = mySpawn;
       })();
-      */
+    */
 
-    
+
     setInterval(() => {
       this.slavesDeployed = true;
       const sessionId = `${sessionsProps[0].testSession.id}`;
@@ -131,7 +127,7 @@ class App {
       const sessionId = `${sessionsProps[1].testSession.id}`;
       this.log.debug('publishing to redis', { tags: ['app', sessionId] });
       pctComplete = pctComplete > 99 ? 0 : pctComplete + 1;
-      //pctComplete = pctComplete >= 100 ? 100 : pctComplete + 1;
+      // pctComplete = pctComplete >= 100 ? 100 : pctComplete + 1;
       try {
         this.publisher.publish(
           sessionId,
@@ -146,7 +142,7 @@ class App {
     setInterval(() => {
       const sessionId = `${sessionsProps[0].testSession.id}`;
       this.log.debug('publishing to redis - bugCount', { tags: ['app', sessionId] });
-      bugCount++;      
+      bugCount += 1;
       try {
         this.publisher.publish(
           sessionId,
@@ -168,8 +164,9 @@ class App {
      // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
      // Currently reports for all test sessions will be the same.
      // Setting aScannerAttackStrength, aScannerAlertThreshold with single instance Zap will simply be a last one wins scenario.
-     // We could also look at using spawnSync, but then, Zap would need to be restarted, which defeats the point of creating a process, other thn the fact that the Cucumber Cli won't run twice.
-      
+     // We could also look at using spawnSync, but then, Zap would need to be restarted, which defeats the point of creating a process,
+     //   other thn the fact that the Cucumber Cli won't run twice.
+
       const { spawn } = require('child_process');
       const cucCli = spawn('node', cucumberArgs, {cwd: process.cwd(), env: process.env, argv0: process.argv[0]});
       this.slavesDeployed = true;
@@ -186,7 +183,8 @@ class App {
 
       cucCli.on('close', (code) => {
         debugger;
-        process.stdout.write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`, {tags: ['app']});        
+        process.stdout
+          .write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`, {tags: ['app']});
       })
 
       cucCli.on('error', (err) => {
@@ -197,14 +195,11 @@ class App {
     */
     return 'App tests are now running.'; // This needs to be per session.
 
-////////////////////////////////////////////////////////////////////////////////////////
-
-
-
+    // //////////////////////////////////////////////////////////////////////////////////////
   }
 
 
-  async testPlan(testJob) {
+  async testPlan(testJob) { // eslint-disable-line no-unused-vars
     const cucumberArgs = this.createCucumberArgs();
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
@@ -218,8 +213,7 @@ class App {
 
 
   createCucumberArgs(sutProps) {
-
-    //sut.validateProperties(sutProperties);
+    // sut.validateProperties(sutProperties);
 
     const slaveProperties = {
       protocol: this.slave.protocol,
@@ -231,14 +225,12 @@ class App {
       spider: this.slave.spider
     };
 
-    //zap.validateProperties(slaveProperties);
-    
+    // zap.validateProperties(slaveProperties);
+
     const cucumberParameters = {
       slaveProperties,
-      sutProperties: sutProps ? sutProps : {},
-      cucumber: {
-        timeOut: this.cucumber.timeOut
-      }
+      sutProperties: sutProps || {},
+      cucumber: { timeOut: this.cucumber.timeOut }
     };
 
     const parameters = JSON.stringify(cucumberParameters);
@@ -248,7 +240,7 @@ class App {
       this.cucumber.features,
       '--require',
       this.cucumber.steps,
-      /*'--exit',*/
+      /* '--exit', */
       `--format=json:${this.results.uri}`,
       '--tags',
       this.cucumber.tagExpression,
@@ -260,7 +252,7 @@ class App {
     return cucumberArgs;
   }
 
-
+  // eslint-disable-next-line class-methods-use-this
   async getActiveTestCases(cucumberCli) {
     // Files to work the below out where in:
     // https://github.com/cucumber/cucumber-js/blob/master/src/cli/index.js
@@ -269,44 +261,38 @@ class App {
     const configuration = await cucumberCli.getConfiguration();
     const activeTestCases = await cucumber.getTestCasesFromFilesystem({
       cwd: process.cwd(),
-      eventBroadcaster: ( () => new (require('events'))() )(),
+      eventBroadcaster: (() => new (require('events'))())(), // eslint-disable-line global-require
       featureDefaultLanguage: configuration.featureDefaultLanguage,
       featurePaths: configuration.featurePaths,
-      order: configuration.order,  
-      pickleFilter: ( () => new (require('cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions) )()
+      order: configuration.order,
+      pickleFilter: (() => new (require('cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions))() // eslint-disable-line global-require, new-cap
     });
     return activeTestCases;
   }
 
-
+  // eslint-disable-next-line class-methods-use-this
   async testPlanText(activeTestCases) {
-    const activeTestFileUris = activeTestCases.map(currentValue => currentValue.uri).filter( (currentValue, currentElementIndex, urisOfActiveTestCases) => urisOfActiveTestCases.indexOf(currentValue) === currentElementIndex );
-    return (await Promise.all(activeTestFileUris.map( featureFileUri => readFileAsync(`${process.cwd()}/${featureFileUri}`, {encoding: 'utf8'}) )))
-    .reduce( (accumulatedFeatures, feature) => accumulatedFeatures.concat(...['\n\n', feature]) );
+    const activeTestFileUris = activeTestCases
+      .map(currentValue => currentValue.uri)
+      .filter((currentValue, currentElementIndex, urisOfActiveTestCases) => urisOfActiveTestCases.indexOf(currentValue) === currentElementIndex);
+    return (await Promise.all(activeTestFileUris
+      .map(featureFileUri => readFileAsync(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
+      .reduce((accumulatedFeatures, feature) => accumulatedFeatures.concat(...['\n\n', feature]));
   }
 
 
   async testResult() {
-
     let result;
 
     try {
-      result = await readFileAsync(this.results.uri, {encoding: 'utf8'})
-    }
-    catch (err) {
-      this.log.error(`Could not read test results file, the error was: ${err}.`, {tags: ['app', 'testResult()']});
+      result = await readFileAsync(this.results.uri, { encoding: 'utf8' });
+    } catch (err) {
+      this.log.error(`Could not read test results file, the error was: ${err}.`, { tags: ['app', 'testResult()'] });
     }
 
     return result;
   }
-
-
-
-
-
-
 }
-
 
 
 module.exports = App;
