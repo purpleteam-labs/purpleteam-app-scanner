@@ -71,7 +71,7 @@
     "hapi-good-winston": "^2.0.1",
     "joi": "^13.6.0",
     "path": "^0.12.7",
-    "purpleteam-logger": "^0.1.5",
+    "purpleteam-logger": "^1.0.0",
     "redis": "^2.8.0",
     "selenium-webdriver": "^3.6.0",
     "susie": "^3.0.0",
