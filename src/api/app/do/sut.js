@@ -23,8 +23,10 @@ const sutSchema = {
     route: Joi.string().min(2).regex(/^\/[a-z]+/i),
     usernameFieldLocater: Joi.string().min(2).required(),
     passwordFieldLocater: Joi.string().min(2).required(),
-    submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required()
-  }),
+    submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
+    expectedResponseSuccess: Joi.string().min(2).max(200),
+    expectedResponseFail: Joi.string().min(2).max(200)
+  }).xor('expectedResponseSuccess', 'expectedResponseFail'),
   reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
   testSession: Joi.object({
     type: Joi.string().valid('testSession').required(),
