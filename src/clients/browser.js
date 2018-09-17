@@ -4,24 +4,33 @@ let log; // Todo: KC: Should be provided by an IoC container.
 let driver;
 
 
-const findElementThenClick = async (searchText) => {
+const authenticated = async (expectedLogInResponse) => {
+  const { success, fail } = expectedLogInResponse;
+  const page = await driver.getPageSource();
+  return page.includes(success) || !page.includes(fail);
+};
+
+
+const findElementThenClick = async (searchText, expectedLogInResponse) => {
+  const authenticatedFeedback = async () => (expectedLogInResponse ? ` User was ${await authenticated(expectedLogInResponse) ? 'authenticated' : '***not*** authenticated, check the login credentials you supplied in the buildUserConfig'}.` : '');
   try {
     await driver.findElement(By.id(searchText)).click();
-    return log.notice(`Located element using id="${searchText}", and clicked it.`, { tags: ['browser'] });
+    return log.notice(`Located element using id="${searchText}", and clicked it.${await authenticatedFeedback()}`, { tags: ['browser'] });
   } catch (e) {
     log.notice(`Unable to locate element using id="${searchText}".`, { tags: ['browser'] });
   }
   try {
     await driver.findElement(By.className(searchText)).click();
-    return log.notice(`Located element using className="${searchText}", and clicked it.`, { tags: ['browser'] });
+    return log.notice(`Located element using className="${searchText}", and clicked it.${await authenticatedFeedback()}`, { tags: ['browser'] });
   } catch (e) {
     log.notice(`Unable to locate element using className="${searchText}".`, { tags: ['browser'] });
   }
   try {
     await driver.findElement(By.name(searchText)).click();
-    return log.notice(`Located element using name="${searchText}", and clicked it.`, { tags: ['browser'] });
+    return log.notice(`Located element using name="${searchText}", and clicked it.${await authenticatedFeedback()}`, { tags: ['browser'] });
   } catch (e) {
     log.notice(`Unable to locate element using name="${searchText}".`, { tags: ['browser'] });
+    log.crit(`Unable to locate element using id, className, or name of "${searchText}".`, { tags: ['browser'] });
     throw new Error(`Unable to locate element using id, className, or name of "${searchText}".`);
   }
 };
@@ -53,7 +62,6 @@ const findElementThenSendKeys = async (attackField) => {
     log.notice(`Unable to locate element using name="${attackField.name}".`, { tags: ['browser'] });
     throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}".`);
   }
-  throw new Error(`Falsy attackField: (${attackField}) or attackField.visible: (${attackField.visible}) supplied. Both must be truthy.`);
 };
 
 
