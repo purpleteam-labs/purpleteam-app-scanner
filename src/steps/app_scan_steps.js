@@ -15,7 +15,13 @@ Before(() => {
 Given('a new test session based on each build user supplied testSession', async function () { // eslint-disable-line func-names
   const sutBaseUrl = this.sut.baseUrl();
   const { findElementThenClick, findElementThenSendKeys } = this.sut.getBrowser();
-  const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, submit }, testSession: { attributes: { username, password } } } = this.sut.getProperties(['authentication', 'testSession']);
+  const { authentication, authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, submit }, testSession: { attributes: { username, password } } } = this.sut.getProperties(['authentication', 'testSession']);
+  // const { authentication, testSession: { attributes: { username, password } } } = this.sut.getProperties(['authentication', 'testSession']);
+  const expectedLogInResponse = {
+    success: authentication.expectedResponseSuccess,
+    fail: authentication.expectedResponseFail
+  };
+
 
   // Todo: KC: Allow for no loginRoute, usernameFieldLocater, passwordFieldLocater, user, pass
 
@@ -27,7 +33,7 @@ Given('a new test session based on each build user supplied testSession', async 
   await findElementThenSendKeys({ name: usernameFieldLocater, value: username, visible: true });
   await findElementThenSendKeys({ name: passwordFieldLocater, value: password, visible: true });
   await webDriver.sleep(1000);
-  await findElementThenClick(submit);
+  await findElementThenClick(submit, expectedLogInResponse);
 });
 
 
@@ -75,7 +81,7 @@ Given('a new scanning session based on each build user supplied testSession', fu
 
   return zaproxy.context.newContext(contextName, apiKey).then(
     (resp) => {
-      const { contextId } = resp; // eslint-disable-line no-shadow
+      ({ contextId } = resp);
       this.log.notice(`Created new Zap context with a contextId of: ${contextId}.`, { tags: ['app_scan_steps'] });
     },
     error => this.log.notice(`Error occured while attempting to create a new Zap context, message was: ${error.message}`, { tags: ['app_scan_steps'] })
@@ -103,7 +109,7 @@ Given('the application is spidered for each testSession', async function () { //
   await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey).then(resp => this.log.notice(`Set forced user mode enabled to "${enabled}". Response was: ${JSON.stringify(resp)}`, { tags: ['app_scan_steps'] }), err => `Error occured while attempting to set forced user mode enabled to "${enabled}". Error was: ${err.message}`);
   await zaproxy.users.newUser(contextId, username, apiKey).then(
     (resp) => {
-    const { userId } = resp; // eslint-disable-line
+      ({ userId } = resp);
       this.log.notice(`Set the newUser "${username}". Response was: ${JSON.stringify(resp)}`, { tags: ['app_scan_steps'] });
     },
     err => `Error occured while attempting to set the newUser "${username}". Error was: ${err.message}`
@@ -157,9 +163,9 @@ Given('all active scanners are enabled', async function () { // eslint-disable-l
     // This is for the build user and the purpleteam admin:
     this.log.notice(`\n\nThe following are all the active scanners available with their current state:\n${scannersStateForBuildUser}`, { tags: ['app_scan_steps', 'pt-build-user'] });
     // This is for the purpleteam admin only:
-    this.log.notice(`\n\nThe following are all the active scanners available with their current state:\n\n${JSON.stringify(result)}\n\n`, { tags: ['app_scan_steps', 'pt-admin'] });
+    this.log.notice(`\n\nThe following are all the active scanners available with their current state:\n\n${JSON.stringify(result, null, 2)}\n\n`, { tags: ['app_scan_steps', 'pt-admin'] });
   };
-  await zaproxy.ascan.scanners(scanPolicyName, policyid).then((zapApiPrintEnabledAScanersFuncCallback, err) => `Error occured while attempting to get the configured active scanners for display. Error was: ${err.message}`); // eslint-disable-line no-shadow
+  await zaproxy.ascan.scanners(scanPolicyName, policyid).then(zapApiPrintEnabledAScanersFuncCallback, err => `Error occured while attempting to get the configured active scanners for display. Error was: ${err.message}`);
 });
 
 
