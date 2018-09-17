@@ -62,6 +62,7 @@ const findElementThenSendKeys = async (attackField) => {
     log.notice(`Unable to locate element using name="${attackField.name}".`, { tags: ['browser'] });
     throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}".`);
   }
+  return ''; // Keep eslint happy
 };
 
 
