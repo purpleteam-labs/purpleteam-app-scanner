@@ -16,7 +16,7 @@ const publish = (testSessionId, data, event = 'testerProgress') => {
 
   const channel = `${baseChannel}${testSessionId ? `-${testSessionId}` : ''}`;
   try {
-    log.debug(`Redis client publishing to the channel: "${channel}".`, { tags: ['messagePublisher'] });
+    // log.debug(`Redis client publishing to the channel: "${channel}".`, { tags: ['messagePublisher'] });
     client.publish(channel, message);
   } catch (e) {
     log.warning(`The redis client failed to publish to the channel: "${channel}". The error was: ${e}`, { tags: ['messagePublisher'] });
