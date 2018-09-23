@@ -1,5 +1,7 @@
 const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
 const log = require('purpleteam-logger').init(config.get('logger'));
+
+const messagePublisher = require(`${process.cwd()}/src/publishers/messagePublisher`).init({ log, redis: config.get('redis.clientCreationOptions') }); // eslint-disable-line import/no-dynamic-require
 // features/support/world.js
 const cucumber = require('cucumber');
 
@@ -11,10 +13,11 @@ const zap = require(`${process.cwd()}/src/slaves/zap`); // eslint-disable-line i
 
 class CustomWorld {
   constructor({ attach, parameters }) {
-    const { sutProperties } = parameters;
+    const { sutProperties, sutProperties: { testSession } } = parameters;
 
     this.log = log;
-    this.log.notice(`Constructing the cucumber world for session with id "${parameters.sutProperties.testSession.id}".\n`, { tags: ['world'] });
+    this.publisher = messagePublisher;
+    this.publisher.pubLog({ testSessionId: testSession.id, logLevel: 'notice', textData: `Constructing the cucumber world for session with id "${testSession.id}".`, tagObj: { tags: ['world'] } });
 
     this.variable = 0;
     this.attach = attach;
@@ -22,7 +25,7 @@ class CustomWorld {
     setDefaultTimeout(parameters.cucumber.timeOut);
 
     this.sut = sut;
-    this.sut.init({ log, sutProperties });
+    this.sut.init({ log, publisher: this.publisher, sutProperties });
     this.zap = zap;
     this.zap.init({ log, slaveProperties: { ...parameters.slaveProperties, sutBaseUrl: this.sut.baseUrl() } });
   }

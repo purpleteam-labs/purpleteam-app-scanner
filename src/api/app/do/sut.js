@@ -6,6 +6,7 @@ const browser = require(`${process.cwd()}/src/clients/browser`);
 const config = require(`${process.cwd()}/config/config`);
 /* eslint-enable import/no-dynamic-require */
 let log;
+let publisher;
 
 // Todo: KC: Will need quite a bit of testing around schemas.
 const sutSchema = {
@@ -81,7 +82,7 @@ const initialiseProperties = (sutProperties) => {
 
 
 const init = (options) => {
-  ({ log } = options);
+  ({ log, publisher } = options);
   initialiseProperties(options.sutProperties);
 };
 
@@ -102,7 +103,7 @@ const initialiseBrowser = async (slaveProperties) => {
     slave: slaveProperties
   });
 
-  browser.init({ log, webDriver });
+  browser.init({ publisher, webDriver });
 };
 
 

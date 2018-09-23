@@ -49,9 +49,9 @@ class App {
     // //////////////////////////////////////////////////////////////////////////////////////
 
     // For testing single session. Cucumber won't run twice in the same process.
-    /*
+    
     debugger;
-    let cucumberArgs = this.createCucumberArgs(sessionsProps[1]);
+    const cucumberArgs = this.createCucumberArgs(sessionsProps[1]);
 
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
@@ -60,18 +60,18 @@ class App {
     });
     debugger;
     this.slavesDeployed = true;
-    await cucumberCliInstance.run()
-    .then(async succeeded => {
-      debugger;
-      log.notice(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, {tags: ['app']});
-    }).catch((error) => {
-      debugger;
-      return log.error(error, {tags: ['app']});
-    });
+    /*await*/ cucumberCliInstance.run() // If you want to debug the tests before execution returns, uncomment the await.
+      .then(async (succeeded) => {
+        debugger;
+        this.publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'notice', textData: `Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, tagObj: { tags: ['app'] } });
+      }).catch((error) => {
+        debugger;
+        return this.publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'error', textData: error, tagObj: { tags: ['app'] } });
+      });
 
     debugger;
-    return 'Tests are now running.';
-    */
+
+
     // End of testing single session.
 
     // //////////////////////////////////////////////////////////////////////////////////////
@@ -94,16 +94,14 @@ class App {
       })();
     */
 
-
+    /*
+    // This is just verifying end-to-end comms
     setInterval(() => {
       this.slavesDeployed = true;
       const sessionId = `${sessionsProps[0].testSession.id}`;
       this.log.debug('publishing to redis', { tags: ['app', sessionId] });
       try {
-        this.publisher.publish(
-          sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}` } })
-        );
+        this.publisher.publish(sessionId, `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}`);
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
       }
@@ -113,10 +111,7 @@ class App {
       const sessionId = `${sessionsProps[1].testSession.id}`;
       this.log.debug('publishing to redis', { tags: ['app', sessionId] });
       try {
-        this.publisher.publish(
-          sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerProgress', data: { progress: `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}` } })
-        );
+        this.publisher.publish(sessionId, `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}`);
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
       }
@@ -129,10 +124,7 @@ class App {
       pctComplete = pctComplete > 99 ? 0 : pctComplete + 1;
       // pctComplete = pctComplete >= 100 ? 100 : pctComplete + 1;
       try {
-        this.publisher.publish(
-          sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerPctComplete', data: { pctComplete } })
-        );
+        this.publisher.publish(sessionId, pctComplete, 'testerPctComplete');
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerPctComplete". Error was: ${e}`, { tags: ['app', sessionId] });
       }
@@ -144,31 +136,29 @@ class App {
       this.log.debug('publishing to redis - bugCount', { tags: ['app', sessionId] });
       bugCount += 1;
       try {
-        this.publisher.publish(
-          sessionId,
-          JSON.stringify({ timestamp: Date.now(), event: 'testerBugCount', data: { bugCount } })
-        );
+        this.publisher.publish(sessionId, bugCount, 'testerBugCount');
       } catch (e) {
         this.log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerBugCount". Error was: ${e}`, { tags: ['app', sessionId] });
       }
     }, 2000);
-
+    */
 
     /*
     // Todo: KC: Need to check whether testers are already running or not.
-    for (let sessionProps of sessionsProps) {
-
-      let cucumberArgs = this.createCucumberArgs(sessionProps);
+    for (let sessionProps of sessionsProps) { // eslint-disable-line no-restricted-syntax
+      const cucumberArgs = this.createCucumberArgs(sessionProps);
       debugger;
 
-     // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
-     // Currently reports for all test sessions will be the same.
-     // Setting aScannerAttackStrength, aScannerAlertThreshold with single instance Zap will simply be a last one wins scenario.
-     // We could also look at using spawnSync, but then, Zap would need to be restarted, which defeats the point of creating a process,
-     //   other thn the fact that the Cucumber Cli won't run twice.
+      // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
+      // Currently reports for all test sessions will be the same.
+      // Setting aScannerAttackStrength, aScannerAlertThreshold with single instance Zap will simply be a last one wins scenario.
+      // We could also look at using spawnSync, but then, Zap would need to be restarted, which defeats the point of creating a process,
+      //   other thn the fact that the Cucumber Cli won't run twice.
+      // Can I start slave containers from within this container? What's the best way to do this?
+      // How to do service discovery rather than hard coding IP and ports in config within one container?
 
       const { spawn } = require('child_process');
-      const cucCli = spawn('node', cucumberArgs, {cwd: process.cwd(), env: process.env, argv0: process.argv[0]});
+      const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
       this.slavesDeployed = true;
 
       cucCli.stdout.on('data', (data) => {
@@ -184,16 +174,17 @@ class App {
       cucCli.on('close', (code) => {
         debugger;
         process.stdout
-          .write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`, {tags: ['app']});
+          .write(`child process "cucumber Cli" running session with id "${sessionProps.testSession.id}" exited with code ${code}`, { tags: ['app'] });
       })
 
       cucCli.on('error', (err) => {
         debugger;
-        process.stdout.write('Failed to start subprocess.', {tags: ['app']});
+        process.stdout.write('Failed to start subprocess.', { tags: ['app'] });
       });
     }
     */
-    return 'App tests are now running.'; // This needs to be per session.
+
+    return 'App tests are now running.'; // This is propagated per session in the CLI model.
 
     // //////////////////////////////////////////////////////////////////////////////////////
   }
