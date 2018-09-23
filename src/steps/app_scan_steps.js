@@ -107,7 +107,7 @@ Given('the application is spidered for each testSession', async function () { //
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider thread count. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set the spider thread count. Error was: ${err.message}`
-    );  
+    );
   await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Added context "${sutBaseUrl}" to Zap. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
@@ -227,7 +227,7 @@ When('the active scan is run', async function () { // eslint-disable-line func-n
 
   const { apiFeedbackSpeed, apiKey, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey', 'spider']);
   const zaproxy = this.zap.getZaproxy();
-  const { log, publisher } = this;
+  const { publisher } = this;
 
   let numberOfAlertsForSesh = 0;
   let combinedStatusValueOfRoutesForSesh = 0;
@@ -272,7 +272,7 @@ When('the active scan is run', async function () { // eslint-disable-line func-n
       zapInProgressIntervalId = setInterval(() => { // eslint-disable-line prefer-const
         status();
         if ((zapError && statusValueForRoute !== 100) || (statusValueForRoute === undefined)) {
-          publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Canceling test. Zap API is unreachible. ${zapError ? 'Zap Error: ${zapError}' : 'No status value available, may be due to incorrect api key.'}`, tagObj: { tags: ['app_scan_steps'] } }); // eslint-disable-line no-template-curly-in-string          
+          publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Canceling test. Zap API is unreachible. ${zapError ? 'Zap Error: ${zapError}' : 'No status value available, may be due to incorrect api key.'}`, tagObj: { tags: ['app_scan_steps'] } }); // eslint-disable-line no-template-curly-in-string
           clearInterval(zapInProgressIntervalId);
           reject(`Test failure: ${zapError}`); // eslint-disable-line prefer-promise-reject-errors
         } else if (statusValueForRoute === 100) {

@@ -43,7 +43,7 @@ const findElementThenSendKeys = async (attackField, testSessionId) => {
       return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using id="${attackField.name}", and sent keys.`, tagObj: { tags: ['browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${attackField.name}".`, tagObj: { tags: ['browser'] }});
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${attackField.name}".`, tagObj: { tags: ['browser'] } });
   }
   try {
     if (attackField && attackField.visible) {
