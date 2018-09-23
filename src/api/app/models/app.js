@@ -49,27 +49,29 @@ class App {
     // //////////////////////////////////////////////////////////////////////////////////////
 
     // For testing single session. Cucumber won't run twice in the same process.
-    
-    debugger;
+
     const cucumberArgs = this.createCucumberArgs(sessionsProps[1]);
+
+
+    const cucumberCliStdout = {
+      publisher: this.publisher,
+      write(...writeParams) {
+        const [str] = writeParams;
+        this.publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'notice', textData: str, tagObj: { tags: ['app', 'cucumberCLI-stdout-write'] } });
+      }
+    };
 
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
       cwd: process.cwd(),
-      stdout: process.stdout
+      stdout: cucumberCliStdout
     });
-    debugger;
-    this.slavesDeployed = true;
-    /*await*/ cucumberCliInstance.run() // If you want to debug the tests before execution returns, uncomment the await.
-      .then(async (succeeded) => {
-        debugger;
-        this.publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'notice', textData: `Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, tagObj: { tags: ['app'] } });
-      }).catch((error) => {
-        debugger;
-        return this.publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'error', textData: error, tagObj: { tags: ['app'] } });
-      });
 
-    debugger;
+    this.slavesDeployed = true;
+    /* await */cucumberCliInstance.run() // If you want to debug the tests before execution returns, uncomment the await.
+      .then(async (succeeded) => {
+        this.log.notice(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, { tags: ['app'] });
+      }).catch(error => this.log.error(error, { tags: ['app'] }));
 
 
     // End of testing single session.
