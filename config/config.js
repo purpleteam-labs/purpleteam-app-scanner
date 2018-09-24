@@ -151,6 +151,11 @@ const schema = {
       format: String,
       default: `${process.cwd()}/outcomes/results.txt`
     }
+  },
+  runType: {
+    doc: 'The type to run the cucumber tests.',
+    format: ['parallel', 'sequential', 'publisher'],
+    default: 'parallel'
   }
 };
 

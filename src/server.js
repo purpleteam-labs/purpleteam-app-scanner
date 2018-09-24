@@ -42,7 +42,8 @@ const domainPlugins = [
       slave: config.get('slave'),
       cucumber: config.get('cucumber'),
       results: config.get('results'),
-      publisher: messagePublisher
+      publisher: messagePublisher,
+      runType: config.get('runType')
     }
   }
 ];
