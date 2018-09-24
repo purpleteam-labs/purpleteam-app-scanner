@@ -12,7 +12,7 @@ Before(() => {
 });
 */
 
-Given('a new test session based on each build user supplied testSession', async function () { // eslint-disable-line func-names
+Given('a new test session based on each build user supplied testSession', async function () {
   const sutBaseUrl = this.sut.baseUrl();
   const { findElementThenClick, findElementThenSendKeys } = this.sut.getBrowser();
   const { authentication, authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, submit }, testSession: { id, attributes: { username, password } } } = this.sut.getProperties(['authentication', 'testSession']);
@@ -37,7 +37,7 @@ Given('a new test session based on each build user supplied testSession', async 
 });
 
 
-Given('each build user supplied route of each testSession is navigated', async function () { // eslint-disable-line func-names
+Given('each build user supplied route of each testSession is navigated', async function () {
   const baseUrl = this.sut.baseUrl();
   const { findElementThenClick, findElementThenSendKeys } = this.sut.getBrowser();
   const { testSession: { id, relationships: { data: testSessionResourceIdentifiers } }, testRoutes: routeResourceObjects } = this.sut.getProperties(['testSession', 'testRoutes']);
@@ -45,25 +45,23 @@ Given('each build user supplied route of each testSession is navigated', async f
   const routeResourceObjectsOfSession = routeResourceObjects.filter(routeResourceObject => routes.includes(routeResourceObject.id));
   const webDriver = this.sut.getBrowser().getWebDriver();
 
-  const promiseOfRouteFetchPopulateSubmit = routeResourceObjectsOfSession.map((routeResourceObject) => { // eslint-disable-line arrow-body-style
-    return new Promise(async (resolve, reject) => {
-      // Todo: KC: Fix hard coded sleeps.
-      await webDriver.sleep(1000)
-        .then(() => {
-          this.publisher.pubLog({ testSessionId: id, logLevel: 'notice', textData: `Navigating route id "${routeResourceObject.id}" of test session id "${id}".`, tagObj: { tags: ['app_scan_steps'] } });
-          return webDriver.get(`${baseUrl}${routeResourceObject.id}`);
-        })
-        .then(() => webDriver.sleep(1000))
-        .then(() => Promise.all(routeResourceObject.attributes.attackFields.map(attackField => findElementThenSendKeys(attackField, id))))
-        .then(() => findElementThenClick(routeResourceObject.attributes.submit, id))
-        .then(() => webDriver.sleep(1000))
-        .then(() => { resolve(`Done ${routeResourceObject}`); })
-        .catch((err) => {
-          this.publisher.pubLog({ testSessionId: id, logLevel: 'error', textData: err.message, tagObj: { tags: ['app_scan_steps'] } });
-          reject(err);
-        });
-    });
-  });
+  const promiseOfRouteFetchPopulateSubmit = routeResourceObjectsOfSession.map(routeResourceObject => new Promise(async (resolve, reject) => {
+    // Todo: KC: Fix hard coded sleeps.
+    await webDriver.sleep(1000)
+      .then(() => {
+        this.publisher.pubLog({ testSessionId: id, logLevel: 'notice', textData: `Navigating route id "${routeResourceObject.id}" of test session id "${id}".`, tagObj: { tags: ['app_scan_steps'] } });
+        return webDriver.get(`${baseUrl}${routeResourceObject.id}`);
+      })
+      .then(() => webDriver.sleep(1000))
+      .then(() => Promise.all(routeResourceObject.attributes.attackFields.map(attackField => findElementThenSendKeys(attackField, id))))
+      .then(() => findElementThenClick(routeResourceObject.attributes.submit, id))
+      .then(() => webDriver.sleep(1000))
+      .then(() => { resolve(`Done ${routeResourceObject}`); })
+      .catch((err) => {
+        this.publisher.pubLog({ testSessionId: id, logLevel: 'error', textData: err.message, tagObj: { tags: ['app_scan_steps'] } });
+        reject(err);
+      });
+  }));
   await Promise.all(promiseOfRouteFetchPopulateSubmit).catch(reason => this.publisher.pubLog({ testSessionId: id, logLevel: 'error', textData: reason.message, tagObj: { tags: ['app_scan_steps'] } }));
 });
 
@@ -74,7 +72,7 @@ let scanId;
 let aScanners;
 
 
-Given('a new scanning session based on each build user supplied testSession', function () { // eslint-disable-line func-names
+Given('a new scanning session based on each build user supplied testSession', function () {
   const { testSession: { id: testSessionId }, context: { name: contextName } } = this.sut.getProperties(['testSession', 'context']);
   const apiKey = this.zap.getProperties('apiKey');
   const zaproxy = this.zap.getZaproxy();
@@ -89,7 +87,7 @@ Given('a new scanning session based on each build user supplied testSession', fu
 });
 
 
-Given('the application is spidered for each testSession', async function () { // eslint-disable-line func-names
+Given('the application is spidered for each testSession', async function () {
   const sutBaseUrl = this.sut.baseUrl();
   const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater }, loggedInIndicator, testSession: { id: testSessionId, attributes: { username, password } }, context: { name: contextName } } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testSession', 'context']);
 
@@ -161,7 +159,7 @@ Given('the application is spidered for each testSession', async function () { //
 });
 
 
-Given('all active scanners are disabled', async function () { // eslint-disable-line func-names
+Given('all active scanners are disabled', async function () {
   const { id: testSessionId } = this.sut.getProperties('testSession');
   const apiKey = this.zap.getProperties('apiKey');
   const zaproxy = this.zap.getZaproxy();
@@ -174,7 +172,7 @@ Given('all active scanners are disabled', async function () { // eslint-disable-
 });
 
 
-Given('all active scanners are enabled', async function () { // eslint-disable-line func-names
+Given('all active scanners are enabled', async function () {
   const apiKey = this.zap.getProperties('apiKey');
   const zaproxy = this.zap.getZaproxy();
   const { id: testSessionId, attributes: { aScannerAttackStrength, aScannerAlertThreshold } } = this.sut.getProperties('testSession');
@@ -194,6 +192,8 @@ Given('all active scanners are enabled', async function () { // eslint-disable-l
     },
     err => `Error occured while attempting to get all active scanners from Zap. Error was: ${err.message}`
   );
+  // Zap seems to have some sort of ordering problem if we use a Promise.all
+  // Optimising this would only save milliseconds, & the entire testing process takes minutes, ignoring this chance for micro-optimisation.
   for (const ascanner of aScanners) { // eslint-disable-line no-restricted-syntax
     // eslint-disable-next-line no-await-in-loop
     await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName, apiKey).then(
@@ -218,7 +218,7 @@ Given('all active scanners are enabled', async function () { // eslint-disable-l
 });
 
 
-When('the active scan is run', async function () { // eslint-disable-line func-names
+When('the active scan is run', async function () {
   const sutBaseUrl = this.sut.baseUrl();
 
   const { testSession: { id: testSessionId, relationships: { data: testSessionResourceIdentifiers } }, testRoutes: routeResourceObjects } = this.sut.getProperties(['testSession', 'testRoutes']);
@@ -266,15 +266,15 @@ When('the active scan is run', async function () { // eslint-disable-line func-n
               publisher.publish(testSessionId, numberOfAlertsForSesh + numberOfAlertsForRoute, 'testerBugCount');
             }
           },
-          error => zapError = error.message // eslint-disable-line no-return-assign
+          (error) => { zapError = error.message; }
         );
       }
       zapInProgressIntervalId = setInterval(() => { // eslint-disable-line prefer-const
         status();
         if ((zapError && statusValueForRoute !== 100) || (statusValueForRoute === undefined)) {
-          publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Canceling test. Zap API is unreachible. ${zapError ? 'Zap Error: ${zapError}' : 'No status value available, may be due to incorrect api key.'}`, tagObj: { tags: ['app_scan_steps'] } }); // eslint-disable-line no-template-curly-in-string
+          publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Canceling test. Zap API is unreachible. ${zapError ? `Zap Error: ${zapError}` : 'No status value available, may be due to incorrect api key.'}`, tagObj: { tags: ['app_scan_steps'] } });
           clearInterval(zapInProgressIntervalId);
-          reject(`Test failure: ${zapError}`); // eslint-disable-line prefer-promise-reject-errors
+          reject(new Error(`Test failure: ${zapError}`));
         } else if (statusValueForRoute === 100) {
           publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `We are finishing scan ${scanId} for the route: "${routeResourceObjectForAscanCallback.id}". Please see the report for further details.`, tagObj: { tags: ['app_scan_steps'] } });
 
@@ -322,14 +322,14 @@ When('the active scan is run', async function () { // eslint-disable-line func-n
 });
 
 
-Then('the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap', function () { // eslint-disable-line func-names
+Then('the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap', function () {
   const { testSession: { id: testSessionId, attributes: { alertThreshold }, relationships: { data: testSessionResourceIdentifiers } } } = this.sut.getProperties(['testSession', 'testRoutes']);
   const routes = testSessionResourceIdentifiers.filter(resourceIdentifier => resourceIdentifier.type === 'route').map(resourceIdentifier => resourceIdentifier.id);
 
   const numberOfAlertsForSesh = this.zap.numberOfAlertsForSesh();
 
   if (numberOfAlertsForSesh > alertThreshold) {
-    this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Search the generated report for the routes: "${routes}", to see the ${numberOfAlertsForSesh - alertThreshold} vulnerabilities that exceed the Build User defined threshold of "${alertThreshold}"" for the session with id "${testSessionId}".`, tagObj: { tags: ['app_scan_steps'] } });
+    this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Search the generated report for the routes: [${routes}], to see the ${numberOfAlertsForSesh - alertThreshold} vulnerabilities that exceed the Build User defined threshold of "${alertThreshold}" for the session with id "${testSessionId}".`, tagObj: { tags: ['app_scan_steps'] } });
   }
 
   expect(numberOfAlertsForSesh).to.be.at.most(alertThreshold);
@@ -345,18 +345,18 @@ const nowAsFileName = () => {
 
 // Todo: KC: Should promisify the fs.writeFile.
 // The Zap reports are written to file,
-After({ tags: '@app_scan' }, async function () { // eslint-disable-line func-names
+After({ tags: '@app_scan' }, async function () {
   const zaproxy = this.zap.getZaproxy();
   const { apiKey, reportDir } = this.zap.getProperties(['apiKey', 'reportDir']);
   const { testSession: { id: testSessionId }, reportFormats } = this.sut.getProperties(['testSession', 'reportFormats']);
 
-  const zapApiReportFuncCallback = (resp) => {
-    const toPrint = ((resp) => { // eslint-disable-line no-shadow
+  const zapApiReportFuncCallback = (response) => {
+    const toPrint = ((resp) => {
       if (typeof (resp) === 'object') return { format: 'json', text: JSON.stringify(resp) };
       if (typeof (resp) === 'string' && resp.startsWith('<html>')) return { format: 'html', text: resp };
       if (typeof (resp) === 'string' && resp.includes('# ZAP Scanning Report')) return { format: 'md', text: resp };
       return new Error('Unknown report type encountered');
-    })(resp);
+    })(response);
 
     return new Promise((resolve, reject) => {
       const reportPath = `${reportDir}testSessionId-${testSessionId}_${nowAsFileName()}.${toPrint.format}`;
@@ -376,5 +376,5 @@ After({ tags: '@app_scan' }, async function () { // eslint-disable-line func-nam
   this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `About to write reports in the following formats: ${[...reportFormats]}`, tagObj: { tags: ['app_scan_steps'] } });
 
   const reportPromises = reportFormats.map(format => zaproxy.core[`${format}report`](apiKey).then(zapApiReportFuncCallback, err => `Error occured while attempting to create Zap ${format} report. Error was: ${err.message}`));
-  await Promise.all(reportPromises); // eslint-disable-line func-names
+  await Promise.all(reportPromises);
 });
