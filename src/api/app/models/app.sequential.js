@@ -1,10 +1,10 @@
 const cucumber = require('cucumber');
 
-let publisher;
 const sequential = (runParams) => {
   const { model, model: { createCucumberArgs, publisher }, sessionsProps } = runParams;
 
   // For testing single session. Cucumber won't run twice in the same process. This only runs single testSession.
+  //   Tried using this (https://github.com/cucumber/cucumber-js/issues/786#issuecomment-422060468) approach with using the same support library.
 
   const cucumberArgs = createCucumberArgs.call(model, sessionsProps[1]);
 
