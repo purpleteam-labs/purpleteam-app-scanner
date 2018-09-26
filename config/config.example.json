@@ -8,6 +8,10 @@
   "slave": {
     "ip": "172.17.0.2",
     "apiKey": "your api key that the slave is configured to accept."
+  },
+  "cucumber": {
+    "tagExpression": "@simple_math or @app_scan",
+    "timeOut": 1800000
   }
 }
 
