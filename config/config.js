@@ -137,7 +137,8 @@ const schema = {
     binary: {
       doc: 'The location of the Cucumber binary.',
       format: String,
-      default: `${process.cwd()}/node_modules/.bin/cucumber-js`
+      // default: `${process.cwd()}/node_modules/.bin/cucumber-js`
+      default: `${process.cwd()}/bin/purpleteamParallelCucumber`
     },
     timeOut: {
       doc: 'The value used to set the timeout (https://github.com/cucumber/cucumber-js/blob/master/docs/support_files/timeouts.md)',

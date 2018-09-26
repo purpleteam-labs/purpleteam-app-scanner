@@ -3,6 +3,9 @@
   "version": "0.1.0-alpha.1",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "purpleteamParallelCucumber": "./bin/purpleteamParallelCucumber"
+  },
   "scripts": {
     "lint": "eslint .",
     "deps": "npm-check",
