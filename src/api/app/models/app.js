@@ -42,18 +42,10 @@ class App {
       testSession: sesh // The data array contains the relationshops to the testSessions
     }));
 
+    if (this.runType === 'sequential') await model[this.runType]({ model: this, sessionsProps });
+    else model[this.runType]({ model: this, sessionsProps });
 
-    
-
-debugger;
-
-    model[this.runType]({ model: this, sessionsProps });
-
-
-debugger;
     return 'App tests are now running.'; // This is propagated per session in the CLI model.
-
-    // //////////////////////////////////////////////////////////////////////////////////////
   }
 
 
