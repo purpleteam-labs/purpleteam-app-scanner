@@ -11,9 +11,10 @@ const model = require('./');
 
 class App {
   constructor(options) {
-    const { log, slave, cucumber: cucumberConfig, results, publisher, runType } = options;
+    const { log, strings, slave, cucumber: cucumberConfig, results, publisher, runType } = options;
 
     this.log = log;
+    this.strings = strings;
     this.slave = slave;
     this.cucumber = cucumberConfig;
     this.results = results;
@@ -91,7 +92,7 @@ class App {
       '--require',
       this.cucumber.steps,
       /* '--exit', */
-      `--format=json:${this.results.uri}`,
+      `--format=json:${this.results.uri}_testSessionId-${sutProps.testSession.id}_${this.strings.NowAsFileName('-')}.json`,
       '--tags',
       this.cucumber.tagExpression,
       '--world-parameters',
@@ -135,7 +136,8 @@ class App {
     let result;
 
     try {
-      result = await readFileAsync(this.results.uri, { encoding: 'utf8' });
+      // result = await readFileAsync(this.results.uri, { encoding: 'utf8' });
+      result = 'Todo: re-implement using redis pub sub.';
     } catch (err) {
       this.log.error(`Could not read test results file, the error was: ${err}.`, { tags: ['app', 'testResult()'] });
     }

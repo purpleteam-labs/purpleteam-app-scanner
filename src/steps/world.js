@@ -9,6 +9,7 @@ const { setWorldConstructor, setDefaultTimeout } = cucumber;
 
 const sut = require(`${process.cwd()}/src/api/app/do/sut`); // eslint-disable-line import/no-dynamic-require
 const zap = require(`${process.cwd()}/src/slaves/zap`); // eslint-disable-line import/no-dynamic-require
+const strings = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
 
 
 class CustomWorld {
@@ -28,6 +29,7 @@ class CustomWorld {
     this.sut.init({ log, publisher: this.publisher, sutProperties });
     this.zap = zap;
     this.zap.init({ log, slaveProperties: { ...parameters.slaveProperties, sutBaseUrl: this.sut.baseUrl() } });
+    this.strings = strings;
   }
 
 

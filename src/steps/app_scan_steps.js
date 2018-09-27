@@ -335,13 +335,6 @@ Then('the vulnerability count should not exceed the build user defined threshold
   expect(numberOfAlertsForSesh).to.be.at.most(alertThreshold);
 });
 
-// Also used in the CLI.
-const nowAsFileName = () => {
-  const date = new Date();
-  const padLeft = num => (num < 10 ? `0${num}` : `${num}`);
-  return `${date.getFullYear()}-${padLeft(date.getMonth() + 1)}-${padLeft(date.getDate())}T${padLeft(date.getHours())}:${padLeft(date.getMinutes())}:${padLeft(date.getSeconds())}`;
-};
-
 
 // Todo: KC: Should promisify the fs.writeFile.
 // The Zap reports are written to file,
@@ -349,6 +342,7 @@ After({ tags: '@app_scan' }, async function () {
   const zaproxy = this.zap.getZaproxy();
   const { apiKey, reportDir } = this.zap.getProperties(['apiKey', 'reportDir']);
   const { testSession: { id: testSessionId }, reportFormats } = this.sut.getProperties(['testSession', 'reportFormats']);
+  const { NowAsFileName } = this.strings;
 
   const zapApiReportFuncCallback = (response) => {
     const toPrint = ((resp) => {
@@ -359,7 +353,7 @@ After({ tags: '@app_scan' }, async function () {
     })(response);
 
     return new Promise((resolve, reject) => {
-      const reportPath = `${reportDir}testSessionId-${testSessionId}_${nowAsFileName()}.${toPrint.format}`;
+      const reportPath = `${reportDir}report_testSessionId-${testSessionId}_${NowAsFileName()}.${toPrint.format}`;
       this.log.notice(`Writing ${toPrint.format}report to ${reportPath}`, { tags: ['app_scan_steps'] });
       fs.writeFile(reportPath, toPrint.text, (writeFileErr) => {
         if (writeFileErr) {

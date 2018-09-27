@@ -150,7 +150,7 @@ const schema = {
     uri: {
       doc: 'The location of the results.',
       format: String,
-      default: `${process.cwd()}/outcomes/results.txt`
+      default: `${process.cwd()}/outcomes/result`
     }
   },
   runType: {
