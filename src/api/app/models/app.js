@@ -130,20 +130,6 @@ class App {
       .map(featureFileUri => readFileAsync(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
       .reduce((accumulatedFeatures, feature) => accumulatedFeatures.concat(...['\n\n', feature]));
   }
-
-
-  async testResult() {
-    let result;
-
-    try {
-      // result = await readFileAsync(this.results.uri, { encoding: 'utf8' });
-      result = 'Todo: re-implement using redis pub sub.';
-    } catch (err) {
-      this.log.error(`Could not read test results file, the error was: ${err}.`, { tags: ['app', 'testResult()'] });
-    }
-
-    return result;
-  }
 }
 
 
