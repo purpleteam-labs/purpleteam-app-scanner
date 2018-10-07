@@ -65,7 +65,7 @@ const schema = {
       dir: {
         doc: 'The location of the report.',
         format: String,
-        default: `${process.cwd()}/outcomes/`
+        default: '/var/log/purpleteam/outcomes/'
       }
     },
     spider: {
@@ -147,10 +147,10 @@ const schema = {
     }
   },
   results: {
-    uri: {
+    dir: {
       doc: 'The location of the results.',
       format: String,
-      default: `${process.cwd()}/outcomes/result`
+      default: '/var/log/purpleteam/outcomes/'
     }
   },
   runType: {
