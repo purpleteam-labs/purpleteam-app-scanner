@@ -9,7 +9,7 @@ const publisher = (runParams) => {
     try {
       p.publish(sessionId, `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}`);
     } catch (e) {
-      log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
+      log.error(`Error occurred while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
     }
   }, 1000);
 
@@ -19,7 +19,7 @@ const publisher = (runParams) => {
     try {
       p.publish(sessionId, `it is {red-fg}raining{/red-fg} cats and dogs${Date.now()}, session: ${sessionId}`);
     } catch (e) {
-      log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
+      log.error(`Error occurred while attempting to publish to redis channel: "app", event: "testerProgress". Error was: ${e}`, { tags: ['app', sessionId] });
     }
   }, 1000);
 
@@ -32,7 +32,7 @@ const publisher = (runParams) => {
     try {
       p.publish(sessionId, pctComplete, 'testerPctComplete');
     } catch (e) {
-      log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerPctComplete". Error was: ${e}`, { tags: ['app', sessionId] });
+      log.error(`Error occurred while attempting to publish to redis channel: "app", event: "testerPctComplete". Error was: ${e}`, { tags: ['app', sessionId] });
     }
   }, 1000);
 
@@ -44,7 +44,7 @@ const publisher = (runParams) => {
     try {
       p.publish(sessionId, bugCount, 'testerBugCount');
     } catch (e) {
-      log.error(`Error occured while attempting to publish to redis channel: "app", event: "testerBugCount". Error was: ${e}`, { tags: ['app', sessionId] });
+      log.error(`Error occurred while attempting to publish to redis channel: "app", event: "testerBugCount". Error was: ${e}`, { tags: ['app', sessionId] });
     }
   }, 2000);
 };
