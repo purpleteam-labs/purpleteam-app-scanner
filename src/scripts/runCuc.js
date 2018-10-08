@@ -1,6 +1,3 @@
-const fs = require('fs');
-const { promisify } = require('util');
-
 const cucumber = require('cucumber');
 
 const config = require('config/config');
@@ -42,7 +39,7 @@ exports.default = async function run() {
   });
   */
 
-  const cli = new cucumber.Cli({
+  const cucumberCliInstance = new cucumber.Cli({
     argv: process.argv,
     cwd,
     stdout: cucumberCliStdout
@@ -50,26 +47,9 @@ exports.default = async function run() {
 
   let result;
   try {
-    result = await cli.run();
+    result = await cucumberCliInstance.run();
     log.info(`The cucumber result for testSession: ${testSessionId} was ${JSON.stringify(result)}`, { tags: ['runCuc'] });
-    // Send event to Orchestrator
-
-    /*
-    const promiseToReadDir = promisify(fs.readdir);
-    const promiseToStat = promisify(fs.stat);
-
-    const promiseOfFileNameTimeObjs = (await promiseToReadDir('/home/kim/Source/purpleteam-app-scanner/outcomes/'))
-      .map(async name => ({ name, time: (await promiseToStat(`/home/kim/Source/purpleteam-app-scanner/outcomes/${name}`)).mtime.getTime() }));
-
-    const fileNameTimeObjs = await Promise.all(promiseOfFileNameTimeObjs);
-
-    const outcomeFiles = fileNameTimeObjs.sort((fileA, fileB) => fileB.time - fileA.time)
-      .map(file => file.name)
-      .reduce((listOf, fileName) => `${listOf}\n${fileName}`);
-
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Tester finished. The following outcome files were created:\n${outcomeFiles}`, tagObj: { tags: ['runCuc'] } });
-    */
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: 'Tester finished.', tagObj: { tags: ['runCuc'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Tester finished: {sessionId: ${testSessionId}, tester: app}`, tagObj: { tags: ['runCuc'] } });
   } catch (error) {
     exitWithError(error);
   }
