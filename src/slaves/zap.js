@@ -15,8 +15,7 @@ const zapSchema = {
     maxDepth: Joi.number().integer().positive(),
     threadCount: Joi.number().integer().min(0).max(20),
     maxChildren: Joi.number().integer().min(0).max(20)
-  }),
-  sutBaseUrl: Joi.string().uri()
+  })
 };
 
 let log; // Todo: KC: Should be provided by an IoC container.
@@ -40,8 +39,8 @@ const init = (options) => {
   properties = validateProperties(options.slaveProperties);
 
   const zapOptions = {
-    proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`,
-    targetApp: properties.sutBaseUrl
+    apiKey: properties.apiKey,
+    proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`
   };
 
   zaproxy = new ZapClient(zapOptions);

@@ -28,7 +28,7 @@ class CustomWorld {
     this.sut = sut;
     this.sut.init({ log, publisher: this.publisher, sutProperties });
     this.zap = zap;
-    this.zap.init({ log, slaveProperties: { ...parameters.slaveProperties, sutBaseUrl: this.sut.baseUrl() } });
+    this.zap.init({ log, slaveProperties: { ...parameters.slaveProperties } });
     this.strings = strings;
   }
 
