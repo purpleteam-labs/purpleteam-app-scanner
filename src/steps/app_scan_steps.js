@@ -74,10 +74,9 @@ let aScanners;
 
 Given('a new scanning session based on each build user supplied testSession', function () {
   const { testSession: { id: testSessionId }, context: { name: contextName } } = this.sut.getProperties(['testSession', 'context']);
-  const apiKey = this.zap.getProperties('apiKey');
   const zaproxy = this.zap.getZaproxy();
 
-  return zaproxy.context.newContext(contextName, apiKey).then(
+  return zaproxy.context.newContext(contextName).then(
     (resp) => {
       ({ contextId } = resp);
       this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Created new Zap context with a contextId of: ${contextId}.`, tagObj: { tags: ['app_scan_steps'] } });
@@ -91,67 +90,67 @@ Given('the application is spidered for each testSession', async function () {
   const sutBaseUrl = this.sut.baseUrl();
   const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater }, loggedInIndicator, testSession: { id: testSessionId, attributes: { username, password } }, context: { name: contextName } } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testSession', 'context']);
 
-  const { apiKey, spider: { maxDepth, threadCount, maxChildren } } = this.zap.getProperties(['apiKey', 'spider']);
+  const { maxDepth, threadCount, maxChildren } = this.zap.getProperties('spider');
   const zaproxy = this.zap.getZaproxy();
   const enabled = true;
   const authenticationMethod = 'formBasedAuthentication';
 
-  await zaproxy.spider.setOptionMaxDepth(maxDepth, apiKey)
+  await zaproxy.spider.setOptionMaxDepth(maxDepth)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider max depth. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set the spider max depth. Error was: ${err.message}`
     );
-  await zaproxy.spider.setOptionThreadCount(threadCount, apiKey)
+  await zaproxy.spider.setOptionThreadCount(threadCount)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider thread count. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set the spider thread count. Error was: ${err.message}`
     );
-  await zaproxy.context.includeInContext(contextName, sutBaseUrl, apiKey)
+  await zaproxy.context.includeInContext(contextName, sutBaseUrl)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Added context "${sutBaseUrl}" to Zap. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to add context "${sutBaseUrl}" to Zap. Error was: ${err.message}`
     );
   // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
   // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
-  await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`, apiKey)
+  await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication method to "${authenticationMethod}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set authentication method to "${authenticationMethod}". Error was: ${err.message}`
     );
   // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
-  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator, apiKey)
+  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set logged in indicator "${loggedInIndicator}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set logged in indicator to "${loggedInIndicator}". Error was: ${err.message}`
     );
-  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled, apiKey)
+  await zaproxy.forcedUser.setForcedUserModeEnabled(enabled)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user mode enabled to "${enabled}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set forced user mode enabled to "${enabled}". Error was: ${err.message}`
     );
-  await zaproxy.users.newUser(contextId, username, apiKey).then(
+  await zaproxy.users.newUser(contextId, username).then(
     (resp) => {
       ({ userId } = resp);
       this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the newUser "${username}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } });
     },
     err => `Error occured while attempting to set the newUser "${username}". Error was: ${err.message}`
   );
-  await zaproxy.forcedUser.setForcedUser(contextId, userId, apiKey)
+  await zaproxy.forcedUser.setForcedUser(contextId, userId)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user with Id "${userId}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set forced user "${userId}". Error was: ${err.message}`
     );
-  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`, apiKey)
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication credentials. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set authentication credentials. Error was: ${err.message}`
     );
-  await zaproxy.users.setUserEnabled(contextId, userId, enabled, apiKey)
+  await zaproxy.users.setUserEnabled(contextId, userId, enabled)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set user enabled on user with id "${userId}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to set user enabled with id "${userId}". Error was: ${err.message}`
     );
-  await zaproxy.spider.scan(sutBaseUrl, maxChildren, apiKey)
+  await zaproxy.spider.scan(sutBaseUrl, maxChildren)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Spider scan initiated for "${sutBaseUrl}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to initiate spider scan for "${sutBaseUrl}". Error was: ${err.message}`
@@ -161,10 +160,9 @@ Given('the application is spidered for each testSession', async function () {
 
 Given('all active scanners are disabled', async function () {
   const { id: testSessionId } = this.sut.getProperties('testSession');
-  const apiKey = this.zap.getProperties('apiKey');
   const zaproxy = this.zap.getZaproxy();
   const scanPolicyName = null;
-  await zaproxy.ascan.disableAllScanners(scanPolicyName, apiKey)
+  await zaproxy.ascan.disableAllScanners(scanPolicyName)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Disable all active scanners was called. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to disable all active scanners. Error was: ${err.message}`
@@ -173,14 +171,13 @@ Given('all active scanners are disabled', async function () {
 
 
 Given('all active scanners are enabled', async function () {
-  const apiKey = this.zap.getProperties('apiKey');
   const zaproxy = this.zap.getZaproxy();
   const { id: testSessionId, attributes: { aScannerAttackStrength, aScannerAlertThreshold } } = this.sut.getProperties('testSession');
 
   const scanPolicyName = null;
   const policyid = null;
 
-  await zaproxy.ascan.enableAllScanners(scanPolicyName, apiKey)
+  await zaproxy.ascan.enableAllScanners(scanPolicyName)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Enable all active scanners was called. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to enable all active scanners. Error was: ${err.message}`
@@ -196,12 +193,12 @@ Given('all active scanners are enabled', async function () {
   // Optimising this would only save milliseconds, & the entire testing process takes minutes, ignoring this chance for micro-optimisation.
   for (const ascanner of aScanners) { // eslint-disable-line no-restricted-syntax
     // eslint-disable-next-line no-await-in-loop
-    await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName, apiKey).then(
+    await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName).then(
       result => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Attack strength has been set ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}.`, tagObj: { tags: ['app_scan_steps'] } }),
       error => this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error occured while attempting to set the attack strength for active scanner: { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
     );
     // eslint-disable-next-line no-await-in-loop
-    await zaproxy.ascan.setScannerAlertThreshold(ascanner.id, aScannerAlertThreshold, scanPolicyName, apiKey).then(
+    await zaproxy.ascan.setScannerAlertThreshold(ascanner.id, aScannerAlertThreshold, scanPolicyName).then(
       result => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Alert threshold has been set ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}.`, tagObj: { tags: ['app_scan_steps'] } }),
       error => this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error occured while attempting to set the alert threshold for active scanner: { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
     );
@@ -225,7 +222,7 @@ When('the active scan is run', async function () {
   const routes = testSessionResourceIdentifiers.filter(resourceIdentifier => resourceIdentifier.type === 'route').map(resourceIdentifier => resourceIdentifier.id);
   const routeResourceObjectsOfSession = routeResourceObjects.filter(routeResourceObject => routes.includes(routeResourceObject.id));
 
-  const { apiFeedbackSpeed, apiKey, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'apiKey', 'spider']);
+  const { apiFeedbackSpeed, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'spider']);
   const zaproxy = this.zap.getZaproxy();
   const { publisher } = this;
 
@@ -292,7 +289,7 @@ When('the active scan is run', async function () {
     });
   };
 
-  await zaproxy.spider.scanAsUser(sutBaseUrl, contextId, userId, maxChildren, apiKey)
+  await zaproxy.spider.scanAsUser(contextId, userId, sutBaseUrl, maxChildren)
     .then(
       resp => publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Spider scan as user "${userId}" for url "${sutBaseUrl}", context "${contextId}", with maxChildren "${maxChildren}" was called. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to scan as user. Error was: ${err.message}`
@@ -305,7 +302,7 @@ When('the active scan is run', async function () {
 
     // http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.
 
-    await zaproxy.ascan.scan(sutAttackUrl, true, false, '', routeResourceObject.attributes.method, qs, apiKey) // eslint-disable-line no-await-in-loop
+    await zaproxy.ascan.scan(sutAttackUrl, true, false, '', routeResourceObject.attributes.method, qs) // eslint-disable-line no-await-in-loop
       .then(zapApiAscanScanPerRoute)
       // May need another then here...
       .catch((err) => { // eslint-disable-line no-loop-func
@@ -340,7 +337,7 @@ Then('the vulnerability count should not exceed the build user defined threshold
 // The Zap reports are written to file,
 After({ tags: '@app_scan' }, async function () {
   const zaproxy = this.zap.getZaproxy();
-  const { apiKey, reportDir } = this.zap.getProperties(['apiKey', 'reportDir']);
+  const reportDir = this.zap.getProperties('reportDir');
   const { testSession: { id: testSessionId }, reportFormats } = this.sut.getProperties(['testSession', 'reportFormats']);
   const { NowAsFileName } = this.strings;
 
@@ -369,6 +366,6 @@ After({ tags: '@app_scan' }, async function () {
 
   this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `About to write reports in the following formats: ${[...reportFormats]}`, tagObj: { tags: ['app_scan_steps'] } });
 
-  const reportPromises = reportFormats.map(format => zaproxy.core[`${format}report`](apiKey).then(zapApiReportFuncCallback, err => `Error occured while attempting to create Zap ${format} report. Error was: ${err.message}`));
+  const reportPromises = reportFormats.map(format => zaproxy.core[`${format}report`]().then(zapApiReportFuncCallback, err => `Error occured while attempting to create Zap ${format} report. Error was: ${err.message}`));
   await Promise.all(reportPromises);
 });

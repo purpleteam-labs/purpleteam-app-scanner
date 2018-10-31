@@ -66,9 +66,9 @@
   "dependencies": {
     "app-module-path": "^2.2.0",
     "chromedriver": "^2.36.0",
+    "code": "^5.2.0",
     "convict": "^4.3.2",
     "cucumber": "^4.0.0",
-    "code": "^5.2.0",
     "good": "^8.1.1",
     "hapi": "^17.5.4",
     "hapi-good-winston": "^2.0.1",
@@ -78,7 +78,7 @@
     "redis": "^2.8.0",
     "selenium-webdriver": "^3.6.0",
     "susie": "^3.0.0",
-    "zaproxy": "git+https://github.com/binarymist/zaproxy-wip.git"
+    "zaproxy": "file:../zap-api-nodejs"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {
