@@ -156,6 +156,8 @@ const schema = {
   runType: {
     doc: 'The type to run the cucumber tests.',
     format: ['parallel', 'sequential', 'publisher'],
+    // If parallel is not selected, the results archive will not be created, because all testSessions never finish.
+    // We check that all testSessions are finished before creating archive in the orchestrator's orchestrate.areAllTestSessionsOfAllTestersFinished
     default: 'parallel'
   }
 };

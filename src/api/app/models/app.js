@@ -37,10 +37,10 @@ class App {
       port: testJob.data.attributes.sutPort,
       browser: testJob.data.attributes.browser,
       loggedInIndicator: testJob.data.attributes.loggedInIndicator,
-      context: { name: 'NodeGoat_Context' },
+      context: { name: `${sesh.id}_Context` },
       authentication: testJob.data.attributes.sutAuthentication,
       reportFormats: testJob.data.attributes.reportFormats,
-      testSession: sesh // The data array contains the relationshops to the testSessions
+      testSession: sesh // The data array contains the relationships to the testSessions
     }));
 
     if (this.runType === 'sequential') await model[this.runType]({ model: this, sessionsProps });
