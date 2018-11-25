@@ -159,6 +159,20 @@ const schema = {
     // If parallel is not selected, the results archive will not be created, because all testSessions never finish.
     // We check that all testSessions are finished before creating archive in the orchestrator's orchestrate.areAllTestSessionsOfAllTestersFinished
     default: 'parallel'
+  },
+  cloud: {
+    function: {
+      region: {
+        doc: 'The region of the functions being invoked.',
+        format: String,
+        default: 'ap-southeast-2'
+      },
+      endpoint: {
+        doc: 'The endpoint of the functions being invoked.',
+        format: 'url',
+        default: 'https://lambda.ap-southeast-2.amazonaws.com'
+      }
+    }
   }
 };
 

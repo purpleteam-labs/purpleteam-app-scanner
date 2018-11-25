@@ -45,7 +45,8 @@ const domainPlugins = [
       cucumber: config.get('cucumber'),
       results: config.get('results'),
       publisher: messagePublisher,
-      runType: config.get('runType')
+      runType: config.get('runType'),
+      cloud: config.get('cloud')
     }
   }
 ];

@@ -20,7 +20,7 @@ const { Lambda } = require('aws-sdk');
 */
 
 const parallel = async (runParams) => {
-  const { model, model: { log, /* publisher: p, */ createCucumberArgs }, sessionsProps } = runParams;
+  const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
 
   const numberOfTestSessions = sessionsProps.length;
 
@@ -28,7 +28,7 @@ const parallel = async (runParams) => {
     FunctionName: 'provisionAppSlaves',
     Payload: JSON.stringify({ slaveType: 'app', instances: numberOfTestSessions })
   };
-  const lambda = new Lambda({ region: 'whatever', endpoint: 'http://127.0.0.1:3001' });
+  const lambda = new Lambda({ region, endpoint });
   const resp = lambda.invoke(lambdaParams);
 
   let appSlaveServiceNames;

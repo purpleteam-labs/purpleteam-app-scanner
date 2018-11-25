@@ -11,7 +11,7 @@ const model = require('./');
 
 class App {
   constructor(options) {
-    const { log, strings, slave, cucumber: cucumberConfig, results, publisher, runType } = options;
+    const { log, strings, slave, cucumber: cucumberConfig, results, publisher, runType, cloud } = options;
 
     this.log = log;
     this.strings = strings;
@@ -20,6 +20,7 @@ class App {
     this.results = results;
     this.publisher = publisher;
     this.runType = runType;
+    this.cloud = cloud;
     this.slavesDeployed = false;
   }
 
