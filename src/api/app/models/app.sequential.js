@@ -1,7 +1,7 @@
 const cucumber = require('cucumber');
 
 const sequential = (runParams) => {
-  const { model, model: { createCucumberArgs, publisher }, sessionsProps } = runParams;
+  const { model, model: { createCucumberArgs, log, publisher }, sessionsProps } = runParams;
 
   // For testing single session. Cucumber won't run twice in the same process. This only runs single testSession.
   //   Tried using this (https://github.com/cucumber/cucumber-js/issues/786#issuecomment-422060468) approach with using the same support library.
@@ -27,9 +27,9 @@ const sequential = (runParams) => {
   // If you want to debug the tests before execution returns, uncomment the await, make this function async and add await to the calling function.
   /* await */cucumberCliInstance.run()
     .then(async (succeeded) => {
-      this.log.notice(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, { tags: ['app'] });
+      log.notice(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, { tags: ['app'] });
       publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'notice', textData: `Tester finished: {sessionId: ${sessionsProps[1].testSession.id}, tester: app}`, tagObj: { tags: ['runCuc'] } });
-    }).catch(error => this.log.error(error, { tags: ['app'] }));
+    }).catch(error => log.error(error, { tags: ['app'] }));
 };
 
 module.exports = sequential;
