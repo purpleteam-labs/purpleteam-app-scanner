@@ -44,7 +44,7 @@ class App {
     }));
 
     if (this.runType === 'sequential') await model[this.runType]({ model: this, sessionsProps });
-    else model[this.runType]({ model: this, sessionsProps });
+    else await model[this.runType]({ model: this, sessionsProps });
 
     return 'App tests are now running.'; // This is propagated per session in the CLI model.
   }
@@ -63,12 +63,12 @@ class App {
   }
 
 
-  createCucumberArgs(sutProps) {
+  createCucumberArgs(sutProps = {}, slaveHost = this.slave.ip) {
     // sut.validateProperties(sutProperties);
 
     const slaveProperties = {
+      ip: slaveHost,
       protocol: this.slave.protocol,
-      ip: this.slave.ip,
       port: this.slave.port,
       apiKey: this.slave.apiKey,
       apiFeedbackSpeed: this.slave.apiFeedbackSpeed,
@@ -80,7 +80,7 @@ class App {
 
     const cucumberParameters = {
       slaveProperties,
-      sutProperties: sutProps || {},
+      sutProperties: sutProps,
       cucumber: { timeOut: this.cucumber.timeOut }
     };
 
