@@ -64,7 +64,7 @@ internals.resolvePromises = async (provisionFeedback) => {
       else responseBodyPropData[provisionFeedback[i].responseBodyProp] = JSON.parse(payload).body[provisionFeedback[i].responseBodyProp];
     }
   }).catch((err) => {
-    log.error(`Error occurred while invoking lambda function. Error was: ${err}`, { tags: ['app.parallel'] });    
+    log.error(`Error occurred while invoking lambda function. Error was: ${err}`, { tags: ['app.parallel'] });
   });
 
   return responseBodyPropData;
@@ -84,11 +84,18 @@ internals.provisionViaLambda = (options) => {
 
 
 const parallel = async (runParams) => {
-  const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;  
+  const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
   internals.log = log;
   const numberOfTestSessions = sessionsProps.length;
 
-  const { appSlaveServiceNames, seleniumHubServiceName } = await internals.provisionViaLambda({ cloudFuncOpts: { region, endpoint }, numberOfTestSessions, browsers: sessionsProps.map(p => p.browser) });
+  const {
+    appSlaveServiceNames,
+    seleniumHubServiceName
+  } = await internals.provisionViaLambda({
+    cloudFuncOpts: { region, endpoint },
+    numberOfTestSessions,
+    browsers: sessionsProps.map(p => p.browser)
+  });
 
   for (let i = 0; i < numberOfTestSessions; i += 1) {
     const cucumberArgs = createCucumberArgs.call(model, sessionsProps[i], appSlaveServiceNames[i], seleniumHubServiceName);
