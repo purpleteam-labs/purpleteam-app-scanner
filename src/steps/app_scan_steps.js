@@ -63,6 +63,7 @@ Given('each build user supplied route of each testSession is navigated', async f
       });
   }));
   await Promise.all(promiseOfRouteFetchPopulateSubmit).catch(reason => this.publisher.pubLog({ testSessionId: id, logLevel: 'error', textData: reason.message, tagObj: { tags: ['app_scan_steps'] } }));
+  // Todo: KC: Bring the selenium grid down.
 });
 
 

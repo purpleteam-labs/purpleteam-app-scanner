@@ -21,7 +21,8 @@ class WebDriverFactory {
         .forBrowser(options.browser)
         .setChromeOptions(/* add any options */)
         .setFirefoxOptions(/* add any options */)
-        .setProxy(proxy.manual({ [options.slave.protocol]: `${options.slave.ip}:${options.slave.port}` }))
+        .setProxy(proxy.manual({ [options.slave.protocol]: `${options.slave.hostname}:${options.slave.port}` }))
+        .usingServer(`http://${options.selenium.hubServiceName}:4444/wd/hub`)
         .build();
     } catch (error) {
       log.error(error, { tags: ['webdriver'] });

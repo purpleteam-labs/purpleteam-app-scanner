@@ -19,31 +19,79 @@ const { Lambda } = require('aws-sdk');
   })();
 */
 
-const parallel = async (runParams) => {
-  const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
+const internals = {};
 
-  const numberOfTestSessions = sessionsProps.length;
+internals.provisionAppSlaves = (options) => {
+  // If we need to stop the slave containers after this/a run, runCuc.js may be the best place.
+  const { lambda, numberOfTestSessions } = options;
 
-  const lambdaParams = {
+  const lambdaParamsToProvisionAppSlaves = {
+    // https://github.com/awslabs/aws-sam-cli/pull/749
+    InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
     FunctionName: 'provisionAppSlaves',
     Payload: JSON.stringify({ slaveType: 'app', instances: numberOfTestSessions })
   };
-  const lambda = new Lambda({ region, endpoint });
-  const resp = lambda.invoke(lambdaParams);
 
-  let appSlaveServiceNames;
+  const responseToProvisionAppSlaves = lambda.invoke(lambdaParamsToProvisionAppSlaves);
+  const promise = responseToProvisionAppSlaves.promise();
+  return { functionName: lambdaParamsToProvisionAppSlaves.FunctionName, responseBodyProp: 'appSlaveServiceNames', promise };
+};
 
-  await resp.promise()
-    .then((resolved) => {
-      const { Payload: payload } = resolved;
-      ({ body: { appSlaveServiceNames } } = JSON.parse(payload));
-    }).catch((err) => {
-      log.error(`Error occurred while invoking lambda function "${lambdaParams.FunctionName}". Error was: ${err}`, { tags: ['app.parallel'] });
-    });
+internals.provisionSeleniumHubNodes = (options) => {
+  const { lambda, browsers: seleniumNodes } = options;
+  const lambdaParamsToProvisionSeleniumHubNodes = {
+    // https://github.com/awslabs/aws-sam-cli/pull/749
+    InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
+    FunctionName: 'provisionSeleniumHubNodes',
+    Payload: JSON.stringify(seleniumNodes)
+  };
 
-  let i;
-  for (i = 0; i < numberOfTestSessions; i += 1) {
-    const cucumberArgs = createCucumberArgs.call(model, sessionsProps[i], appSlaveServiceNames[i]);
+  const responseToProvisionSeleniumHubNodes = lambda.invoke(lambdaParamsToProvisionSeleniumHubNodes);
+  const promise = responseToProvisionSeleniumHubNodes.promise();
+  return { functionName: lambdaParamsToProvisionSeleniumHubNodes.FunctionName, responseBodyProp: 'seleniumHubServiceName', promise };
+};
+
+
+internals.resolvePromises = async (provisionFeedback) => {
+  const { log } = internals;
+  const promisesFromLambdas = provisionFeedback.map(p => p.promise);
+  const responseBodyPropData = {};
+
+  await Promise.all(promisesFromLambdas).then((resolved) => {
+    for (let i = 0; i < provisionFeedback.length; i += 1) {
+      const { Payload: payload } = resolved[i];
+      if (payload.includes('errorMessage')) log.error(`Error occurred while invoking lambda function "${provisionFeedback[i].functionName}". Response was: ${payload}`, { tags: ['app.parallel'] });
+      else responseBodyPropData[provisionFeedback[i].responseBodyProp] = JSON.parse(payload).body[provisionFeedback[i].responseBodyProp];
+    }
+  }).catch((err) => {
+    log.error(`Error occurred while invoking lambda function. Error was: ${err}`, { tags: ['app.parallel'] });    
+  });
+
+  return responseBodyPropData;
+};
+
+
+internals.provisionViaLambda = (options) => {
+  const { cloudFuncOpts, numberOfTestSessions, browsers } = options;
+  const { provisionAppSlaves, provisionSeleniumHubNodes, resolvePromises } = internals;
+  const lambda = new Lambda(cloudFuncOpts);
+
+  const provisionAppSlavesFeedback = provisionAppSlaves({ lambda, numberOfTestSessions });
+  const provisionSeleniumHubNodesFeedback = provisionSeleniumHubNodes({ lambda, browsers });
+
+  return resolvePromises([provisionAppSlavesFeedback, provisionSeleniumHubNodesFeedback]);
+};
+
+
+const parallel = async (runParams) => {
+  const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;  
+  internals.log = log;
+  const numberOfTestSessions = sessionsProps.length;
+
+  const { appSlaveServiceNames, seleniumHubServiceName } = await internals.provisionViaLambda({ cloudFuncOpts: { region, endpoint }, numberOfTestSessions, browsers: sessionsProps.map(p => p.browser) });
+
+  for (let i = 0; i < numberOfTestSessions; i += 1) {
+    const cucumberArgs = createCucumberArgs.call(model, sessionsProps[i], appSlaveServiceNames[i], seleniumHubServiceName);
 
     // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
     // Currently reports for all test sessions will be the same.

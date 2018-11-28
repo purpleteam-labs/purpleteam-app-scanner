@@ -6,7 +6,7 @@ const config = require(`${process.cwd()}/config/config`); // eslint-disable-line
 
 const zapSchema = {
   protocol: Joi.string().required().valid('https', 'http'),
-  ip: Joi.string().required().ip(),
+  hostname: Joi.string().required(),
   port: Joi.number().required().port(),
   apiKey: Joi.string().required(),
   apiFeedbackSpeed: Joi.number().integer().positive(),
@@ -25,7 +25,7 @@ let alertCount;
 
 const validateProperties = (slaveProperties) => {
   const result = Joi.validate(slaveProperties, zapSchema);
-
+  // log.debug(`result: ${JSON.stringify(result)}`);
   if (result.error) {
     log.error(result.error.message, { tags: ['zap'] });
     throw new Error(result.error.message);
@@ -40,7 +40,7 @@ const init = (options) => {
 
   const zapOptions = {
     apiKey: properties.apiKey,
-    proxy: `${properties.protocol}://${properties.ip}:${properties.port}/`
+    proxy: `${properties.protocol}://${properties.hostname}:${properties.port}/`
   };
 
   zaproxy = new ZapClient(zapOptions);
@@ -65,6 +65,6 @@ module.exports = {
   init,
   getProperties,
   getZaproxy: () => zaproxy,
-  getPropertiesForBrowser: () => getProperties(['protocol', 'ip', 'port']),
+  getPropertiesForBrowser: () => getProperties(['protocol', 'hostname', 'port']),
   numberOfAlertsForSesh
 };

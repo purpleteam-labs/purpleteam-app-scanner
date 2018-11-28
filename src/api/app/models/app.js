@@ -64,11 +64,11 @@ class App {
   }
 
 
-  createCucumberArgs(sutProps = {}, slaveHost = this.slave.ip) {
+  createCucumberArgs(sutProps = {}, slaveHost = this.slave.hostname, seleniumHubServiceName = '') {
     // sut.validateProperties(sutProperties);
 
     const slaveProperties = {
-      ip: slaveHost,
+      hostname: slaveHost,
       protocol: this.slave.protocol,
       port: this.slave.port,
       apiKey: this.slave.apiKey,
@@ -81,6 +81,7 @@ class App {
 
     const cucumberParameters = {
       slaveProperties,
+      seleniumHubServiceName,
       sutProperties: sutProps,
       cucumber: { timeOut: this.cucumber.timeOut }
     };

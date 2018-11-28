@@ -14,7 +14,7 @@ const strings = require(`${process.cwd()}/src/strings`); // eslint-disable-line 
 
 class CustomWorld {
   constructor({ attach, parameters }) {
-    const { sutProperties, sutProperties: { testSession } } = parameters;
+    const { seleniumHubServiceName, sutProperties, sutProperties: { testSession } } = parameters;
 
     this.log = log;
     this.publisher = messagePublisher;
@@ -25,6 +25,7 @@ class CustomWorld {
 
     setDefaultTimeout(parameters.cucumber.timeOut);
 
+    this.selenium = { hubServiceName: seleniumHubServiceName };
     this.sut = sut;
     this.sut.init({ log, publisher: this.publisher, sutProperties });
     this.zap = zap;
@@ -34,7 +35,7 @@ class CustomWorld {
 
 
   async initialiseBrowser() {
-    await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser());
+    await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser(), this.selenium.hubServiceName);
   }
 
 

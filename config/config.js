@@ -41,9 +41,9 @@ const schema = {
       format: ['https', 'http'],
       default: 'https'
     },
-    ip: {
-      doc: 'The IP address of the slave host.',
-      format: 'ipaddress',
+    hostname: {
+      doc: 'The hostname (IP or name) address of the slave host.',
+      format: String,
       default: '240.0.0.0'
     },
     port: {
