@@ -97,6 +97,7 @@ const parallel = async (runParams) => {
     browsers: sessionsProps.map(p => p.browser)
   });
 
+  // Todo: KC: Ditch for loop, possibly combine each element from sessionsProps and appSlaveServiceNames into an iterable.
   for (let i = 0; i < numberOfTestSessions; i += 1) {
     const cucumberArgs = createCucumberArgs.call(model, sessionsProps[i], appSlaveServiceNames[i], seleniumHubServiceName);
 

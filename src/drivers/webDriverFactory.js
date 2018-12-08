@@ -16,6 +16,7 @@ class WebDriverFactory {
     ({ log } = options);
     if (webDriver) return webDriver;
     // Builder API: https://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_Builder.html
+    // proxy module: https://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/proxy.html
     try {
       webDriver = await new seleniumWebdriver.Builder()
         .forBrowser(options.browser)
