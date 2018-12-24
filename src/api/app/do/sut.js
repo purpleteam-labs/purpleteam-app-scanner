@@ -94,13 +94,13 @@ const getProperties = (selecter) => {
 };
 
 
-const initialiseBrowser = async (slaveProperties, seleniumHubServiceName) => {
+const initialiseBrowser = async (slaveProperties, seleniumContainerName) => {
   const webDriverFactory = new WebDriverFactory();
 
   webDriver = await webDriverFactory.webDriver({
     log,
     browser: properties.browser,
-    selenium: { hubServiceName: seleniumHubServiceName },
+    selenium: { seleniumContainerName },
     slave: slaveProperties
   });
 

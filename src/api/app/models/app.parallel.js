@@ -21,65 +21,70 @@ const { Lambda } = require('aws-sdk');
 
 const internals = {};
 
-internals.provisionAppSlaves = (options) => {
+internals.lambdaFuncNames = ['provisionAppSlaves', 'provisionSeleniumStandalones'];
+
+internals.provisionContainers = (options) => {
   // If we need to stop the slave containers after this/a run, runCuc.js may be the best place.
-  const { lambda, numberOfTestSessions } = options;
-
-  const lambdaParamsToProvisionAppSlaves = {
+  const { lambda, provisionViaLambdaDto, lambdaFunc } = options;
+  const lambdaParams = {
     // https://github.com/awslabs/aws-sam-cli/pull/749
     InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
-    FunctionName: 'provisionAppSlaves',
-    Payload: JSON.stringify({ slaveType: 'app', instances: numberOfTestSessions })
+    FunctionName: lambdaFunc,
+    Payload: JSON.stringify({ provisionViaLambdaDto })
   };
 
-  const responseToProvisionAppSlaves = lambda.invoke(lambdaParamsToProvisionAppSlaves);
-  const promise = responseToProvisionAppSlaves.promise();
-  return { functionName: lambdaParamsToProvisionAppSlaves.FunctionName, responseBodyProp: 'appSlaveServiceNames', promise };
+  const response = lambda.invoke(lambdaParams);
+  const promise = response.promise();
+  return { functionName: lambdaFunc, responseBodyProp: 'provisionViaLambdaDto', promise };
 };
-
-internals.provisionSeleniumHubNodes = (options) => {
-  const { lambda, browsers: seleniumNodes } = options;
-  const lambdaParamsToProvisionSeleniumHubNodes = {
-    // https://github.com/awslabs/aws-sam-cli/pull/749
-    InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
-    FunctionName: 'provisionSeleniumHubNodes',
-    Payload: JSON.stringify(seleniumNodes)
-  };
-
-  const responseToProvisionSeleniumHubNodes = lambda.invoke(lambdaParamsToProvisionSeleniumHubNodes);
-  const promise = responseToProvisionSeleniumHubNodes.promise();
-  return { functionName: lambdaParamsToProvisionSeleniumHubNodes.FunctionName, responseBodyProp: 'seleniumHubServiceName', promise };
-};
-
 
 internals.resolvePromises = async (provisionFeedback) => {
   const { log } = internals;
   const promisesFromLambdas = provisionFeedback.map(p => p.promise);
-  const responseBodyPropData = {};
 
-  await Promise.all(promisesFromLambdas).then((resolved) => {
-    for (let i = 0; i < provisionFeedback.length; i += 1) {
-      const { Payload: payload } = resolved[i];
-      if (payload.includes('errorMessage')) log.error(`Error occurred while invoking lambda function "${provisionFeedback[i].functionName}". Response was: ${payload}`, { tags: ['app.parallel'] });
-      else responseBodyPropData[provisionFeedback[i].responseBodyProp] = JSON.parse(payload).body[provisionFeedback[i].responseBodyProp];
-    }
-  }).catch((err) => {
+  const responses = await Promise.all(promisesFromLambdas).catch((err) => {
     log.error(`Error occurred while invoking lambda function. Error was: ${err}`, { tags: ['app.parallel'] });
   });
 
-  return responseBodyPropData;
+  const provisionViaLambdaDtoCollection = responses.map(r => JSON.parse(r.Payload).body.provisionViaLambdaDto);
+  return provisionViaLambdaDtoCollection;
 };
 
+internals.mergeProvisionViaLambdaDtoCollection = (provisionViaLambdaDtoCollection) => {
+  const merge = [];
+  const numberOfElementsToMerge = internals.lambdaFuncNames.length;
+  let numberOfElementsToMergeCounter = 0;
 
-internals.provisionViaLambda = (options) => {
-  const { cloudFuncOpts, numberOfTestSessions, browsers } = options;
-  const { provisionAppSlaves, provisionSeleniumHubNodes, resolvePromises } = internals;
+  while (numberOfElementsToMergeCounter < numberOfElementsToMerge) {
+    // eslint-disable-next-line no-loop-func
+    merge.push(provisionViaLambdaDtoCollection.map(cV => cV.items[numberOfElementsToMergeCounter]));
+    numberOfElementsToMergeCounter += 1;
+  }
+
+  const provisionedViaLambdaDto = {};
+
+  provisionedViaLambdaDto.items = merge.map((mCV, mI) => {
+    const { browser, testSessionId } = mCV[mI];
+    return {
+      browser,
+      testSessionId,
+      appSlaveContainerName: mCV.find(e => e.appSlaveContainerName).appSlaveContainerName,
+      seleniumContainerName: mCV.find(e => e.seleniumContainerName).seleniumContainerName
+    };
+  });
+
+  return provisionedViaLambdaDto;
+};
+
+internals.provisionViaLambda = async (options) => {
+  const { cloudFuncOpts, provisionViaLambdaDto } = options;
+  const { provisionContainers, resolvePromises, mergeProvisionViaLambdaDtoCollection, lambdaFuncNames } = internals;
   const lambda = new Lambda(cloudFuncOpts);
 
-  const provisionAppSlavesFeedback = provisionAppSlaves({ lambda, numberOfTestSessions });
-  const provisionSeleniumHubNodesFeedback = provisionSeleniumHubNodes({ lambda, browsers });
+  const collectionOfWrappedProvisionViaLambdaDtos = lambdaFuncNames.map(f => provisionContainers({ lambda, provisionViaLambdaDto, lambdaFunc: f }));
 
-  return resolvePromises([provisionAppSlavesFeedback, provisionSeleniumHubNodesFeedback]);
+  const provisionViaLambdaDtoCollection = await resolvePromises(collectionOfWrappedProvisionViaLambdaDtos);
+  return mergeProvisionViaLambdaDtoCollection(provisionViaLambdaDtoCollection);
 };
 
 
@@ -88,18 +93,24 @@ const parallel = async (runParams) => {
   internals.log = log;
   const numberOfTestSessions = sessionsProps.length;
 
-  const {
-    appSlaveServiceNames,
-    seleniumHubServiceName
-  } = await internals.provisionViaLambda({
-    cloudFuncOpts: { region, endpoint },
-    numberOfTestSessions,
-    browsers: sessionsProps.map(p => p.browser)
-  });
+  const provisionViaLambdaDto = {
+    items: sessionsProps.map(s => ({
+      testSessionId: s.testSession.id,
+      browser: s.browser,
+      appSlaveContainerName: null,
+      seleniumContainerName: null
+    }))
+  };
+
+  const provisionedViaLambdaDto = await internals.provisionViaLambda({ cloudFuncOpts: { region, endpoint }, provisionViaLambdaDto });
+
+  const runableSessionsProps = provisionedViaLambdaDto.items.map((cV, i) => (
+    { sessionProps: sessionsProps[i], slaveHost: cV.appSlaveContainerName, seleniumContainerName: cV.seleniumContainerName }
+  ));
 
   // Todo: KC: Ditch for loop, possibly combine each element from sessionsProps and appSlaveServiceNames into an iterable.
   for (let i = 0; i < numberOfTestSessions; i += 1) {
-    const cucumberArgs = createCucumberArgs.call(model, sessionsProps[i], appSlaveServiceNames[i], seleniumHubServiceName);
+    const cucumberArgs = createCucumberArgs.call(model, runableSessionsProps[i]);
 
     // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
     // Currently reports for all test sessions will be the same.

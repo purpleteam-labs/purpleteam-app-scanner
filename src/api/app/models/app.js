@@ -64,7 +64,7 @@ class App {
   }
 
 
-  createCucumberArgs(sutProps = {}, slaveHost = this.slave.hostname, seleniumHubServiceName = '') {
+  createCucumberArgs({ sessionProps = {}, slaveHost = this.slave.hostname, seleniumContainerName = '' }) {
     // sut.validateProperties(sutProperties);
 
     const slaveProperties = {
@@ -81,8 +81,8 @@ class App {
 
     const cucumberParameters = {
       slaveProperties,
-      seleniumHubServiceName,
-      sutProperties: sutProps,
+      seleniumContainerName,
+      sutProperties: sessionProps,
       cucumber: { timeOut: this.cucumber.timeOut }
     };
 
@@ -94,7 +94,7 @@ class App {
       '--require',
       this.cucumber.steps,
       /* '--exit', */
-      `--format=json:${this.results.dir}result_testSessionId-${sutProps ? sutProps.testSession.id : 'noSutPropsAvailable'}_${this.strings.NowAsFileName('-')}.json`,
+      `--format=json:${this.results.dir}result_testSessionId-${sessionProps ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.json`,
       '--tags',
       this.cucumber.tagExpression,
       '--world-parameters',
