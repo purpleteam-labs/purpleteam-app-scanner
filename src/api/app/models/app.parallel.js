@@ -112,16 +112,6 @@ const parallel = async (runParams) => {
   for (let i = 0; i < numberOfTestSessions; i += 1) {
     const cucumberArgs = createCucumberArgs.call(model, runableSessionsProps[i]);
 
-    // We may end up having to hava an instance of Zap per test session in order to acheive isolation.
-    // Currently reports for all test sessions will be the same.
-    // Setting aScannerAttackStrength, aScannerAlertThreshold with single instance Zap will simply be a last one wins scenario.
-    // We could also look at using spawnSync, but then, Zap would need to be restarted, which defeats the point of creating a process,
-    //   other than the fact that the Cucumber Cli won't run twice.
-    // Can I start slave containers from within this container? What's the best way to do this?
-    //   Nope, it's not secure, gives full root access of the host to this container: https://github.com/apocas/dockerode/issues/89
-    // How to do service discovery rather than hard coding IP and ports in config within one container?
-
-
     const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
     model.slavesDeployed = true;
 
