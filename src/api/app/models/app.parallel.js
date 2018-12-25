@@ -91,7 +91,6 @@ internals.provisionViaLambda = async (options) => {
 const parallel = async (runParams) => {
   const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
   internals.log = log;
-  const numberOfTestSessions = sessionsProps.length;
 
   const provisionViaLambdaDto = {
     items: sessionsProps.map(s => ({
@@ -109,8 +108,8 @@ const parallel = async (runParams) => {
   ));
 
   // Todo: KC: Ditch for loop, possibly combine each element from sessionsProps and appSlaveServiceNames into an iterable.
-  for (let i = 0; i < numberOfTestSessions; i += 1) {
-    const cucumberArgs = createCucumberArgs.call(model, runableSessionsProps[i]);
+  runableSessionsProps.forEach((rSP, i) => {
+    const cucumberArgs = createCucumberArgs.call(model, rSP);
 
     const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
     model.slavesDeployed = true;
@@ -132,7 +131,7 @@ const parallel = async (runParams) => {
     cucCli.on('error', (err) => {
       process.stdout.write(`Failed to start subprocess. The error was: ${err}`, { tags: ['app'] });
     });
-  }
+  });
 };
 
 module.exports = parallel;
