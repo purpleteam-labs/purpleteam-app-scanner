@@ -82,7 +82,7 @@ Given('a new scanning session based on each build user supplied testSession', fu
       ({ contextId } = resp);
       this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Created new Zap context with a contextId of: ${contextId}, correlating with the contextName of: ${contextName}.`, tagObj: { tags: ['app_scan_steps'] } });
     },
-    error => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Error occured while attempting to create a new Zap context, message was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
+    error => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Error occured while attempting to create a new Zap context using contextName: "${contextName}", message was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
   );
 });
 
