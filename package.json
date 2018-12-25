@@ -66,6 +66,7 @@
   "dependencies": {
     "app-module-path": "^2.2.0",
     "aws-sdk": "^2.361.0",
+    "axios": "^0.18.0",
     "chromedriver": "^2.36.0",
     "code": "^5.2.0",
     "convict": "^4.3.2",
