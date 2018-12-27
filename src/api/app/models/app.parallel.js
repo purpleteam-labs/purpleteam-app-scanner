@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const { Lambda } = require('aws-sdk');
+const axios = require('axios');
 
 // For complete sessionsProps
 // https://github.com/cucumber/cucumber-js/issues/786#issuecomment-372928596
@@ -87,6 +88,37 @@ internals.provisionViaLambda = async (options) => {
   return mergeProvisionViaLambdaDtoCollection(provisionViaLambdaDtoCollection);
 };
 
+const s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisionedViaLambdaDto }) => {
+  
+  const containerReadyPromises = provisionedViaLambdaDto.items.map(mCV => [
+    
+      // isReady: response => response.data.includes('ZAP API UI'),
+      axios.get(`${protocol}://${mCV.appSlaveContainerName}:${port}/UI`, { headers: { 'Content-type': 'application/json' } })
+    ,
+      // isReady: response => response.data.value.ready === true,
+      axios.get(`http://${mCV.seleniumContainerName}:4444/wd/hub/status`, { headers: { 'Content-type': 'application/json' } })
+    
+  ]).reduce((accum, rCV) => [...accum, ...rCV], []);
+
+  const results = await Promise.all(containerReadyPromises);
+
+  const isReady = {
+    appSlave: (response) => {
+      if (typeof response.data === 'string') return response.data.includes('ZAP API UI');
+    },
+    seleniumContainer: (response) => {
+      return response.data.value.ready === true;
+    }
+  };
+
+  const containersThatAreNotReady = results.filter((e) => {
+    return !(isReady.appSlave(e) || isReady.seleniumContainer(e));
+  });
+
+  return !containersThatAreNotReady.length;
+  
+
+};
 
 const parallel = async (runParams) => {
   const { model, model: { log, /* publisher: p, */ createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
@@ -107,31 +139,34 @@ const parallel = async (runParams) => {
     { sessionProps: sessionsProps[i], slaveHost: cV.appSlaveContainerName, seleniumContainerName: cV.seleniumContainerName }
   ));
 
-  // Todo: KC: Ditch for loop, possibly combine each element from sessionsProps and appSlaveServiceNames into an iterable.
-  runableSessionsProps.forEach((rSP, i) => {
-    const cucumberArgs = createCucumberArgs.call(model, rSP);
+  const ready = await s2ContainersReady({ model, provisionedViaLambdaDto });
 
-    const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
-    model.slavesDeployed = true;
+  if (ready) {
+    runableSessionsProps.forEach((rSP, i) => {
+      const cucumberArgs = createCucumberArgs.call(model, rSP);
 
-    cucCli.stdout.on('data', (data) => {
-      process.stdout.write(data);
+      const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
+      model.slavesDeployed = true;
+
+      cucCli.stdout.on('data', (data) => {
+        process.stdout.write(data);
+      });
+
+      cucCli.stderr.on('data', (data) => {
+        process.stdout.write(data);
+      });
+
+      // eslint-disable-next-line no-loop-func
+      cucCli.on('close', (code) => {
+        process.stdout
+          .write(`child process "cucumber Cli" running session with id "${sessionsProps[i].testSession.id}" exited with code ${code}`, { tags: ['app'] });
+      });
+
+      cucCli.on('error', (err) => {
+        process.stdout.write(`Failed to start subprocess. The error was: ${err}`, { tags: ['app'] });
+      });
     });
-
-    cucCli.stderr.on('data', (data) => {
-      process.stdout.write(data);
-    });
-
-    // eslint-disable-next-line no-loop-func
-    cucCli.on('close', (code) => {
-      process.stdout
-        .write(`child process "cucumber Cli" running session with id "${sessionsProps[i].testSession.id}" exited with code ${code}`, { tags: ['app'] });
-    });
-
-    cucCli.on('error', (err) => {
-      process.stdout.write(`Failed to start subprocess. The error was: ${err}`, { tags: ['app'] });
-    });
-  });
+  }
 };
 
 module.exports = parallel;
