@@ -108,9 +108,7 @@ const s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisi
       seleniumContainer: response => response.data.value.ready === true
     };
 
-    const containersThatAreNotReady = results.filter((e) => {
-      return !(isReady.appSlave(e) || isReady.seleniumContainer(e));
-    });
+    const containersThatAreNotReady = results.filter(e => !(isReady.appSlave(e) || isReady.seleniumContainer(e)));
 
     return !containersThatAreNotReady.length;
   }
