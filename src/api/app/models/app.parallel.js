@@ -98,7 +98,7 @@ const s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisi
 
   const results = await Promise.all(containerReadyPromises)
     .catch((err) => {
-      log.error(`Error occurred while testing that s2 containers were up/responsive. Error was: ${err.message}`, { tags: ['app.parallel'] });
+      log.warning(`Error occurred while testing that s2 containers were up/responsive. Error was: ${err.message}`, { tags: ['app.parallel'] });
       return false;
     });
 
