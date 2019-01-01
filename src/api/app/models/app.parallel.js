@@ -119,7 +119,6 @@ const s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisi
 
 internals.runTestSession = (runableSessionProps) => {
   const { model } = internals;
-  // const cucumberArgs = createCucumberArgs.call(model, runableSessionProps);
   const cucumberArgs = model.createCucumberArgs(runableSessionProps);
 
   const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
@@ -145,7 +144,7 @@ internals.runTestSession = (runableSessionProps) => {
 };
 
 const parallel = async (runParams) => {
-  const { model, model: { log, publisher: p, createCucumberArgs, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
+  const { model, model: { log, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
   const { runTestSession } = internals;
   internals.log = log;
   internals.model = model;
