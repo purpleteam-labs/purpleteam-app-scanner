@@ -44,11 +44,7 @@ class App {
       testSession: sesh // The data array contains the relationships to the testSessions
     }));
 
-    let returnStatus;
-
-    if (this.runType === 'sequential') returnStatus = await model[this.runType]({ model: this, sessionsProps });
-    else returnStatus = await model[this.runType]({ model: this, sessionsProps });
-
+    const returnStatus = await model[this.runType]({ model: this, sessionsProps });
     return returnStatus; // This is propagated per session in the CLI model.
   }
 
