@@ -88,7 +88,7 @@ internals.provisionViaLambda = async (options) => {
   return mergeProvisionViaLambdaDtoCollection(provisionViaLambdaDtoCollection);
 };
 
-const s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisionedViaLambdaDto }) => {
+internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisionedViaLambdaDto }) => {
   const { log } = internals;
   log.debug('Checking whether S2 containers are ready yet', { tags: ['app.parallel'] });
   const containerReadyPromises = provisionedViaLambdaDto.items.map(mCV => [
@@ -143,7 +143,7 @@ internals.runTestSession = (runableSessionProps) => {
 
 const parallel = async (runParams) => {
   const { model, model: { log, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
-  const { runTestSession } = internals;
+  const { s2ContainersReady, runTestSession } = internals;
   internals.log = log;
   internals.model = model;
 
