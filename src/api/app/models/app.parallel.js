@@ -25,7 +25,8 @@ const internals = {};
 internals.lambdaFuncNames = ['provisionAppSlaves', 'provisionSeleniumStandalones'];
 
 internals.provisionContainers = (options) => {
-  // If we need to stop the slave containers after this/a run, runCuc.js may be the best place.
+  // If we need to stop the S2 containers after this/a run, runCuc.js may be the best place,
+  // or within an event handler of cucCli of the internals.runTestSession.
   const { lambda, provisionViaLambdaDto, lambdaFunc } = options;
   const lambdaParams = {
     // https://github.com/awslabs/aws-sam-cli/pull/749
