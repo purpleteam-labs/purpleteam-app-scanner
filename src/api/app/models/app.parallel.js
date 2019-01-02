@@ -115,6 +115,19 @@ internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, pro
   return false;
 };
 
+internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, provisionedViaLambdaDto }) => new Promise((resolve, reject) => {
+  const { s2ContainersReady, model } = internals;
+  let countDown = timeOut;
+  const decrementInterval = 1000;
+  const check = async () => {
+    countDown -= decrementInterval;
+    if (await s2ContainersReady({ model, provisionedViaLambdaDto })) resolve();
+    else if (countDown < 0) reject(new Error('Timed out while waiting for S2 containers to be ready.'));
+    else setTimeout(check, decrementInterval);
+  };
+  setTimeout(check, decrementInterval);
+});
+
 internals.runTestSession = (runableSessionProps) => {
   const { model } = internals;
   const cucumberArgs = model.createCucumberArgs(runableSessionProps);
@@ -137,13 +150,13 @@ internals.runTestSession = (runableSessionProps) => {
   });
 
   cucCli.on('error', (err) => {
-    process.stdout.write(`Failed to start subprocess. The error was: ${err}`, { tags: ['app.parallel'] });
+    process.stdout.write(`Failed to start sub-process. The error was: ${err}`, { tags: ['app.parallel'] });
   });
 };
 
 const parallel = async (runParams) => {
   const { model, model: { log, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
-  const { s2ContainersReady, runTestSession } = internals;
+  const { waitForS2ContainersReady, runTestSession } = internals;
   internals.log = log;
   internals.model = model;
 
@@ -162,21 +175,9 @@ const parallel = async (runParams) => {
     { sessionProps: sessionsProps[i], slaveHost: cV.appSlaveContainerName, seleniumContainerName: cV.seleniumContainerName }
   ));
 
-  const waitForS2ContainersReady = timeOut => new Promise((resolve, reject) => {
-    let countDown = timeOut;
-    const decrementInterval = 1000;
-    const check = async () => {
-      countDown -= decrementInterval;
-      if (await s2ContainersReady({ model, provisionedViaLambdaDto })) resolve();
-      else if (countDown < 0) reject(new Error('Timed out while waiting for S2 containers to be ready.'));
-      else setTimeout(check, decrementInterval);
-    };
-    setTimeout(check, decrementInterval);
-  });
-
   let returnStatus;
 
-  await waitForS2ContainersReady(10000)
+  await waitForS2ContainersReady({ waitForS2ContainersTimeOut: 10000, provisionedViaLambdaDto })
     .then(() => {
       runableSessionsProps.forEach((rSP) => {
         runTestSession(rSP);
