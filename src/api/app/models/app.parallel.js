@@ -45,10 +45,25 @@ internals.resolvePromises = async (provisionFeedback) => {
   const promisesFromLambdas = provisionFeedback.map(p => p.promise);
 
   const responses = await Promise.all(promisesFromLambdas).catch((err) => {
-    log.error(`Error occurred while invoking lambda function. Error was: ${err}`, { tags: ['app.parallel'] });
+    log.error(`Unhandled error occurred within a lambda function while attempting to start S2 containers. Error was: ${err.message}`, { tags: ['app.parallel'] });
+    throw err;
   });
 
-  const provisionViaLambdaDtoCollection = responses.map(r => JSON.parse(r.Payload).body.provisionViaLambdaDto);
+  let provisionViaLambdaDtoCollection;
+  try {
+    provisionViaLambdaDtoCollection = responses.map(r => JSON.parse(r.Payload).body.provisionViaLambdaDto);
+  } catch (e) {
+    log.error(`Unhandled error occurred within a lambda function while attempting to start S2 containers. Error was: ${e.message}`, { tags: ['app.parallel'] });
+    throw e;
+  }
+
+  provisionViaLambdaDtoCollection.some((e) => {
+    if (typeof e.items === 'string' && e.items.includes('Timeout exceeded')) {
+      log.error(`Handled error occurred within a lambda function while attempting to start S2 containers. Error was: ${e.items}`, { tags: ['app.parallel'] });
+      throw new Error(e.items);
+    } else return false;
+  });
+
   return provisionViaLambdaDtoCollection;
 };
 
@@ -91,7 +106,7 @@ internals.provisionViaLambda = async (options) => {
 
 internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisionedViaLambdaDto }) => {
   const { log } = internals;
-  log.debug('Checking whether S2 containers are ready yet', { tags: ['app.parallel'] });
+  log.notice('Checking whether S2 containers are ready yet', { tags: ['app.parallel'] });
   const containerReadyPromises = provisionedViaLambdaDto.items.map(mCV => [
     axios.get(`${protocol}://${mCV.appSlaveContainerName}:${port}/UI`, { headers: { 'Content-type': 'application/json' } }),
     axios.get(`http://${mCV.seleniumContainerName}:4444/wd/hub/status`, { headers: { 'Content-type': 'application/json' } })
@@ -122,7 +137,7 @@ internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, pro
   const decrementInterval = 1000;
   const check = async () => {
     countDown -= decrementInterval;
-    if (await s2ContainersReady({ model, provisionedViaLambdaDto })) resolve();
+    if (await s2ContainersReady({ model, provisionedViaLambdaDto })) resolve('S2 containers are ready to take orders');
     else if (countDown < 0) reject(new Error('Timed out while waiting for S2 containers to be ready.'));
     else setTimeout(check, decrementInterval);
   };
@@ -179,7 +194,8 @@ const parallel = async (runParams) => {
   let returnStatus;
 
   await waitForS2ContainersReady({ waitForS2ContainersTimeOut: 10000, provisionedViaLambdaDto })
-    .then(() => {
+    .then((resolved) => {
+      log.notice(resolved, { tags: ['app.parallel'] });
       runableSessionsProps.forEach((rSP) => {
         runTestSession(rSP);
       });
