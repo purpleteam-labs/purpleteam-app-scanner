@@ -145,7 +145,7 @@ internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, pro
 });
 
 internals.runTestSession = (runableSessionProps) => {
-  const { model } = internals;
+  const { model, log } = internals;
   const cucumberArgs = model.createCucumberArgs(runableSessionProps);
 
   const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
@@ -159,10 +159,14 @@ internals.runTestSession = (runableSessionProps) => {
     process.stdout.write(data);
   });
 
-  // eslint-disable-next-line no-loop-func
+  cucCli.on('exit', (code, signal) => {
+    const message = `child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}"`;
+    log.notice(message, { tags: ['app.parallel'] });
+  });
+
   cucCli.on('close', (code) => {
-    process.stdout
-      .write(`child process "cucumber Cli" running session with id "${runableSessionProps.sessionProps.testSession.id}" exited with code ${code}`, { tags: ['app.parallel'] });
+    const message = `"close" event was emitted with code: "${code}" for "cucumber Cli" running session with id "${runableSessionProps.sessionProps.testSession.id}".`;
+    log.notice(message, { tags: ['app.parallel'] });
   });
 
   cucCli.on('error', (err) => {

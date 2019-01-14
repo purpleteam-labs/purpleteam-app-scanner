@@ -56,9 +56,11 @@ exports.default = async function run() {
 
 
   const exitCode = result.success ? 0 : 1;
-  if (result.shouldExitImmediately) {
-    process.exit(exitCode);
-  } else {
-    process.exitCode = exitCode;
-  }
+
+  process.exit(exitCode);
+  // if (result.shouldExitImmediately) {
+  //   process.exit(exitCode);
+  // } else {
+  //   process.exitCode = exitCode;
+  // }
 };
