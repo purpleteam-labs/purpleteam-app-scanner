@@ -20,12 +20,16 @@ const axios = require('axios');
   })();
 */
 
-const internals = {};
-
-internals.lambdaFuncNames = ['provisionAppSlaves', 'provisionSeleniumStandalones'];
+const internals = {
+  log: undefined,
+  model: undefined,
+  numberOfTestSessions: 0,
+  testSessionDoneCount: 0,
+  lambdaProvisioningFuncNames: ['provisionAppSlaves', 'provisionSeleniumStandalones']
+};
 
 internals.provisionContainers = (options) => {
-  // If we need to stop the S2 containers after this/a run, runCuc.js may be the best place,
+  // If we need to stop the S2 app containers after this/a run, runCuc.js may be the best place,
   // or within an event handler of cucCli of the internals.runTestSession.
   const { lambda, provisionViaLambdaDto, lambdaFunc } = options;
   const lambdaParams = {
@@ -45,7 +49,7 @@ internals.resolvePromises = async (provisionFeedback) => {
   const promisesFromLambdas = provisionFeedback.map(p => p.promise);
 
   const responses = await Promise.all(promisesFromLambdas).catch((err) => {
-    log.error(`Unhandled error occurred within a lambda function while attempting to start S2 containers. Error was: ${err.message}`, { tags: ['app.parallel'] });
+    log.error(`Unhandled error occurred within a Lambda function while attempting to start S2 app containers. Error was: ${err.message}`, { tags: ['app.parallel'] });
     throw err;
   });
 
@@ -53,13 +57,13 @@ internals.resolvePromises = async (provisionFeedback) => {
   try {
     provisionViaLambdaDtoCollection = responses.map(r => JSON.parse(r.Payload).body.provisionViaLambdaDto);
   } catch (e) {
-    log.error(`Unhandled error occurred within a lambda function while attempting to start S2 containers. Error was: ${e.message}`, { tags: ['app.parallel'] });
+    log.error(`Unhandled error occurred within a Lambda function while attempting to start S2 app containers. Error was: ${e.message}`, { tags: ['app.parallel'] });
     throw e;
   }
 
   provisionViaLambdaDtoCollection.some((e) => {
     if (typeof e.items === 'string' && e.items.includes('Timeout exceeded')) {
-      log.error(`Handled error occurred within a lambda function while attempting to start S2 containers. Error was: ${e.items}`, { tags: ['app.parallel'] });
+      log.error(`Handled error occurred within a Lambda function while attempting to start S2 app containers, Make sure you have the Docker images pulled locally. Error was: ${e.items}`, { tags: ['app.parallel'] });
       throw new Error(e.items);
     } else return false;
   });
@@ -69,7 +73,7 @@ internals.resolvePromises = async (provisionFeedback) => {
 
 internals.mergeProvisionViaLambdaDtoCollection = (provisionViaLambdaDtoCollection) => {
   const merge = [];
-  const numberOfElementsToMerge = internals.lambdaFuncNames.length;
+  const numberOfElementsToMerge = internals.lambdaProvisioningFuncNames.length;
   let numberOfElementsToMergeCounter = 0;
 
   while (numberOfElementsToMergeCounter < numberOfElementsToMerge) {
@@ -95,7 +99,7 @@ internals.mergeProvisionViaLambdaDtoCollection = (provisionViaLambdaDtoCollectio
 
 internals.provisionViaLambda = async (options) => {
   const { cloudFuncOpts, provisionViaLambdaDto } = options;
-  const { provisionContainers, resolvePromises, mergeProvisionViaLambdaDtoCollection, lambdaFuncNames } = internals;
+  const { provisionContainers, resolvePromises, mergeProvisionViaLambdaDtoCollection, lambdaProvisioningFuncNames: lambdaFuncNames } = internals;
   const lambda = new Lambda(cloudFuncOpts);
 
   const collectionOfWrappedProvisionViaLambdaDtos = lambdaFuncNames.map(f => provisionContainers({ lambda, provisionViaLambdaDto, lambdaFunc: f }));
@@ -106,7 +110,7 @@ internals.provisionViaLambda = async (options) => {
 
 internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisionedViaLambdaDto }) => {
   const { log } = internals;
-  log.notice('Checking whether S2 containers are ready yet', { tags: ['app.parallel'] });
+  log.notice('Checking whether S2 app containers are ready yet', { tags: ['app.parallel'] });
   const containerReadyPromises = provisionedViaLambdaDto.items.map(mCV => [
     axios.get(`${protocol}://${mCV.appSlaveContainerName}:${port}/UI`, { headers: { 'Content-type': 'application/json' } }),
     axios.get(`http://${mCV.seleniumContainerName}:4444/wd/hub/status`, { headers: { 'Content-type': 'application/json' } })
@@ -114,7 +118,7 @@ internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, pro
 
   const results = await Promise.all(containerReadyPromises)
     .catch((err) => {
-      log.warning(`Error occurred while testing that s2 containers were up/responsive. Error was: ${err.message}`, { tags: ['app.parallel'] });
+      log.warning(`Error occurred while testing that s2 app containers were up/responsive. Error was: ${err.message}`, { tags: ['app.parallel'] });
       return false;
     });
 
@@ -137,15 +141,16 @@ internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, pro
   const decrementInterval = 1000;
   const check = async () => {
     countDown -= decrementInterval;
-    if (await s2ContainersReady({ model, provisionedViaLambdaDto })) resolve('S2 containers are ready to take orders');
-    else if (countDown < 0) reject(new Error('Timed out while waiting for S2 containers to be ready.'));
+    if (await s2ContainersReady({ model, provisionedViaLambdaDto })) resolve('S2 app containers are ready to take orders');
+    else if (countDown < 0) reject(new Error('Timed out while waiting for S2 app containers to be ready.'));
     else setTimeout(check, decrementInterval);
   };
   setTimeout(check, decrementInterval);
 });
 
-internals.runTestSession = (runableSessionProps) => {
-  const { model, log } = internals;
+internals.runTestSession = (runableSessionProps, cloudFuncOpts) => {
+  const { model, log, numberOfTestSessions } = internals;
+  
   const cucumberArgs = model.createCucumberArgs(runableSessionProps);
 
   const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
@@ -159,9 +164,42 @@ internals.runTestSession = (runableSessionProps) => {
     process.stdout.write(data);
   });
 
-  cucCli.on('exit', (code, signal) => {
+  cucCli.on('exit', async (code, signal) => {
     const message = `child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}"`;
     log.notice(message, { tags: ['app.parallel'] });
+
+    internals.testSessionDoneCount += 1;
+    if (internals.testSessionDoneCount >= numberOfTestSessions) {
+
+      const lambda = new Lambda(cloudFuncOpts);
+      const deprovisionViaLambdaDto = { items: ['app-slave', 'selenium-standalone'] };
+
+      const lambdaParams = {
+        // https://github.com/awslabs/aws-sam-cli/pull/749
+        InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
+        FunctionName: 'deprovisionS2Containers',
+        Payload: JSON.stringify({ deprovisionViaLambdaDto })
+      };
+
+      const response = lambda.invoke(lambdaParams);
+      const promise = response.promise();
+      const resolved = await promise;
+
+      let result;
+      try {
+        result = JSON.parse(resolved.Payload).body.deprovisionViaLambdaDto.items;
+      } catch (e) {
+        log.error(`Unhandled error occurred within a Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${e.message}`, { tags: ['app.parallel'] });
+        throw e;
+      }
+
+      if (typeof result === 'string' && result.includes('Timeout exceeded')) {
+        log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${result}`, { tags: ['app.parallel'] });
+        throw new Error(result);
+      }
+
+      log.notice(result, { tags: ['app.parallel'] });
+    }
   });
 
   cucCli.on('close', (code) => {
@@ -179,6 +217,7 @@ const parallel = async (runParams) => {
   const { waitForS2ContainersReady, runTestSession } = internals;
   internals.log = log;
   internals.model = model;
+  internals.numberOfTestSessions = sessionsProps.length;
 
   const provisionViaLambdaDto = {
     items: sessionsProps.map(s => ({
@@ -200,14 +239,15 @@ const parallel = async (runParams) => {
   await waitForS2ContainersReady({ waitForS2ContainersTimeOut: 10000, provisionedViaLambdaDto })
     .then((resolved) => {
       log.notice(resolved, { tags: ['app.parallel'] });
+      const cloudFuncOpts = { region, endpoint };
       runableSessionsProps.forEach((rSP) => {
-        runTestSession(rSP);
+        runTestSession(rSP, cloudFuncOpts);
       });
       returnStatus = 'App tests are now running.';
     })
     .catch((error) => {
       log.error(error.message, { tags: ['app.parallel'] });
-      returnStatus = 'Back-end failure: S2 containers are not ready.';
+      returnStatus = 'Back-end failure: S2 app containers are not ready.';
     });
 
   return returnStatus;
