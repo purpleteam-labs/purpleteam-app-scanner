@@ -28,6 +28,7 @@ const internals = {
   lambdaProvisioningFuncNames: ['provisionAppSlaves', 'provisionSeleniumStandalones']
 };
 
+
 internals.provisionContainers = (options) => {
   // If we need to stop the S2 app containers after this/a run, runCuc.js may be the best place,
   // or within an event handler of cucCli of the internals.runTestSession.
@@ -43,6 +44,7 @@ internals.provisionContainers = (options) => {
   const promise = response.promise();
   return { functionName: lambdaFunc, responseBodyProp: 'provisionViaLambdaDto', promise };
 };
+
 
 internals.resolvePromises = async (provisionFeedback) => {
   const { log } = internals;
@@ -71,6 +73,7 @@ internals.resolvePromises = async (provisionFeedback) => {
   return provisionViaLambdaDtoCollection;
 };
 
+
 internals.mergeProvisionViaLambdaDtoCollection = (provisionViaLambdaDtoCollection) => {
   const merge = [];
   const numberOfElementsToMerge = internals.lambdaProvisioningFuncNames.length;
@@ -97,6 +100,7 @@ internals.mergeProvisionViaLambdaDtoCollection = (provisionViaLambdaDtoCollectio
   return provisionedViaLambdaDto;
 };
 
+
 internals.provisionViaLambda = async (options) => {
   const { cloudFuncOpts, provisionViaLambdaDto } = options;
   const { provisionContainers, resolvePromises, mergeProvisionViaLambdaDtoCollection, lambdaProvisioningFuncNames: lambdaFuncNames } = internals;
@@ -107,6 +111,7 @@ internals.provisionViaLambda = async (options) => {
   const provisionViaLambdaDtoCollection = await resolvePromises(collectionOfWrappedProvisionViaLambdaDtos);
   return mergeProvisionViaLambdaDtoCollection(provisionViaLambdaDtoCollection);
 };
+
 
 internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, provisionedViaLambdaDto }) => {
   const { log } = internals;
@@ -135,6 +140,7 @@ internals.s2ContainersReady = async ({ model: { slave: { protocol, port } }, pro
   return false;
 };
 
+
 internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, provisionedViaLambdaDto }) => new Promise((resolve, reject) => {
   const { s2ContainersReady, model } = internals;
   let countDown = timeOut;
@@ -148,9 +154,10 @@ internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, pro
   setTimeout(check, decrementInterval);
 });
 
+
 internals.runTestSession = (runableSessionProps, cloudFuncOpts) => {
   const { model, log, numberOfTestSessions } = internals;
-  
+
   const cucumberArgs = model.createCucumberArgs(runableSessionProps);
 
   const cucCli = spawn('node', cucumberArgs, { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
@@ -170,7 +177,6 @@ internals.runTestSession = (runableSessionProps, cloudFuncOpts) => {
 
     internals.testSessionDoneCount += 1;
     if (internals.testSessionDoneCount >= numberOfTestSessions) {
-
       const lambda = new Lambda(cloudFuncOpts);
       const deprovisionViaLambdaDto = { items: ['app-slave', 'selenium-standalone'] };
 
@@ -211,6 +217,7 @@ internals.runTestSession = (runableSessionProps, cloudFuncOpts) => {
     process.stdout.write(`Failed to start sub-process. The error was: ${err}`, { tags: ['app.parallel'] });
   });
 };
+
 
 const parallel = async (runParams) => {
   const { model, model: { log, cloud: { function: { region, endpoint } } }, sessionsProps } = runParams;
