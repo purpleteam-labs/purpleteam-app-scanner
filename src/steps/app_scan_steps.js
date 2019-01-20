@@ -311,7 +311,7 @@ When('the active scan is run', async function () {
         // The following error means we haven't got the query string right.
         // Error occured while attempting to initiate active scan. Error was: 400 -
         // {"code":"url_not_found","message":"URL Not Found in the Scan Tree"}
-        reject(err); // eslint-disable-line no-undef
+        throw err;
       });
   }
 
