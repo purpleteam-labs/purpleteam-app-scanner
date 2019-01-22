@@ -155,6 +155,39 @@ internals.waitForS2ContainersReady = ({ waitForS2ContainersTimeOut: timeOut, pro
 });
 
 
+internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts) => {
+  const { log } = internals;
+  const lambda = new Lambda(cloudFuncOpts);
+  const deprovisionViaLambdaDto = { items: ['app-slave', 'selenium-standalone'] };
+
+  const lambdaParams = {
+    // https://github.com/awslabs/aws-sam-cli/pull/749
+    InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
+    FunctionName: 'deprovisionS2Containers',
+    Payload: JSON.stringify({ deprovisionViaLambdaDto })
+  };
+
+  const response = lambda.invoke(lambdaParams);
+  const promise = response.promise();
+  const resolved = await promise;
+
+  let result;
+  try {
+    result = JSON.parse(resolved.Payload).body.deprovisionViaLambdaDto.items;
+  } catch (e) {
+    log.error(`Unhandled error occurred within a Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${e.message}`, { tags: ['app.parallel'] });
+    throw e;
+  }
+
+  if (typeof result === 'string' && result.includes('Timeout exceeded')) {
+    log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${result}`, { tags: ['app.parallel'] });
+    throw new Error(result);
+  }
+
+  log.notice(result, { tags: ['app.parallel'] });
+};
+
+
 internals.runTestSession = (runableSessionProps, cloudFuncOpts) => {
   const { model, log, numberOfTestSessions } = internals;
 
@@ -174,38 +207,8 @@ internals.runTestSession = (runableSessionProps, cloudFuncOpts) => {
   cucCli.on('exit', async (code, signal) => {
     const message = `child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}"`;
     log.notice(message, { tags: ['app.parallel'] });
-
     internals.testSessionDoneCount += 1;
-    if (internals.testSessionDoneCount >= numberOfTestSessions) {
-      const lambda = new Lambda(cloudFuncOpts);
-      const deprovisionViaLambdaDto = { items: ['app-slave', 'selenium-standalone'] };
-
-      const lambdaParams = {
-        // https://github.com/awslabs/aws-sam-cli/pull/749
-        InvocationType: process.env.NODE_ENV === 'development' ? 'RequestResponse' : 'Event',
-        FunctionName: 'deprovisionS2Containers',
-        Payload: JSON.stringify({ deprovisionViaLambdaDto })
-      };
-
-      const response = lambda.invoke(lambdaParams);
-      const promise = response.promise();
-      const resolved = await promise;
-
-      let result;
-      try {
-        result = JSON.parse(resolved.Payload).body.deprovisionViaLambdaDto.items;
-      } catch (e) {
-        log.error(`Unhandled error occurred within a Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${e.message}`, { tags: ['app.parallel'] });
-        throw e;
-      }
-
-      if (typeof result === 'string' && result.includes('Timeout exceeded')) {
-        log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${result}`, { tags: ['app.parallel'] });
-        throw new Error(result);
-      }
-
-      log.notice(result, { tags: ['app.parallel'] });
-    }
+    if (internals.testSessionDoneCount >= numberOfTestSessions) internals.deprovisionS2ContainersViaLambda(cloudFuncOpts);
   });
 
   cucCli.on('close', (code) => {
