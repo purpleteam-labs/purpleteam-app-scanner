@@ -12,7 +12,7 @@ let publisher;
 const sutSchema = {
 
   protocol: Joi.string().required().valid('https', 'http'),
-  ip: Joi.string().ip().required(),
+  ip: Joi.string().hostname().required(),
   port: Joi.number().port().required(),
   browser: Joi.string().valid(config.getSchema().properties.sut.properties.browser.format).lowercase().default(config.get('sut.browser')),
   loggedInIndicator: Joi.string(),
