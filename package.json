@@ -65,7 +65,7 @@
   "homepage": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/blob/master/README.md",
   "dependencies": {
     "app-module-path": "^2.2.0",
-    "aws-sdk": "^2.361.0",
+    "aws-sdk": "^2.422.0",
     "axios": "^0.18.0",
     "chromedriver": "^2.36.0",
     "code": "^5.2.0",
