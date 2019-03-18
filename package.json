@@ -69,7 +69,7 @@
     "axios": "^0.18.0",
     "code": "^5.2.4",
     "convict": "^4.4.1",
-    "cucumber": "^4.0.0",
+    "cucumber": "^5.1.0",
     "good": "^8.1.1",
     "hapi": "^17.5.4",
     "hapi-good-winston": "^2.0.1",
