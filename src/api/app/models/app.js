@@ -93,6 +93,7 @@ class App {
       this.cucumber.steps,
       /* '--exit', */
       `--format=json:${this.results.dir}result_testSessionId-${sessionProps ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.json`,
+      /* Todo: Provide ability for Build User to pass flag to disable colours */
       '--format-options',
       '{"colorsEnabled": true}',
       '--tags',
