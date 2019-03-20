@@ -73,7 +73,7 @@
     "good": "^8.1.2",
     "hapi": "^17.5.4",
     "hapi-good-winston": "^2.0.1",
-    "joi": "^13.6.0",
+    "joi": "^14.3.1",
     "path": "^0.12.7",
     "purpleteam-logger": "^1.0.0",
     "redis": "^2.8.0",
