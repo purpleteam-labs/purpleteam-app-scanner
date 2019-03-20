@@ -84,7 +84,7 @@
   "devDependencies": {
     "eslint": "^5.15.3",
     "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-import": "^2.16.0",
     "lab": "^18.0.2",
     "npm-check": "^5.9.0",
     "pre-commit": "^1.2.2",
