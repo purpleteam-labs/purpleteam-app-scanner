@@ -72,7 +72,7 @@
     "cucumber": "^5.1.0",
     "good": "^8.1.2",
     "hapi": "^18.1.0",
-    "hapi-good-winston": "^2.0.1",
+    "hapi-good-winston": "^2.1.0",
     "joi": "^14.3.1",
     "purpleteam-logger": "^1.0.0",
     "redis": "^2.8.0",
