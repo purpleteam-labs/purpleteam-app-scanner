@@ -71,7 +71,7 @@
     "convict": "^4.4.1",
     "cucumber": "^5.1.0",
     "good": "^8.1.2",
-    "hapi": "^17.5.4",
+    "hapi": "^18.1.0",
     "hapi-good-winston": "^2.0.1",
     "joi": "^14.3.1",
     "purpleteam-logger": "^1.0.0",
