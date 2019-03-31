@@ -68,8 +68,8 @@ COPY --chown=app_scanner:purpleteam . $WORKDIR
 
 # Here I used to chown and chmod as shown here: http://f1.holisticinfosecforwebdevelopers.com/chap03.html#vps-countermeasures-docker-the-default-user-is-root
 # Problem is, each of these commands creates another layer of all the files modified and thus adds over 100MB to the image: https://www.datawire.io/not-engineer-running-3-5gb-docker-images/
-# In a prod environment, it may? make sense
-#RUN chmod -R g-s /home/$USER && chmod -R o-wrx $WORKDIR
+# In a prod environment, it may? make sense to do the following, similar to the similar commented out line in the NodeGoat Dockerfile.
+#RUN chmod -R g-s,o-rx /home/$USER && chmod -R o-wrx $WORKDIR
 
 # Then all further actions including running the containers should
 # be done under non-root user, unless root is actually required.
