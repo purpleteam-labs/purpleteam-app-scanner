@@ -25,9 +25,7 @@ const publish = (testSessionId, data, event = 'testerProgress') => {
 };
 
 
-const pubLog = (pubLogParams) => {
-  const { testSessionId, logLevel, textData, tagObj, event } = pubLogParams;
-
+const pubLog = ({ testSessionId, logLevel, textData, tagObj, event }) => {
   publish(testSessionId, textData, event);
   log[logLevel](textData, tagObj);
 };
@@ -37,9 +35,9 @@ const init = (options) => {
   if (!client) {
     ({ log } = options);
     client = redis.createClient(options.redis);
-    client.on('error', (error) => { log.error(`An error event was received from the redis client: "${error.message}"`, { tags: ['messagePublisher'] }); });
-    client.on('ready', () => { log.info(`A connection is established to the redis client at "${client.address}"`, { tags: ['messagePublisher'] }); });
-    log.info(`Attempting to establish a connection with redis at "${options.redis.host}:${options.redis.port}"`, { tags: ['messagePublisher'] });
+    client.on('error', (error) => { log.error(`An error event was received from the redis client: "${error.message}".`, { tags: ['messagePublisher'] }); });
+    client.on('ready', () => { log.info(`A connection is established to the redis client at "${client.address}".`, { tags: ['messagePublisher'] }); });
+    log.info(`Attempting to establish a connection with redis at "${options.redis.host}:${options.redis.port}".`, { tags: ['messagePublisher'] });
   }
   return { publish, pubLog };
 };
