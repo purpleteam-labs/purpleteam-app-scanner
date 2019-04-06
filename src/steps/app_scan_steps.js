@@ -82,7 +82,7 @@ Given('a new scanning session based on each build user supplied testSession', fu
       ({ contextId } = resp);
       this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Created new Zap context with a contextId of: ${contextId}, correlating with the contextName of: ${contextName}.`, tagObj: { tags: ['app_scan_steps'] } });
     },
-    error => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Error occured while attempting to create a new Zap context using contextName: "${contextName}", message was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
+    error => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Error occurred while attempting to create a new Zap context using contextName: "${contextName}", message was: ${error.message}.`, tagObj: { tags: ['app_scan_steps'] } })
   );
 });
 
@@ -98,63 +98,63 @@ Given('the application is spidered for each testSession', async function () {
 
   await zaproxy.spider.setOptionMaxDepth(maxDepth)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider max depth. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set the spider max depth. Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider max depth, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set the spider max depth, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.spider.setOptionThreadCount(threadCount)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider thread count. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set the spider thread count. Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the spider thread count, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set the spider thread count, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.context.includeInContext(contextName, sutBaseUrl)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Added context "${sutBaseUrl}" to Zap. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to add context "${sutBaseUrl}" to Zap. Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Added context "${sutBaseUrl}" to Zap, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to add context "${sutBaseUrl}" to Zap, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
   // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
   await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication method to "${authenticationMethod}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set authentication method to "${authenticationMethod}". Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication method to "${authenticationMethod}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set authentication method to "${authenticationMethod}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
   await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set logged in indicator "${loggedInIndicator}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set logged in indicator to "${loggedInIndicator}". Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set logged in indicator "${loggedInIndicator}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set logged in indicator to "${loggedInIndicator}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.forcedUser.setForcedUserModeEnabled(enabled)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user mode enabled to "${enabled}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set forced user mode enabled to "${enabled}". Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user mode enabled to "${enabled}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set forced user mode enabled to "${enabled}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.users.newUser(contextId, username).then(
     (resp) => {
       ({ userId } = resp);
-      this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the newUser "${username}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } });
+      this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set the newUser "${username}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } });
     },
-    err => `Error occured while attempting to set the newUser "${username}". Error was: ${err.message}`
+    err => `Error occurred while attempting to set the newUser "${username}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
   );
   await zaproxy.forcedUser.setForcedUser(contextId, userId)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user with Id "${userId}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set forced user "${userId}". Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user with Id "${userId}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set forced user "${userId}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication credentials. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set authentication credentials. Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication credentials, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set authentication credentials, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.users.setUserEnabled(contextId, userId, enabled)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set user enabled on user with id "${userId}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to set user enabled with id "${userId}". Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set user enabled on user with id "${userId}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to set user enabled with id "${userId}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.spider.scan(sutBaseUrl, maxChildren)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Spider scan initiated for "${sutBaseUrl}". Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to initiate spider scan for "${sutBaseUrl}". Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Spider scan initiated for "${sutBaseUrl}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occurred while attempting to initiate spider scan for "${sutBaseUrl}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
 });
 
@@ -165,8 +165,8 @@ Given('all active scanners are disabled', async function () {
   const scanPolicyName = null;
   await zaproxy.ascan.disableAllScanners(scanPolicyName)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Disable all active scanners was called. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to disable all active scanners. Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Disable all active scanners was called, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occured while attempting to disable all active scanners, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
 });
 
@@ -180,39 +180,39 @@ Given('all active scanners are enabled', async function () {
 
   await zaproxy.ascan.enableAllScanners(scanPolicyName)
     .then(
-      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Enable all active scanners was called. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
-      err => `Error occured while attempting to enable all active scanners. Error was: ${err.message}`
+      resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Enable all active scanners was called, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      err => `Error occured while attempting to enable all active scanners, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
   await zaproxy.ascan.scanners(scanPolicyName, policyid).then(
     (resp) => {
       aScanners = resp.scanners;
-      this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Obtained all ${aScanners.length} active scanners from Zap.`, tagObj: { tags: ['app_scan_steps'] } });
+      this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Obtained all ${aScanners.length} active scanners from Zap, for test session with id: "${testSessionId}".`, tagObj: { tags: ['app_scan_steps'] } });
     },
-    err => `Error occured while attempting to get all active scanners from Zap. Error was: ${err.message}`
+    err => `Error occured while attempting to get all active scanners from Zap, for test session with id: "${testSessionId}". Error was: ${err.message}.`
   );
   // Zap seems to have some sort of ordering problem if we use a Promise.all
   // Optimising this would only save milliseconds, & the entire testing process takes minutes, ignoring this chance for micro-optimisation.
   for (const ascanner of aScanners) { // eslint-disable-line no-restricted-syntax
     // eslint-disable-next-line no-await-in-loop
     await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName).then(
-      result => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Attack strength has been set ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}.`, tagObj: { tags: ['app_scan_steps'] } }),
-      error => this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error occured while attempting to set the attack strength for active scanner: { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
+      result => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Attack strength has been set, for test session with id: "${testSessionId}": ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      error => this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error occured while attempting to set the attack strength for active scanner, for test session with id: "${testSessionId}": { id: ${ascanner.id}, name: ${ascanner.name}}. The error was: ${error.message}.`, tagObj: { tags: ['app_scan_steps'] } })
     );
     // eslint-disable-next-line no-await-in-loop
     await zaproxy.ascan.setScannerAlertThreshold(ascanner.id, aScannerAlertThreshold, scanPolicyName).then(
-      result => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Alert threshold has been set ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}.`, tagObj: { tags: ['app_scan_steps'] } }),
-      error => this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error occured while attempting to set the alert threshold for active scanner: { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}`, tagObj: { tags: ['app_scan_steps'] } })
+      result => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Alert threshold has been set, for test session with id: "${testSessionId}": ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}}.`, tagObj: { tags: ['app_scan_steps'] } }),
+      error => this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error occured while attempting to set the alert threshold for active scanner, for test session with id: "${testSessionId}": { id: ${ascanner.id}, name: ${ascanner.name}. The error was: ${error.message}.`, tagObj: { tags: ['app_scan_steps'] } })
     );
   }
 
   const zapApiPrintEnabledAScanersFuncCallback = (result) => { // eslint-disable-line no-unused-vars
     const scannersStateForBuildUser = result.scanners.reduce((all, each) => `${all}\nname: ${each.name.padEnd(50)}, id: ${each.id.padEnd(6)}, enabled: ${each.enabled}, attackStrength: ${each.attackStrength.padEnd(6)}, alertThreshold: ${each.alertThreshold.padEnd(6)}`, '');
     // This is for the build user and the purpleteam admin:
-    this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `\n\nThe following are all the active scanners available with their current state:\n${scannersStateForBuildUser}\n`, tagObj: { tags: ['app_scan_steps', 'pt-build-user'] } });
+    this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `\n\nThe following are all the active scanners available with their current state, for test session with id: "${testSessionId}":\n${scannersStateForBuildUser}\n`, tagObj: { tags: ['app_scan_steps', 'pt-build-user'] } });
     // This is for the purpleteam admin only:
-    this.log.notice(`\n\nThe following are all the active scanners available with their current state:\n\n${JSON.stringify(result, null, 2)}\n\n`, { tags: ['app_scan_steps', 'pt-admin'] });
+    this.log.notice(`\n\nThe following are all the active scanners available with their current state, for test session with id: "${testSessionId}":\n\n${JSON.stringify(result, null, 2)}\n\n`, { tags: ['app_scan_steps', 'pt-admin'] });
   };
-  await zaproxy.ascan.scanners(scanPolicyName, policyid).then(zapApiPrintEnabledAScanersFuncCallback, err => `Error occured while attempting to get the configured active scanners for display. Error was: ${err.message}`);
+  await zaproxy.ascan.scanners(scanPolicyName, policyid).then(zapApiPrintEnabledAScanersFuncCallback, err => `Error occured while attempting to get the configured active scanners for display, for test session with id: "${testSessionId}". Error was: ${err.message}.`);
 });
 
 
@@ -241,7 +241,7 @@ When('the active scan is run', async function () {
       let statusValueForRoute = 'no status yet';
       let zapError;
       let zapInProgressIntervalId;
-      publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Active scan initiated for test session with id: "${testSessionId}", route: "${routeResourceObjectForAscanCallback.id}". Response was: ${JSON.stringify(zapResult)}`, tagObj: { tags: ['app_scan_steps'] } });
+      publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Active scan initiated for test session with id: "${testSessionId}", route: "${routeResourceObjectForAscanCallback.id}". Response was: ${JSON.stringify(zapResult)}.`, tagObj: { tags: ['app_scan_steps'] } });
 
       let numberOfAlertsForRoute = 0;
       async function status() {
@@ -259,7 +259,7 @@ When('the active scan is run', async function () {
           (result) => {
             if (result) numberOfAlertsForRoute = parseInt(result.numberOfAlerts, 10);
             if (runStatus) {
-              publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Scan ${scanId} is ${`${statusValueForRoute}%`.padEnd(4)} complete with ${`${numberOfAlertsForRoute}`.padEnd(3)} alerts for route: "${routeResourceObjectForAscanCallback.id}".`, tagObj: { tags: ['app_scan_steps'] } });
+              publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Scan ${scanId} is ${`${statusValueForRoute}%`.padEnd(4)} complete with ${`${numberOfAlertsForRoute}`.padEnd(3)} alerts for route: "${routeResourceObjectForAscanCallback.id}", for test session with id: "${testSessionId}".`, tagObj: { tags: ['app_scan_steps'] } });
               publisher.publish(testSessionId, (combinedStatusValueOfRoutesForSesh + statusValueForRoute) / routes.length, 'testerPctComplete');
               publisher.publish(testSessionId, numberOfAlertsForSesh + numberOfAlertsForRoute, 'testerBugCount');
             }
@@ -274,7 +274,7 @@ When('the active scan is run', async function () {
           clearInterval(zapInProgressIntervalId);
           reject(new Error(`Test failure: ${zapError}`));
         } else if (statusValueForRoute === 100) {
-          publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `We are finishing scan ${scanId} for the route: "${routeResourceObjectForAscanCallback.id}". Please see the report for further details.`, tagObj: { tags: ['app_scan_steps'] } });
+          publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `We are finishing scan ${scanId} for the route: "${routeResourceObjectForAscanCallback.id}", for test session with id: "${testSessionId}". Please see the report for further details.`, tagObj: { tags: ['app_scan_steps'] } });
 
           clearInterval(zapInProgressIntervalId);
 
@@ -292,7 +292,7 @@ When('the active scan is run', async function () {
 
   await zaproxy.spider.scanAsUser(contextId, userId, sutBaseUrl, maxChildren)
     .then(
-      resp => publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Spider scan as user "${userId}" for url "${sutBaseUrl}", context "${contextId}", with maxChildren "${maxChildren}" was called. Response was: ${JSON.stringify(resp)}`, tagObj: { tags: ['app_scan_steps'] } }),
+      resp => publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Spider scan as user "${userId}" for url "${sutBaseUrl}", context "${contextId}", with maxChildren "${maxChildren}" was called, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: ['app_scan_steps'] } }),
       err => `Error occured while attempting to scan as user. Error was: ${err.message}`
     );
 
@@ -352,21 +352,21 @@ After({ tags: '@app_scan' }, async function () {
 
     return new Promise((resolve, reject) => {
       const reportPath = `${reportDir}report_testSessionId-${testSessionId}_${NowAsFileName()}.${toPrint.format}`;
-      this.log.notice(`Writing ${toPrint.format}report to ${reportPath}`, { tags: ['app_scan_steps'] });
+      this.log.notice(`Writing ${toPrint.format}report to ${reportPath}, for test session with id: "${testSessionId}".`, { tags: ['app_scan_steps'] });
       fs.writeFile(reportPath, toPrint.text, (writeFileErr) => {
         if (writeFileErr) {
-          this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error writing ${toPrint.format}report file to disk: ${writeFileErr}`, tagObj: { tags: ['app_scan_steps'] } });
-          reject(new Error(`Error writing ${toPrint.format}report file to disk: ${writeFileErr}`));
+          this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Error writing ${toPrint.format}report file to disk, for test session with id: "${testSessionId}": ${writeFileErr}.`, tagObj: { tags: ['app_scan_steps'] } });
+          reject(new Error(`Error writing ${toPrint.format}report file to disk, for test session with id: "${testSessionId}": ${writeFileErr}`));
         }
 
-        this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Done writing ${toPrint.format}report file.`, tagObj: { tags: ['app_scan_steps'] } });
+        this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Done writing ${toPrint.format}report file, for test session with id: "${testSessionId}".`, tagObj: { tags: ['app_scan_steps'] } });
         resolve(`Done writing ${toPrint.format}report file.`);
       });
     });
   };
 
-  this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `About to write reports in the following formats: ${[...reportFormats]}`, tagObj: { tags: ['app_scan_steps'] } });
+  this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `About to write reports in the following formats, for test session with id: "${testSessionId}": ${[...reportFormats]}.`, tagObj: { tags: ['app_scan_steps'] } });
 
-  const reportPromises = reportFormats.map(format => zaproxy.core[`${format}report`]().then(zapApiReportFuncCallback, err => `Error occured while attempting to create Zap ${format} report. Error was: ${err.message}`));
+  const reportPromises = reportFormats.map(format => zaproxy.core[`${format}report`]().then(zapApiReportFuncCallback, err => `Error occured while attempting to create Zap ${format} report, for test session with id: "${testSessionId}". Error was: ${err.message}.`));
   await Promise.all(reportPromises);
 });
