@@ -28,7 +28,7 @@ const sequential = (runParams) => {
   /* await */cucumberCliInstance.run()
     .then(async (succeeded) => {
       log.notice(`Output of cucumberCli after test run: ${JSON.stringify(succeeded)}.`, { tags: ['app'] });
-      publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'notice', textData: `Tester finished: {sessionId: ${sessionsProps[1].testSession.id}, tester: app}`, tagObj: { tags: ['runCuc'] } });
+      publisher.pubLog({ testSessionId: sessionsProps[1].testSession.id, logLevel: 'notice', textData: `Tester finished: {sessionId: ${sessionsProps[1].testSession.id}, tester: app}.`, tagObj: { tags: ['runCuc'] } });
     }).catch(error => log.error(error, { tags: ['app'] }));
 
   return 'App tests are now running.';
