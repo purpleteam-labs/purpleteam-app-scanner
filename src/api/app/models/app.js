@@ -25,7 +25,7 @@ class App {
   }
 
   async runJob(testJob) {
-    this.log.info(`${this.slavesDeployed ? 'slaves already deployed' : 'running testJob'}`, { tags: ['app'] });
+    this.log.info(`${this.slavesDeployed ? 'slaves already deployed.' : 'running testJob.'}`, { tags: ['app'] });
     if (this.slavesDeployed) return 'Request ignored. Slaves already deployed.';
     const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
     const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
