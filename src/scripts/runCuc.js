@@ -48,8 +48,8 @@ exports.default = async function run() {
   let result;
   try {
     result = await cucumberCliInstance.run();
-    log.info(`The cucumber result for testSession: ${testSessionId} was ${JSON.stringify(result)}`, { tags: ['runCuc'] });
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Tester finished: {sessionId: ${testSessionId}, tester: app}`, tagObj: { tags: ['runCuc'] } });
+    log.info(`The cucumber result for testSession: ${testSessionId} was ${JSON.stringify(result)}.`, { tags: ['runCuc'] });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Tester finished: {sessionId: ${testSessionId}, tester: app}.`, tagObj: { tags: ['runCuc'] } });
   } catch (error) {
     exitWithError(error);
   }
