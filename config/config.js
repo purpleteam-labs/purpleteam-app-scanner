@@ -24,7 +24,7 @@ const schema = {
     },
     ip: {
       doc: 'The IP address of this host.',
-      format: 'ipaddress',
+      format: String,
       default: '240.0.0.0'
     }
   },
