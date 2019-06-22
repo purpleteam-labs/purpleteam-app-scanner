@@ -2,7 +2,7 @@ const Hapi = require('hapi');
 const config = require('config/config');
 const app = require('src/api/app');
 
-const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.ip') });
+const server = Hapi.server({ port: config.get('host.port'), host: config.get('host.host') });
 const log = require('purpleteam-logger').init(config.get('logger'));
 const messagePublisher = require('src/publishers/messagePublisher').init({ log, redis: config.get('redis.clientCreationOptions') });
 const strings = require('src/strings');

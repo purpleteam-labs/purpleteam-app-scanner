@@ -3,7 +3,7 @@ require('convict');
 const config = require('./config/config.js');
 
 const options = {
-  host: config.get('host.ip'),
+  host: config.get('host.host'),
   port: config.get('host.port'),
   path: '/status',
   timeout: 2000

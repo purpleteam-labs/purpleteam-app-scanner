@@ -22,8 +22,8 @@ const schema = {
       default: 3000,
       env: 'PORT'
     },
-    ip: {
-      doc: 'The IP address of this host.',
+    host: {
+      doc: 'The IP address or hostname of this host.',
       format: String,
       default: '240.0.0.0'
     }
@@ -32,7 +32,11 @@ const schema = {
     clientCreationOptions: {
       doc: 'The options used for creating the redis client.',
       format: val => typeof val === 'object',
-      default: {}
+      default: {
+        port: 6379,
+        host: 'redis'
+        // "host": "172.17.0.2" // host networking or not running in container
+      }
     }
   },
   slave: {
