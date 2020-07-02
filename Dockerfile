@@ -1,4 +1,4 @@
-FROM node:10-alpine
+FROM node:12-alpine
 
 ARG LOCAL_USER_ID
 ARG LOCAL_GROUP_ID
@@ -8,6 +8,11 @@ ARG LOCAL_GROUP_ID
 ENV USER app_scanner
 ENV GROUP purpleteam
 RUN echo user is: ${USER}, LOCAL_USER_ID is: ${LOCAL_USER_ID}, group is: ${GROUP}, LOCAL_GROUP_ID is: ${LOCAL_GROUP_ID}
+
+# Used for testing zap access manually (usefull for cloud env).
+#RUN apk update
+#RUN apk add wget
+
 # Remove git once zaproxy from package.json is in NPM
 RUN apk add --no-cache zip git
 # Following taken from: https://github.com/mhart/alpine-node/issues/48#issuecomment-430902787
@@ -53,8 +58,8 @@ COPY package*.json $WORKDIR
 # Required if posix needed, for winston-syslog-posix
 #RUN apk add --no-cache --virtual .gyp python make g++
 
-# In a production build, add the --production flag, as in:
-#RUN cd $WORKDIR; npm install --production
+# In a cloud build, add the --cloud flag, as in:
+#RUN cd $WORKDIR; npm install --cloud
 RUN cd $WORKDIR && npm install
 
 # Required if posix needed, for winston-syslog-posix
