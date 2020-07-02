@@ -1,11 +1,15 @@
 const convict = require('convict');
 const path = require('path');
 
+const internals = {
+  aws_region: process.env.AWS_REGION || 'dummy-region'
+};
+
 const schema = {
   env: {
     doc: 'The application environment.',
-    format: ['production', 'development', 'test'],
-    default: 'production',
+    format: ['cloud', 'local', 'test'],
+    default: 'cloud',
     env: 'NODE_ENV'
   },
   logger: {
@@ -58,6 +62,7 @@ const schema = {
     apiKey: {
       doc: 'The key required to send to access all API operations from 2.6.0 onwards. 2.4.1 onwards required an API key to invoke API operations that made changes to Zap.',
       format: String,
+      env: "ZAP_API_KEY",
       default: ''
     },
     apiFeedbackSpeed: {
@@ -169,12 +174,17 @@ const schema = {
       region: {
         doc: 'The region of the functions being invoked.',
         format: String,
-        default: 'ap-southeast-2'
+        default: internals.aws_region
       },
-      endpoint: {
-        doc: 'The endpoint of the functions being invoked.',
+      lambdaEndpoint: {
+        doc: 'The endpoint of the Lambda functions being invoked.',
         format: 'url',
-        default: 'https://lambda.ap-southeast-2.amazonaws.com'
+        default: `https://lambda.${internals.aws_region}.amazonaws.com`
+      },
+      serviceDiscoveryEndpoint: {
+        doc: 'The endpoint of the Service Discovery being invoked.',
+        format: 'url',
+        default: `https://serviceDiscovery.${internals.aws_region}.amazonaws.com`
       }
     }
   }
