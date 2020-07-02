@@ -1,9 +1,7 @@
 const convict = require('convict');
 const path = require('path');
 
-const internals = {
-  aws_region: process.env.AWS_REGION || 'dummy-region'
-};
+const internals = { aws_region: process.env.AWS_REGION || 'dummy-region' };
 
 const schema = {
   env: {
@@ -62,7 +60,7 @@ const schema = {
     apiKey: {
       doc: 'The key required to send to access all API operations from 2.6.0 onwards. 2.4.1 onwards required an API key to invoke API operations that made changes to Zap.',
       format: String,
-      env: "ZAP_API_KEY",
+      env: 'ZAP_API_KEY',
       default: ''
     },
     apiFeedbackSpeed: {
