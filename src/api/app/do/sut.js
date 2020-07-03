@@ -94,13 +94,13 @@ const getProperties = (selecter) => {
 };
 
 
-const initialiseBrowser = async (slaveProperties, seleniumContainerName) => {
+const initialiseBrowser = async (slaveProperties, selenium) => {
   const webDriverFactory = new WebDriverFactory();
-
+  log.debug(`selenium is: ${JSON.stringify(selenium)}`, { tags: ['sut', 'initialiseBrowser'] });
   webDriver = await webDriverFactory.webDriver({
     log,
+    selenium,
     browser: properties.browser,
-    selenium: { seleniumContainerName },
     slave: slaveProperties
   });
 

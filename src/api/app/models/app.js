@@ -61,14 +61,14 @@ class App {
     return testPlan;
   }
 
-
-  createCucumberArgs({ sessionProps = {}, slaveHost = this.slave.hostname, seleniumContainerName = '' }) {
+  // Receiving appSlavePort and seleniumPort are only essential if running in cloud environment.
+  createCucumberArgs({ sessionProps = {}, slaveHost = this.slave.hostname, seleniumContainerName = '', appSlavePort = this.slave.port, seleniumPort = 4444 }) {
     // sut.validateProperties(sutProperties);
-
+    this.log.debug(`seleniumContainerName is: ${seleniumContainerName}`, { tags: ['app'] });
     const slaveProperties = {
       hostname: slaveHost,
       protocol: this.slave.protocol,
-      port: this.slave.port,
+      port: appSlavePort,
       apiKey: this.slave.apiKey,
       apiFeedbackSpeed: this.slave.apiFeedbackSpeed,
       reportDir: this.slave.report.dir,
@@ -80,6 +80,7 @@ class App {
     const cucumberParameters = {
       slaveProperties,
       seleniumContainerName,
+      seleniumPort,
       sutProperties: sessionProps,
       cucumber: { timeOut: this.cucumber.timeOut }
     };

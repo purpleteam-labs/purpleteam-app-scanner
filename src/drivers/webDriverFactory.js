@@ -14,16 +14,18 @@ class WebDriverFactory {
   // eslint-disable-next-line class-methods-use-this
   async webDriver(options) {
     ({ log } = options);
+    const { selenium: { seleniumContainerName, seleniumPort } } = options;
     if (webDriver) return webDriver;
     // Builder API: https://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_Builder.html
     // proxy module: https://seleniumhq.github.io/selenium/docs/api/javascript/module/selenium-webdriver/proxy.html
+    log.debug(`The server is: http://${seleniumContainerName}:${seleniumPort}/wd/hub`, { tags: ['webDriver', 'webDriverFactory'] });
     try {
       webDriver = await new seleniumWebdriver.Builder()
         .forBrowser(options.browser)
         .setChromeOptions(/* add any options */)
         .setFirefoxOptions(/* add any options */)
         .setProxy(proxy.manual({ [options.slave.protocol]: `${options.slave.hostname}:${options.slave.port}` }))
-        .usingServer(`http://${options.selenium.seleniumContainerName}:4444/wd/hub`)
+        .usingServer(`http://${seleniumContainerName}:${seleniumPort}/wd/hub`)
         .build();
     } catch (error) {
       log.error(error, { tags: ['webdriver'] });

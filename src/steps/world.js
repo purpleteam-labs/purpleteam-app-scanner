@@ -14,9 +14,9 @@ const strings = require(`${process.cwd()}/src/strings`); // eslint-disable-line 
 
 class CustomWorld {
   constructor({ attach, parameters }) {
-    const { seleniumContainerName, sutProperties, sutProperties: { testSession } } = parameters;
-
+    const { seleniumContainerName, seleniumPort, sutProperties, sutProperties: { testSession } } = parameters;
     this.log = log;
+    this.log.debug(`seleniumContainerName is: ${seleniumContainerName}, seleniumPort is: ${seleniumPort}, sutProperties are: ${JSON.stringify(sutProperties)}`, { tags: ['world'] });
     this.publisher = messagePublisher;
     this.publisher.pubLog({ testSessionId: testSession.id, logLevel: 'notice', textData: `Constructing the cucumber world for session with id "${testSession.id}".`, tagObj: { tags: ['world'] } });
 
@@ -25,7 +25,7 @@ class CustomWorld {
 
     setDefaultTimeout(parameters.cucumber.timeOut);
 
-    this.selenium = { seleniumContainerName };
+    this.selenium = { seleniumContainerName, seleniumPort };
     this.sut = sut;
     this.sut.init({ log, publisher: this.publisher, sutProperties });
     this.zap = zap;
@@ -35,7 +35,7 @@ class CustomWorld {
 
 
   async initialiseBrowser() {
-    await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser(), this.selenium.seleniumContainerName);
+    await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser(), this.selenium);
   }
 
 
