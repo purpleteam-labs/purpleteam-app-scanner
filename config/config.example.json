@@ -3,15 +3,28 @@
     "level": "debug"  
   },
   "host": {
-    "host": "127.0.0.1"
+    "host": "172.25.0.120"
   },
   "slave": {
+    "protocol": "http",
     "hostname": "172.17.0.2",
-    "apiKey": "your api key that the slave is configured to accept."
+    "apiKey": "<zap-api-key-here>",
+    "apiFeedbackSpeed": 10000,
+    "report": {
+      "dir": "<absolute-path-to/purpleteam/outcomes/>"
+    }
   },
   "cucumber": {
-    "tagExpression": "@simple_math or @app_scan",
+    "tagExpression": "@app_scan",
     "timeOut": 1800000
+  },
+  "runType": "parallel",
+  "results": {
+    "dir": "<absolute-path-to/purpleteam/outcomes/>"
+  },
+  "cloud": {
+    "function": {
+      "lambdaEndpoint": "http://172.25.0.1:3001"
+    }
   }
 }
-
