@@ -25,6 +25,8 @@
 </div>
 
 
+Clone this repository.
+
 Along with the other components in the PurpleTeam solution:
 
 * [purpleteam](https://gitlab.com/purpleteam-labs/purpleteam) (node.js CLI, driven from CI / nightly build)
