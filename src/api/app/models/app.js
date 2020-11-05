@@ -11,7 +11,7 @@ const model = require('./');
 
 class App {
   constructor(options) {
-    const { log, strings, slave, cucumber: cucumberConfig, results, publisher, runType, cloud } = options;
+    const { log, strings, slave, cucumber: cucumberConfig, results, publisher, runType, cloud, debug } = options;
 
     this.log = log;
     this.strings = strings;
@@ -21,6 +21,7 @@ class App {
     this.publisher = publisher;
     this.runType = runType;
     this.cloud = cloud;
+    this.debug = debug;
     this.slavesDeployed = false;
   }
 
@@ -86,6 +87,8 @@ class App {
     };
 
     const parameters = JSON.stringify(cucumberParameters);
+
+    this.log.debug(`The cucumberParameters are: ${parameters}`, { tags: ['app'] });
 
     const cucumberArgs = [
       this.cucumber.binary,

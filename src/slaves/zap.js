@@ -23,6 +23,19 @@ let properties;
 let zaproxy;
 let alertCount;
 
+// String substitutions (Ex: %ip ) are replaced in sut.js
+// String substitutions must be in the format %sut[[.property].path] preceded immediately and followed immediately by a space
+//   unless it's the first or last word in the message.
+// Multiple string substitutions are Allowed.
+// Array elements can also be substituted. Ex: %testRoutes.1.attributes.attackFields.0.value
+const knownZapErrorsWithHelpMessageForBuildUser = [
+  {
+    zapMessage: 'ZAP Error [java.net.UnknownHostException]: %ip', // Notice the space before the '%'
+    helpMessageForBuildUser: 'Are you sure you specified the correct sutIp ( %ip ) in your build user config and that the sutIp you are targeting is in fact up?' // Notice the space immediately before the '%' and immediately after the substitution.
+  }
+  // ,{ More errors with help messages... as we find out about them }
+];
+
 const validateProperties = (slaveProperties) => {
   const result = Joi.validate(slaveProperties, zapSchema);
   // log.debug(`result: ${JSON.stringify(result)}`);
@@ -36,7 +49,7 @@ const validateProperties = (slaveProperties) => {
 
 const init = (options) => {
   ({ log } = options);
-  properties = validateProperties(options.slaveProperties);
+  properties = { knownZapErrorsWithHelpMessageForBuildUser, ...validateProperties(options.slaveProperties) };
 
   const zapOptions = {
     apiKey: properties.apiKey,
@@ -65,6 +78,6 @@ module.exports = {
   init,
   getProperties,
   getZaproxy: () => zaproxy,
-  getPropertiesForBrowser: () => getProperties(['protocol', 'hostname', 'port']),
+  getPropertiesForBrowser: () => getProperties(['protocol', 'hostname', 'port', 'knownZapErrorsWithHelpMessageForBuildUser']),
   numberOfAlertsForSesh
 };

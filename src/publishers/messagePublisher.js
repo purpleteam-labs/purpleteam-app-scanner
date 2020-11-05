@@ -36,8 +36,8 @@ const init = (options) => {
     ({ log } = options);
     client = redis.createClient(options.redis);
     client.on('error', (error) => { log.error(`An error event was received from the redis client: "${error.message}".`, { tags: ['messagePublisher'] }); });
-    client.on('ready', () => { log.info(`A connection is established to the redis client at "${client.address}".`, { tags: ['messagePublisher'] }); });
-    log.info(`Attempting to establish a connection with redis at "${options.redis.host}:${options.redis.port}".`, { tags: ['messagePublisher'] });
+    client.on('ready', () => { log.info(`A connection is established to the redis client at "${client.address}".`, { tags: [`pid-${process.pid}`, 'messagePublisher'] }); });
+    log.info(`Attempting to establish a connection with redis at "${options.redis.host}:${options.redis.port}".`, { tags: [`pid-${process.pid}`, 'messagePublisher'] });
   }
   return { publish, pubLog };
 };

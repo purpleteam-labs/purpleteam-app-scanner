@@ -20,7 +20,7 @@ const cucumberCliStdout = {
   publisher,
   write(...writeParams) {
     const [str] = writeParams;
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: str, tagObj: { tags: ['runCuc', 'cucumberCLI-stdout-write'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: str, tagObj: { tags: [`pid-${process.pid}`, 'runCuc', 'cucumberCLI-stdout-write'] } });
   }
 };
 

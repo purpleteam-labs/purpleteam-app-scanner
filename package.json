@@ -66,19 +66,20 @@
   "dependencies": {
     "app-module-path": "^2.2.0",
     "aws-sdk": "^2.427.0",
-    "axios": "^0.18.0",
+    "axios": "^0.19.0",
     "code": "^5.2.4",
     "convict": "^4.4.1",
     "cucumber": "^5.1.0",
     "good": "^8.1.2",
     "hapi": "^18.1.0",
     "hapi-good-winston": "^2.1.0",
+    "http-proxy-agent": "^4.0.1",
     "joi": "^14.3.1",
     "purpleteam-logger": "^1.0.1",
     "redis": "^2.8.0",
-    "selenium-webdriver": "^3.6.0",
+    "selenium-webdriver": "^4.0.0-alpha.7",
     "susie": "^3.0.0",
-    "zaproxy": "^1.0.0-rc.1"
+    "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#90470c25e77eb25c5f39146f686a29a21ce2bf41"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {

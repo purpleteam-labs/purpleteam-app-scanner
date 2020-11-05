@@ -16,9 +16,9 @@ class CustomWorld {
   constructor({ attach, parameters }) {
     const { seleniumContainerName, seleniumPort, sutProperties, sutProperties: { testSession } } = parameters;
     this.log = log;
-    this.log.debug(`seleniumContainerName is: ${seleniumContainerName}, seleniumPort is: ${seleniumPort}, sutProperties are: ${JSON.stringify(sutProperties)}`, { tags: ['world'] });
+    this.log.debug(`seleniumContainerName is: ${seleniumContainerName}, seleniumPort is: ${seleniumPort}, sutProperties are: ${JSON.stringify(sutProperties)}`, { tags: [`pid-${process.pid}`, 'world'] });
     this.publisher = messagePublisher;
-    this.publisher.pubLog({ testSessionId: testSession.id, logLevel: 'notice', textData: `Constructing the cucumber world for session with id "${testSession.id}".`, tagObj: { tags: ['world'] } });
+    this.publisher.pubLog({ testSessionId: testSession.id, logLevel: 'notice', textData: `Constructing the cucumber world for session with id "${testSession.id}".`, tagObj: { tags: [`pid-${process.pid}`, 'world'] } });
 
     this.variable = 0;
     this.attach = attach;

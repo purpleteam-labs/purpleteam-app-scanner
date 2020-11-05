@@ -16,7 +16,7 @@ const sutSchema = {
   port: Joi.number().port().required(),
   browser: Joi.string().valid(config.getSchema().properties.sut.properties.browser.format).lowercase().default(config.get('sut.browser')),
   loggedInIndicator: Joi.string(),
-  context: Joi.object({
+  context: Joi.object({ // Zap context
     iD: Joi.number().integer().positive(),
     name: Joi.string().token()
   }),
@@ -25,9 +25,8 @@ const sutSchema = {
     usernameFieldLocater: Joi.string().min(2).required(),
     passwordFieldLocater: Joi.string().min(2).required(),
     submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
-    expectedResponseSuccess: Joi.string().min(2).max(200),
-    expectedResponseFail: Joi.string().min(2).max(200)
-  }).xor('expectedResponseSuccess', 'expectedResponseFail'),
+    expectedPageSourceSuccess: Joi.string().min(2).max(200).required()
+  }),
   reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
   testSession: Joi.object({
     type: Joi.string().valid('testSession').required(),
@@ -95,16 +94,36 @@ const getProperties = (selecter) => {
 
 
 const initialiseBrowser = async (slaveProperties, selenium) => {
+  const { knownZapErrorsWithHelpMessageForBuildUser: knownZapFormatStringErrorsWithHelpMessageForBuildUser } = slaveProperties;
   const webDriverFactory = new WebDriverFactory();
-  log.debug(`selenium is: ${JSON.stringify(selenium)}`, { tags: ['sut', 'initialiseBrowser'] });
+  log.debug(`selenium is: ${JSON.stringify(selenium)}`, { tags: [`pid-${process.pid}`, 'sut', 'initialiseBrowser'] });
   webDriver = await webDriverFactory.webDriver({
     log,
     selenium,
     browser: properties.browser,
-    slave: slaveProperties
+    slave: slaveProperties,
+    sutProtocol: properties.protocol
   });
 
-  browser.init({ publisher, webDriver });
+  const getValuesOfSpecifiedSutPropertiesBasedOnPathAsArray = (pathDef, sutProps) => pathDef.reduce((accum, cV) => ((accum && accum[cV]) ? accum[cV] : null), sutProps);
+
+  const replaceStringSubstitutionsWithSutPropertyValues = (message) => {
+    const words = message.split(' ');
+    const substitutions = words.filter(w => w.startsWith('%'));
+    const sutPropertyPaths = substitutions.map(w => w.substring(1));
+    const sutPropertyPathsAsArrays = sutPropertyPaths.map(s => s.split('.'));
+    const replacementValues = sutPropertyPathsAsArrays.map(s => getValuesOfSpecifiedSutPropertiesBasedOnPathAsArray(s, properties));
+    const wordsWithSubstitutionsReplaced = words.map(z => (z.startsWith('%') ? replacementValues.shift() : z));
+    return wordsWithSubstitutionsReplaced.join(' ');
+  };
+
+  const knownZapErrorsWithHelpMessageForBuildUser = knownZapFormatStringErrorsWithHelpMessageForBuildUser
+    .map(k => ({
+      zapMessage: replaceStringSubstitutionsWithSutPropertyValues(k.zapMessage),
+      helpMessageForBuildUser: replaceStringSubstitutionsWithSutPropertyValues(k.helpMessageForBuildUser)
+    }));
+
+  browser.init({ log, publisher, knownZapErrorsWithHelpMessageForBuildUser, webDriver });
 };
 
 
@@ -114,6 +133,7 @@ module.exports = {
   properties,
   initialiseBrowser,
   getProperties,
-  baseUrl: () => `${properties.protocol}://${properties.ip}:${properties.port}`,
+  // Zap Spider normalises port if it's a default port based on the protocol/scheme, so if the sut is listening on a default port, we remove it here.
+  baseUrl: () => `${properties.protocol}://${properties.ip}${{ http: 80, https: 443 }[properties.protocol] === properties.port ? '' : `:${properties.port}`}`,
   getBrowser: () => browser
 };

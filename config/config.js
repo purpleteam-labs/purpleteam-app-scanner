@@ -17,6 +17,18 @@ const schema = {
       default: 'notice'
     }
   },
+  debug: {
+    execArgvDebugString: {
+      doc: 'The process.execArgv debug string if the process is running with it. Used to initiate child processes with in order to debug them.',
+      format: String,
+      default: process.execArgv.indexOf('--inspect-brk=0.0.0.0') !== -1 ? '--inspect-brk=0.0.0.0' : undefined
+    },
+    firstChildProcessInspectPort: {
+      doc: 'The first child process debug port to attach to as defined in the .vscode launch.json',
+      format: 'port',
+      default: 9329
+    }
+  },
   host: {
     port: {
       doc: 'The port of this host.',
@@ -91,6 +103,11 @@ const schema = {
         format: 'int',
         default: 10
       }
+    },
+    shutdownSlavesAfterTest: {
+      doc: 'Useful for inspecting slave containers during debugging.',
+      format: 'Boolean',
+      default: true
     }
   },
   sut: {

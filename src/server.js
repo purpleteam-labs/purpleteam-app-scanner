@@ -46,7 +46,8 @@ const domainPlugins = [
       results: config.get('results'),
       publisher: messagePublisher,
       runType: config.get('runType'),
-      cloud: config.get('cloud')
+      cloud: config.get('cloud'),
+      debug: config.get('debug')
     }
   }
 ];
