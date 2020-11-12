@@ -78,7 +78,6 @@
     "purpleteam-logger": "^1.0.1",
     "redis": "^2.8.0",
     "selenium-webdriver": "^4.0.0-alpha.7",
-    "susie": "^3.0.0",
     "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#90470c25e77eb25c5f39146f686a29a21ce2bf41"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",

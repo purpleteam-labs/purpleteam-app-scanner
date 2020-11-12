@@ -28,7 +28,6 @@ const reporters = {
 
 
 const infrastructuralPlugins = [
-  require('susie'), // eslint-disable-line global-require
   {
     plugin: require('good'), // eslint-disable-line global-require
     options: { reporters: reporters[process.env.NODE_ENV] }
