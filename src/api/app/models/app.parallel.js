@@ -101,7 +101,8 @@ internals.resolvePromises = async (provisionFeedback) => {
     if (e.error) {
       const knownErrors = [
         { fatal: false, partial: 'Timeout exceeded', specific: `Handled error occurred within a Lambda function while attempting to start S2 app containers, Make sure you have the Docker images pulled locally. Error was: ${e.error}.` },
-        { fatal: true, partial: 'Creation of service was not idempotent.', specific: 'Creation of service was not idempotent. The most common reason for this is that ECS services were not cleanly brought down from last test run.' },
+        { fatal: true, partial: 'Creation of service was not idempotent.', specific: 'Creation of service was not idempotent. The most common reason for this is that ECS services were not cleanly brought down from last test run.' }, // This wouldn't be fatal if we retried bringing services down and were successful.
+        { fatal: false, partial: 'Unable to Start a service that is still Draining.', specific: 'Unable to Start a service that is still Draining. Try again soon.' },
         { fatal: true, partial: 'Unexpected error in Lambda occurred', specific: 'Unexpected error in Lambda occurred. Check the Lambda logs for details.' }
       ];
 
@@ -382,6 +383,8 @@ internals.waitForS2ContainersReady = ({
     collectionOfS2ContainerHostNamesWithPorts = resolved;
     log.debug(`The value of collectionOfS2ContainerHostNamesWithPorts is: ${JSON.stringify(collectionOfS2ContainerHostNamesWithPorts)}`, { tags: ['app.parallel', 'waitForS2ContainersReady'] });
   }).catch((error) => {
+    // One of the reasons this happens is when services have been brought down and requested to be brought up again before draining.
+    //   As per the error 'Unable to Start a service that is still Draining.' in resolvePromises sent back from the lambda.
     log.crit(`A failure occurred while attempting to get S2 Container Host Names with ports, The error message was: ${error.message}`, { tags: ['app.parallel'] });
     throw error;
   });

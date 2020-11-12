@@ -40,7 +40,7 @@ class WebDriverFactory {
         .usingServer(`http://${seleniumContainerName}:${seleniumPort}/wd/hub`)
         .build();
     } catch (error) {
-      log.error(error, { tags: ['webdriver'] });
+      log.error(`Error occured while attempting to create the webDriver. Error was: ${error}`, { tags: [`pid-${process.pid}`, 'webDriverFactory'] });
     }
     // await webDriver.manage().setTimeouts({ script: 10000, pageLoad: 60000, implicit: 70000 });
     return webDriver;
