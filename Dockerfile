@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:14-alpine
 
 ARG LOCAL_USER_ID
 ARG LOCAL_GROUP_ID
