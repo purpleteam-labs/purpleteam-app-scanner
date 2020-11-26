@@ -1,7 +1,7 @@
 @app_scan
 Feature: Web application free of security vulnerabilities known to Zap
 
-# Before hooks are run befroe Background
+# Before hooks are run before Background
 
 Background:
   Given a new test session based on each build user supplied testSession

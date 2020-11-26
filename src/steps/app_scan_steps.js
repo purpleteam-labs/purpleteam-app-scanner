@@ -1,5 +1,5 @@
 const { /* Before, */ Given, When, Then /* , setDefaultTimeout */, After } = require('cucumber');
-const Code = require('code');
+const Code = require('@hapi/code');
 
 const { expect } = Code;
 const fs = require('fs');
@@ -91,6 +91,7 @@ Given('the application is spidered for each testSession', async function () {
     testSession: { id: testSessionId, attributes: { username, password }, relationships: { data: testSessionResourceIdentifiers } },
     context: { name: contextName }
   } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testSession', 'context']);
+  const { percentEncode } = this.sut.getBrowser();
 
   const { maxDepth, threadCount, maxChildren } = this.zap.getProperties('spider');
   const zaproxy = this.zap.getZaproxy();
@@ -155,7 +156,7 @@ Given('the application is spidered for each testSession', async function () {
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set forced user with Id "${userId}", for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       err => `Error occurred while attempting to set forced user "${userId}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
-  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${password}`)
+  await zaproxy.users.setAuthenticationCredentials(contextId, userId, `username=${username}&password=${percentEncode(password)}`)
     .then(
       resp => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Set authentication credentials, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       err => `Error occurred while attempting to set authentication credentials, for test session with id: "${testSessionId}". Error was: ${err.message}.`

@@ -469,6 +469,7 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
     log.notice(message, { tags: ['app.parallel'] });
     internals.testSessionDoneCount += 1;
     if (model.slave.shutdownSlavesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions) {
+      internals.testSessionDoneCount = 0;
       internals.deprovisionS2ContainersViaLambda(cloudFuncOpts, deprovisionViaLambdaDto);
     }
   });

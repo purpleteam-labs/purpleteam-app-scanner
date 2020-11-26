@@ -114,6 +114,9 @@ const checkAndNotifyBuildUserIfAnyKnownBrowserErrors = async (testSessionId) => 
 };
 
 
+const percentEncode = str => str.split('').map(char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`).reduce((accum, cV) => `${accum}${cV}`, '');
+
+
 module.exports = {
   findElementThenClick,
   findElementThenClear,
@@ -124,5 +127,6 @@ module.exports = {
   },
   getWebDriver() {
     return driver;
-  }
+  },
+  percentEncode
 };

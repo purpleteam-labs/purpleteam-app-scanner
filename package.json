@@ -75,7 +75,7 @@
     "hapi-good-winston": "^2.1.0",
     "http-proxy-agent": "^4.0.1",
     "joi": "^14.3.1",
-    "purpleteam-logger": "^1.0.1",
+    "purpleteam-logger": "^1.0.2",
     "redis": "^2.8.0",
     "selenium-webdriver": "^4.0.0-alpha.7",
     "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#90470c25e77eb25c5f39146f686a29a21ce2bf41"
