@@ -6,7 +6,7 @@ const { promisify } = require('util');
 const readFileAsync = promisify(fs.readFile);
 const cucumber = require('cucumber');
 
-const model = require('./');
+const model = require('.');
 
 
 class App {
@@ -28,11 +28,11 @@ class App {
   async runJob(testJob) {
     this.log.info(`${this.slavesDeployed ? 'slaves already deployed.' : 'running testJob.'}`, { tags: ['app'] });
     if (this.slavesDeployed) return 'Request ignored. Slaves already deployed.';
-    const testRoutes = testJob.included.filter(resourceObject => resourceObject.type === 'route');
-    const testSessions = testJob.included.filter(resourceObject => resourceObject.type === 'testSession');
+    const testRoutes = testJob.included.filter((resourceObject) => resourceObject.type === 'route');
+    const testSessions = testJob.included.filter((resourceObject) => resourceObject.type === 'testSession');
 
 
-    const sessionsProps = testSessions.map(sesh => ({
+    const sessionsProps = testSessions.map((sesh) => ({
       testRoutes,
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
@@ -131,10 +131,10 @@ class App {
   // eslint-disable-next-line class-methods-use-this
   async testPlanText(activeTestCases) {
     const activeTestFileUris = activeTestCases
-      .map(currentValue => currentValue.uri)
+      .map((currentValue) => currentValue.uri)
       .filter((currentValue, currentElementIndex, urisOfActiveTestCases) => urisOfActiveTestCases.indexOf(currentValue) === currentElementIndex);
     return (await Promise.all(activeTestFileUris
-      .map(featureFileUri => readFileAsync(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
+      .map((featureFileUri) => readFileAsync(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
       .reduce((accumulatedFeatures, feature) => accumulatedFeatures.concat(...['\n\n', feature]));
   }
 }

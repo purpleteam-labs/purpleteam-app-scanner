@@ -45,7 +45,7 @@ const schema = {
   redis: {
     clientCreationOptions: {
       doc: 'The options used for creating the redis client.',
-      format: val => typeof val === 'object',
+      format: (val) => typeof val === 'object',
       default: {
         port: 6379,
         host: 'redis'

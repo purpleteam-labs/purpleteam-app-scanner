@@ -101,7 +101,7 @@ const checkAndNotifyBuildUserIfAnyKnownBrowserErrors = async (testSessionId) => 
   const pageSource = await driver.getPageSource();
 
   if (pageSource.includes('ZAP Error')) {
-    const knownZapErrorWithHelpMessageForBuildUser = knownZapErrorsWithHelpMessageForBuildUser.find(k => pageSource.includes(k.zapMessage));
+    const knownZapErrorWithHelpMessageForBuildUser = knownZapErrorsWithHelpMessageForBuildUser.find((k) => pageSource.includes(k.zapMessage));
 
     if (knownZapErrorWithHelpMessageForBuildUser) {
       publisher.pubLog({ testSessionId, logLevel: 'error', textData: `${knownZapErrorWithHelpMessageForBuildUser.helpMessageForBuildUser} The message received in the browser was: "${knownZapErrorWithHelpMessageForBuildUser.zapMessage}" ... for test session id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
@@ -114,7 +114,7 @@ const checkAndNotifyBuildUserIfAnyKnownBrowserErrors = async (testSessionId) => 
 };
 
 
-const percentEncode = str => str.split('').map(char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`).reduce((accum, cV) => `${accum}${cV}`, '');
+const percentEncode = (str) => str.split('').map((char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`).reduce((accum, cV) => `${accum}${cV}`, '');
 
 
 module.exports = {

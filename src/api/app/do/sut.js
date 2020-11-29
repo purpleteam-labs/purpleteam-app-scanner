@@ -9,12 +9,11 @@ let log;
 let publisher;
 
 // Todo: KC: Will need quite a bit of testing around schemas.
-const sutSchema = {
-
+const sutSchema = Joi.object({
   protocol: Joi.string().required().valid('https', 'http'),
   ip: Joi.string().hostname().required(),
   port: Joi.number().port().required(),
-  browser: Joi.string().valid(config.getSchema().properties.sut.properties.browser.format).lowercase().default(config.get('sut.browser')),
+  browser: Joi.string().valid(...config.getSchema().properties.sut.properties.browser.format).lowercase().default(config.get('sut.browser')),
   loggedInIndicator: Joi.string(),
   context: Joi.object({ // Zap context
     iD: Joi.number().integer().positive(),
@@ -27,15 +26,15 @@ const sutSchema = {
     submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
     expectedPageSourceSuccess: Joi.string().min(2).max(200).required()
   }),
-  reportFormats: Joi.array().items(Joi.string().valid(config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
+  reportFormats: Joi.array().items(Joi.string().valid(...config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
   testSession: Joi.object({
     type: Joi.string().valid('testSession').required(),
     id: Joi.string().alphanum(),
     attributes: Joi.object({
       username: Joi.string().min(2),
       password: Joi.string().min(2),
-      aScannerAttackStrength: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')),
-      aScannerAlertThreshold: Joi.string().valid(config.getSchema().properties.sut.properties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')),
+      aScannerAttackStrength: Joi.string().valid(...config.getSchema().properties.sut.properties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')),
+      aScannerAlertThreshold: Joi.string().valid(...config.getSchema().properties.sut.properties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')),
       alertThreshold: Joi.number().integer().positive().default(config.get('sut.alertThreshold'))
     }),
     relationships: Joi.object({
@@ -54,11 +53,11 @@ const sutSchema = {
         value: Joi.string().empty('').default(''),
         visible: Joi.boolean()
       })),
-      method: Joi.string().valid(config.getSchema().properties.sut.properties.method.format).uppercase().default(config.get('sut.method')),
+      method: Joi.string().valid(...config.getSchema().properties.sut.properties.method.format).uppercase().default(config.get('sut.method')),
       submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i)
     })
   }))
-};
+});
 
 
 let properties;
@@ -66,7 +65,7 @@ let webDriver;
 
 
 const validateProperties = (sutProperties) => {
-  const result = Joi.validate(sutProperties, sutSchema);
+  const result = sutSchema.validate(sutProperties);
   if (result.error) {
     log.error(result.error.message, { tags: ['testing', 'validation'] });
     throw new Error(result.error.message);
@@ -109,16 +108,16 @@ const initialiseBrowser = async (slaveProperties, selenium) => {
 
   const replaceStringSubstitutionsWithSutPropertyValues = (message) => {
     const words = message.split(' ');
-    const substitutions = words.filter(w => w.startsWith('%'));
-    const sutPropertyPaths = substitutions.map(w => w.substring(1));
-    const sutPropertyPathsAsArrays = sutPropertyPaths.map(s => s.split('.'));
-    const replacementValues = sutPropertyPathsAsArrays.map(s => getValuesOfSpecifiedSutPropertiesBasedOnPathAsArray(s, properties));
-    const wordsWithSubstitutionsReplaced = words.map(z => (z.startsWith('%') ? replacementValues.shift() : z));
+    const substitutions = words.filter((w) => w.startsWith('%'));
+    const sutPropertyPaths = substitutions.map((w) => w.substring(1));
+    const sutPropertyPathsAsArrays = sutPropertyPaths.map((s) => s.split('.'));
+    const replacementValues = sutPropertyPathsAsArrays.map((s) => getValuesOfSpecifiedSutPropertiesBasedOnPathAsArray(s, properties));
+    const wordsWithSubstitutionsReplaced = words.map((z) => (z.startsWith('%') ? replacementValues.shift() : z));
     return wordsWithSubstitutionsReplaced.join(' ');
   };
 
   const knownZapErrorsWithHelpMessageForBuildUser = knownZapFormatStringErrorsWithHelpMessageForBuildUser
-    .map(k => ({
+    .map((k) => ({
       zapMessage: replaceStringSubstitutionsWithSutPropertyValues(k.zapMessage),
       helpMessageForBuildUser: replaceStringSubstitutionsWithSutPropertyValues(k.helpMessageForBuildUser)
     }));

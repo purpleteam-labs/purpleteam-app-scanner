@@ -11,6 +11,7 @@
     "deps": "npm-check",
     "update:deps": "npm-check -u",
     "test": "lab --assert @hapi/code --coverage",
+    "test:nolint": "lab --assert @hapi/code --coverage",
     "test:debug": "node --inspect-brk ./node_modules/.bin/lab --assert @hapi/code --timeout 0",
     "pretest": "npm run lint",
     "debug": "node --inspect-brk ./index.js",
@@ -74,7 +75,7 @@
     "hapi": "^18.1.0",
     "hapi-good-winston": "^2.1.0",
     "http-proxy-agent": "^4.0.1",
-    "joi": "^14.3.1",
+    "joi": "^17.3.0",
     "purpleteam-logger": "^1.0.2",
     "redis": "^2.8.0",
     "selenium-webdriver": "^4.0.0-alpha.7",
@@ -82,13 +83,13 @@
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {
-    "eslint": "^5.15.3",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.16.0",
+    "eslint": "^7.14.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
     "@hapi/lab": "^24.1.0",
-    "npm-check": "^5.9.0",
+    "npm-check": "^5.9.2",
     "pre-commit": "^1.2.2",
-    "rewire": "^4.0.1",
-    "sinon": "^7.3.0"
+    "rewire": "^5.0.0",
+    "sinon": "^9.2.1"
   }
 }

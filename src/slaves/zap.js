@@ -4,7 +4,7 @@ const ZapClient = require('zaproxy');
 const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
 
 
-const zapSchema = {
+const zapSchema = Joi.object({
   protocol: Joi.string().required().valid('https', 'http'),
   hostname: Joi.string().required(),
   port: Joi.number().required().port(),
@@ -16,7 +16,7 @@ const zapSchema = {
     threadCount: Joi.number().integer().min(0).max(20),
     maxChildren: Joi.number().integer().min(0).max(20)
   })
-};
+});
 
 let log; // Todo: KC: Should be provided by an IoC container.
 let properties;
@@ -37,7 +37,7 @@ const knownZapErrorsWithHelpMessageForBuildUser = [
 ];
 
 const validateProperties = (slaveProperties) => {
-  const result = Joi.validate(slaveProperties, zapSchema);
+  const result = zapSchema.validate(slaveProperties);
   // log.debug(`result: ${JSON.stringify(result)}`);
   if (result.error) {
     log.error(result.error.message, { tags: ['zap'] });
