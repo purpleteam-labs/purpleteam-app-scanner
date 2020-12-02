@@ -64,22 +64,26 @@
     "url": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/issues"
   },
   "homepage": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/blob/master/README.md",
+  "// Old version of gherkin is required to satisfy src/scripts/cucumber-redacted.js": "Hopefully cucumber will reinstate the cucumber-redacted functionality at some stage.",
   "dependencies": {
+    "@cucumber/cucumber": "^7.0.0-rc.0",
+    "gherkin": "^5.0.0",
     "@hapi/code": "^8.0.2",
     "app-module-path": "^2.2.0",
-    "aws-sdk": "^2.427.0",
-    "axios": "^0.19.0",
-    "convict": "^4.4.1",
-    "cucumber": "^5.1.0",
+    "aws-sdk": "^2.799.0",
+    "axios": "^0.21.0",
+    "convict": "^6.0.0",
+    "convict-format-with-moment": "^6.0.0",
+    "convict-format-with-validator": "^6.0.0",
     "good": "^8.1.2",
     "hapi": "^18.1.0",
-    "hapi-good-winston": "^2.1.0",
+    "hapi-good-winston": "^3.0.1",
     "http-proxy-agent": "^4.0.1",
     "joi": "^17.3.0",
     "purpleteam-logger": "^1.0.2",
-    "redis": "^2.8.0",
+    "redis": "^3.0.2",
     "selenium-webdriver": "^4.0.0-alpha.7",
-    "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#90470c25e77eb25c5f39146f686a29a21ce2bf41"
+    "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#68fc8c8a169f39ab415acf3d38b6ac7051caef8a"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {

@@ -1,5 +1,10 @@
 const convict = require('convict');
+const convictFormatWithMoment = require('convict-format-with-moment');
+const convictFormatWithValidator = require('convict-format-with-validator');
 const path = require('path');
+
+convict.addFormat(convictFormatWithMoment.duration);
+convict.addFormat(convictFormatWithValidator.url);
 
 const internals = { aws_region: process.env.AWS_REGION || 'dummy-region' };
 

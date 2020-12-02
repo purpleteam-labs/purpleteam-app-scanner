@@ -5,6 +5,9 @@ const WebDriverFactory = require(`${process.cwd()}/src/drivers/webDriverFactory`
 const browser = require(`${process.cwd()}/src/clients/browser`);
 const config = require(`${process.cwd()}/config/config`);
 /* eslint-enable import/no-dynamic-require */
+
+const configSchemaProps = config.getSchema()._cvtProperties; // eslint-disable-line no-underscore-dangle
+
 let log;
 let publisher;
 
@@ -13,7 +16,7 @@ const sutSchema = Joi.object({
   protocol: Joi.string().required().valid('https', 'http'),
   ip: Joi.string().hostname().required(),
   port: Joi.number().port().required(),
-  browser: Joi.string().valid(...config.getSchema().properties.sut.properties.browser.format).lowercase().default(config.get('sut.browser')),
+  browser: Joi.string().valid(...configSchemaProps.sut._cvtProperties.browser.format).lowercase().default(config.get('sut.browser')), // eslint-disable-line no-underscore-dangle
   loggedInIndicator: Joi.string(),
   context: Joi.object({ // Zap context
     iD: Joi.number().integer().positive(),
@@ -26,15 +29,15 @@ const sutSchema = Joi.object({
     submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
     expectedPageSourceSuccess: Joi.string().min(2).max(200).required()
   }),
-  reportFormats: Joi.array().items(Joi.string().valid(...config.getSchema().properties.sut.properties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]),
+  reportFormats: Joi.array().items(Joi.string().valid(...configSchemaProps.sut._cvtProperties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]), // eslint-disable-line no-underscore-dangle
   testSession: Joi.object({
     type: Joi.string().valid('testSession').required(),
     id: Joi.string().alphanum(),
     attributes: Joi.object({
       username: Joi.string().min(2),
       password: Joi.string().min(2),
-      aScannerAttackStrength: Joi.string().valid(...config.getSchema().properties.sut.properties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')),
-      aScannerAlertThreshold: Joi.string().valid(...config.getSchema().properties.sut.properties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')),
+      aScannerAttackStrength: Joi.string().valid(...configSchemaProps.sut._cvtProperties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')), // eslint-disable-line no-underscore-dangle
+      aScannerAlertThreshold: Joi.string().valid(...configSchemaProps.sut._cvtProperties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')), // eslint-disable-line no-underscore-dangle
       alertThreshold: Joi.number().integer().positive().default(config.get('sut.alertThreshold'))
     }),
     relationships: Joi.object({
@@ -53,7 +56,7 @@ const sutSchema = Joi.object({
         value: Joi.string().empty('').default(''),
         visible: Joi.boolean()
       })),
-      method: Joi.string().valid(...config.getSchema().properties.sut.properties.method.format).uppercase().default(config.get('sut.method')),
+      method: Joi.string().valid(...configSchemaProps.sut._cvtProperties.method.format).uppercase().default(config.get('sut.method')), // eslint-disable-line no-underscore-dangle
       submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i)
     })
   }))

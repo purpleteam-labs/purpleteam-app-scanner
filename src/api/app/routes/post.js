@@ -22,4 +22,4 @@ module.exports = [{
 // Maintain default set of cucumber features and steps, to run depending on what build user wants as specified in passed config.
 
 
-// Return low levvel report for orchestrator to compile with other testers and format.
+// Return low level report for orchestrator to compile with other testers and format.

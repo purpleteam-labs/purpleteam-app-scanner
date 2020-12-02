@@ -1,10 +1,6 @@
-// https://robbg.io/blog/2017-03-31-async-await-and-node-fs/
-// http://2ality.com/2017/05/util-promisify.html
-const fs = require('fs');
-const { promisify } = require('util');
-
-const readFileAsync = promisify(fs.readFile);
-const cucumber = require('cucumber');
+const { readFile } = require('fs').promises;
+const cucumber = require('@cucumber/cucumber');
+const { getActiveTestCasesFromFilesystem } = require('src/scripts/cucumber-redacted');
 
 const model = require('.');
 
@@ -96,7 +92,7 @@ class App {
       '--require',
       this.cucumber.steps,
       /* '--exit', */
-      `--format=json:${this.results.dir}result_testSessionId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.json`,
+      `--format=message:${this.results.dir}result_testSessionId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.NDJSON`,
       /* Todo: Provide ability for Build User to pass flag to disable colours */
       '--format-options',
       '{"colorsEnabled": true}',
@@ -112,18 +108,13 @@ class App {
 
   // eslint-disable-next-line class-methods-use-this
   async getActiveTestCases(cucumberCli) {
-    // Files to work the below out where in:
-    // https://github.com/cucumber/cucumber-js/blob/master/src/cli/index.js
-    // https://github.com/cucumber/cucumber-js/blob/master/src/cli/helpers.js#L20
-    // https://github.com/cucumber/cucumber-js/blob/master/src/cli/configuration_builder.js
     const configuration = await cucumberCli.getConfiguration();
-    const activeTestCases = await cucumber.getTestCasesFromFilesystem({
+    const activeTestCases = await getActiveTestCasesFromFilesystem({
       cwd: process.cwd(),
       eventBroadcaster: (() => new (require('events'))())(), // eslint-disable-line global-require
       featureDefaultLanguage: configuration.featureDefaultLanguage,
       featurePaths: configuration.featurePaths,
-      order: configuration.order,
-      pickleFilter: (() => new (require('cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions))() // eslint-disable-line global-require, new-cap
+      pickleFilter: (() => new (require('@cucumber/cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions))() // eslint-disable-line global-require, new-cap
     });
     return activeTestCases;
   }
@@ -131,10 +122,10 @@ class App {
   // eslint-disable-next-line class-methods-use-this
   async testPlanText(activeTestCases) {
     const activeTestFileUris = activeTestCases
-      .map((currentValue) => currentValue.uri)
-      .filter((currentValue, currentElementIndex, urisOfActiveTestCases) => urisOfActiveTestCases.indexOf(currentValue) === currentElementIndex);
+      .map((currentValue) => currentValue.uri);
+      // .filter((currentValue, currentElementIndex, urisOfActiveTestCases) => urisOfActiveTestCases.indexOf(currentValue) === currentElementIndex); // Was there a point to this line?
     return (await Promise.all(activeTestFileUris
-      .map((featureFileUri) => readFileAsync(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
+      .map((featureFileUri) => readFile(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
       .reduce((accumulatedFeatures, feature) => accumulatedFeatures.concat(...['\n\n', feature]));
   }
 }

@@ -1,4 +1,4 @@
-const cucumber = require('cucumber');
+const cucumber = require('@cucumber/cucumber');
 
 const config = require('config/config');
 const log = require('purpleteam-logger').init(config.get('logger'));

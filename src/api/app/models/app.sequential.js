@@ -1,4 +1,4 @@
-const cucumber = require('cucumber');
+const cucumber = require('@cucumber/cucumber');
 
 const sequential = (runParams) => {
   const { model, model: { createCucumberArgs, log, publisher }, sessionsProps } = runParams;

@@ -1,4 +1,4 @@
-const { /* Before, */ Given, When, Then /* , setDefaultTimeout */, After } = require('cucumber');
+const { /* Before, */ Given, When, Then /* , setDefaultTimeout */, After } = require('@cucumber/cucumber');
 const Code = require('@hapi/code');
 
 const { expect } = Code;
@@ -18,7 +18,6 @@ Given('a new test session based on each build user supplied testSession', async 
   const { authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater, submit, expectedPageSourceSuccess }, testSession: { id, attributes: { username, password } } } = this.sut.getProperties(['authentication', 'testSession']);
 
   // Todo: KC: Allow for no loginRoute, usernameFieldLocater, passwordFieldLocater, user, pass
-
   await this.initialiseBrowser();
   const webDriver = this.sut.getBrowser().getWebDriver();
   await webDriver.getWindowHandle();

@@ -1,4 +1,5 @@
 const Hapi = require('hapi');
+const good = require('good');
 const config = require('config/config');
 const app = require('src/api/app');
 
@@ -29,7 +30,7 @@ const reporters = {
 
 const infrastructuralPlugins = [
   {
-    plugin: require('good'), // eslint-disable-line global-require
+    plugin: good,
     options: { reporters: reporters[process.env.NODE_ENV] }
   }
 ];
