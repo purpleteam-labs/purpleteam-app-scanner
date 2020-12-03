@@ -1,5 +1,5 @@
-const Hapi = require('hapi');
-const good = require('good');
+const Hapi = require('@hapi/hapi');
+const good = require('@hapi/good');
 const config = require('config/config');
 const app = require('src/api/app');
 
