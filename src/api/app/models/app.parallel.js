@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 const { Lambda, ServiceDiscovery } = require('aws-sdk');
 const axios = require('axios');
 const HttpProxyAgent = require('http-proxy-agent');
+const Bourne = require('@hapi/bourne');
 
 // For complete sessionsProps
 // https://github.com/cucumber/cucumber-js/issues/786#issuecomment-372928596
@@ -83,7 +84,7 @@ internals.resolvePromises = async (provisionFeedback) => {
   let provisionedViaLambdaDtoCollection;
   try {
     provisionedViaLambdaDtoCollection = responses.map((r) => {
-      const payload = JSON.parse(r.Payload);
+      const payload = Bourne.parse(r.Payload);
       const provisionedViaLambdaDto = Object.prototype.hasOwnProperty.call(payload, 'body') ? payload.body.provisionedViaLambdaDto : undefined;
       return provisionedViaLambdaDto;
     });
@@ -429,7 +430,7 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
   let error;
   let unhandledErrorMessageFromWithinLambda;
   try {
-    const payload = JSON.parse(resolved.Payload);
+    const payload = Bourne.parse(resolved.Payload);
     const deprovisionedViaLambdaDto = Object.prototype.hasOwnProperty.call(payload, 'body') ? payload.body.deprovisionedViaLambdaDto : undefined;
     unhandledErrorMessageFromWithinLambda = Object.prototype.hasOwnProperty.call(payload, 'errorMessage') && payload.errorMessage;
     ({ item, error } = deprovisionedViaLambdaDto || { item: undefined, error: undefined });

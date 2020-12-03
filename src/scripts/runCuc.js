@@ -1,4 +1,5 @@
 const cucumber = require('@cucumber/cucumber');
+const Bourne = require('@hapi/bourne');
 
 const config = require('config/config');
 const log = require('purpleteam-logger').init(config.get('logger'));
@@ -27,7 +28,7 @@ const cucumberCliStdout = {
 exports.default = async function run() {
   const cwd = process.cwd();
   const worldParametersV = 11;
-  const worldParameters = JSON.parse(process.argv[worldParametersV]);
+  const worldParameters = Bourne.parse(process.argv[worldParametersV]);
   testSessionId = worldParameters.sutProperties.testSession.id;
   // Uncomment the following to check the world parameters.
   /*
