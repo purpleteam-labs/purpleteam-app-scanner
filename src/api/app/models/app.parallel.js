@@ -78,7 +78,7 @@ internals.resolvePromises = async (provisionFeedback) => {
   const responses = await Promise.all(promisesFromLambdas).catch((err) => {
     // This gets hit if the Lambda timeout (not the S2_PROVISIONING_TIMEOUT) is too short, and maybe possibly with other faults.
     log.crit(`Unhandled error occurred from the Lambda service while attempting to start S2 app containers. Error was: ${err.message}.`, { tags: ['app.parallel'] });
-    throw err; // Todo: As we learn more about the types of failures, we are going to have to provide non fatal workarounds.
+    throw err; // Todo: As we learn more about the types of failures, we are going to have to provide non fatal workarounds: https://gitlab.com/purpleteam-labs/purpleteam/-/issues/22
   });
   log.debug(`The value of responses is: ${JSON.stringify(responses)}.`, { tags: ['app.parallel, resolvePromises'] });
   let provisionedViaLambdaDtoCollection;
@@ -239,7 +239,7 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
 // ////////////////////////////////////////////////////////////////
 
 internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts }) => {
-  // Todo: port should be more specific, I.E. zap container port (container port)
+  // Todo: port should be more specific, I.E. zap container port (container port): https://gitlab.com/purpleteam-labs/purpleteam/-/issues/26
   const { log, model: { slave: { protocol, port } } } = internals;
   log.notice('Checking whether S2 app containers are ready yet.', { tags: ['app.parallel'] });
   let containersAreReady = false;
@@ -289,7 +289,7 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
   let collectionOfS2ContainerHostNamesWithPorts = [];
 
   if (isCloudEnv) {
-    // Todo: Abstract hard coded timeouts. There is also one in parallel function.
+    // Todo: Abstract hard coded timeouts. There is also one in parallel function. https://gitlab.com/purpleteam-labs/purpleteam/-/issues/27
     const timeOut = 70000;
     let countDown = timeOut;
     const decrementInterval = 5000; // 1000 === one second.
@@ -440,7 +440,7 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
   }
   // purpleteam-labs need to know about this,
   // but the call to bring the containers down will still more than likely be successful, so no point in notifying the Build User.
-  // Possibly set-up a cloudwatch alarm or similar...
+  // Possibly set-up a cloudwatch alarm or similar... https://gitlab.com/purpleteam-labs/purpleteam-iac/-/issues/11
   !!error && log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${error}`, { tags: ['app.parallel'] });
   !!item && log.notice(item, { tags: ['app.parallel'] });
   if (unhandledErrorMessageFromWithinLambda) {
@@ -448,8 +448,7 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
     log.crit(errorMessage);
     throw new Error(errorMessage);
   }
-
-  model.slavesDeployed = false;
+  model.status('awaiting job');
 };
 
 internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLambdaDto) => {
@@ -459,7 +458,7 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
   const cucCli = spawn('node', [...(execArgvDebugString ? [`${execArgvDebugString}:${internals.nextChildProcessInspectPort}`] : []), ...cucumberArgs], { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
   internals.nextChildProcessInspectPort += 1;
   log.notice(`cucCli process with PID "${cucCli.pid}" has been spawned for test session with Id "${runableSessionProps.sessionProps.testSession.id}"`, { tags: ['app.parallel'] });
-  model.slavesDeployed = true;
+  model.status('app tests are running');
 
   cucCli.stdout.on('data', (data) => {
     process.stdout.write(data);
@@ -486,7 +485,7 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
 
   cucCli.on('error', (err) => {
     process.stdout.write(`Failed to start sub-process. The error was: ${err}.`, { tags: ['app.parallel'] });
-    model.slavesDeployed = false;
+    model.status('awaiting job');
   });
 };
 
@@ -522,6 +521,7 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
   }[process.env.NODE_ENV];
   log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto)}`, { tags: ['app.parallel', 'parallel'] });
   let returnStatus;
+  let cloudFuncOpts;
   await waitForS2ContainersReady({
     provisionedViaLambdaDto,
     waitForS2ContainersTimeOut: 30000 /* 10000 */,
@@ -539,14 +539,16 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
     // Todo: obfuscate sensitive values from runableSessionProps.
     log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps)}`, { tags: ['app.parallel', 'parallel'] });
 
-    const cloudFuncOpts = { region, endpoint: lambdaEndpoint };
+    cloudFuncOpts = { region, endpoint: lambdaEndpoint };
     runableSessionsProps.forEach((rSP) => {
       runTestSession(cloudFuncOpts, rSP, deprovisionViaLambdaDto);
     });
-    returnStatus = 'App tests are now running.';
+    returnStatus = model.status('app tests are running');
   }).catch((error) => {
     log.error(error.message, { tags: ['app.parallel'] });
-    returnStatus = 'Back-end failure: S2 app containers are not ready.';
+    log.notice('Attempting to bring S2 containers down.', { tags: ['app.parallel'] });
+    internals.deprovisionS2ContainersViaLambda(cloudFuncOpts, deprovisionViaLambdaDto);
+    returnStatus = 'Back-end failure: S2 app containers were not ready.';
   });
 
   return returnStatus;

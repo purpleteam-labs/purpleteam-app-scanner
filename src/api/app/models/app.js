@@ -4,6 +4,12 @@ const { getActiveTestCasesFromFilesystem } = require('src/scripts/cucumber-redac
 
 const model = require('.');
 
+const statusMap = {
+  'awaiting job': true,
+  'initialising job': false,
+  'app tests are running': false
+};
+
 
 class App {
   constructor(options) {
@@ -18,12 +24,21 @@ class App {
     this.runType = runType;
     this.cloud = cloud;
     this.debug = debug;
-    this.slavesDeployed = false;
+    this.status = (state) => {
+      if (state) {
+        Object.keys(statusMap).forEach((k) => { statusMap[k] = false; });
+        statusMap[state] = true;
+        this.log.info(`Setting status to: "${state}"`, { tags: ['app'] });
+        return state;
+      }
+      return Object.entries(statusMap).find((e) => e[1] === true)[0];
+    };
   }
 
   async runJob(testJob) {
-    this.log.info(`${this.slavesDeployed ? 'slaves already deployed.' : 'running testJob.'}`, { tags: ['app'] });
-    if (this.slavesDeployed) return 'Request ignored. Slaves already deployed.';
+    this.log.info(`Status currently set to: "${this.status()}"`, { tags: ['app'] });
+    if (this.status() !== 'awaiting job') return this.status();
+    this.status('initialising job');
     const testRoutes = testJob.included.filter((resourceObject) => resourceObject.type === 'route');
     const testSessions = testJob.included.filter((resourceObject) => resourceObject.type === 'testSession');
 

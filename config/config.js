@@ -177,7 +177,7 @@ const schema = {
   },
   results: {
     dir: {
-      doc: 'The location of the results.',
+      doc: 'The location of the results. This directory needs group rwx permissions.',
       format: String,
       default: '/var/log/purpleteam/outcomes/'
     }
@@ -186,7 +186,7 @@ const schema = {
     doc: 'The type to run the cucumber tests.',
     format: ['parallel', 'sequential', 'publisher'],
     // If parallel is not selected, the results archive will not be created, because all testSessions never finish.
-    // We check that all testSessions are finished before creating archive in the orchestrator's orchestrate.areAllTestSessionsOfAllTestersFinished
+    // We check that all testSessions are finished before creating archive in the orchestrator's orchestrate.areAllTestSessionsOfAllTestersFinishedOrNonexistent
     default: 'parallel'
   },
   cloud: {
