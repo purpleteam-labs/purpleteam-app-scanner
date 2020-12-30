@@ -73,7 +73,7 @@
     "@hapi/hapi": "^20.0.3",
     "app-module-path": "^2.2.0",
     "aws-sdk": "^2.799.0",
-    "axios": "^0.21.0",
+    "axios": "^0.21.1",
     "convict": "^6.0.0",
     "convict-format-with-moment": "^6.0.0",
     "convict-format-with-validator": "^6.0.0",
