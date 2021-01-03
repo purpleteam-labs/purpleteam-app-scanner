@@ -1,7 +1,7 @@
 {
   "name": "purpleteam-app-scanner",
   "version": "0.1.0-alpha.1",
-  "description": "",
+  "description": "Application scanning component of purpleteam -- security regression testing SaaS",
   "main": "index.js",
   "bin": {
     "purpleteamParallelCucumber": "./bin/purpleteamParallelCucumber"
@@ -61,7 +61,7 @@
   "author": "Kim Carter",
   "license": "AGPL-3.0-only",
   "bugs": {
-    "url": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/issues"
+    "url": "https://gitlab.com/purpleteam-labs/purpleteam/issues"
   },
   "homepage": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/blob/master/README.md",
   "// Old version of gherkin is required to satisfy src/scripts/cucumber-redacted.js": "Hopefully cucumber will reinstate the cucumber-redacted functionality at some stage.",
