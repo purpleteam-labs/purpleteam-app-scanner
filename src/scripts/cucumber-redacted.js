@@ -1,3 +1,19 @@
+// Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
+
+// This file is part of purpleteam.
+
+// purpleteam is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation version 3.
+
+// purpleteam is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+
 // Only an older version of gherkin works.
 // Sadly this functionality now inaccessible in the later versions of cucumber, even though it's still needed.
 // https://github.com/cucumber/cucumber-js/issues/1489
