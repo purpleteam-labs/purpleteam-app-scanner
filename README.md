@@ -9,12 +9,16 @@
   Application scanning component of <a href="https://purpleteam-labs.com/" title="purpleteam">purpleteam</a> - Currently in alpha
 <br/><br/>
 
-<a href="https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/commits/main" title="pipeline status">
-   <img src="https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/badges/main/pipeline.svg" alt="pipeline status">
+<a href="https://www.gnu.org/licenses/agpl-3.0" title="license">
+  <img src="https://img.shields.io/badge/License-AGPL%20v3-blue.svg" alt="GNU AGPL">
 </a>
 
-<a href="https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/commits/main" title="test coverage">
-   <img src="https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/badges/main/coverage.svg" alt="test coverage">
+<a href="https://github.com/purpleteam-labs/purpleteam-app-scanner/commits/main" title="pipeline status">
+  <img src="https://github.com/purpleteam-labs/purpleteam-app-scanner/workflows/Node.js%20CI/badge.svg" alt="pipeline status">
+</a>
+
+<a href='https://coveralls.io/github/purpleteam-labs/purpleteam-app-scanner?branch=main'>
+  <img src='https://coveralls.io/repos/github/purpleteam-labs/purpleteam-app-scanner/badge.svg?branch=main' alt='test coverage'>
 </a>
 
 <a href="https://snyk.io/test/github/purpleteam-labs/purpleteam-app-scanner?targetFile=package.json" title="known vulnerabilities">
@@ -37,7 +41,7 @@ npm install
 Copy the config/config.example.json to config/config.local.json.  
 Use the config/config.js for documentation and further examples.  
 
-Take the Zap API Key that you set-up in the [purpleteam-s2-containers](https://gitlab.com/purpleteam-labs/purpleteam-s2-containers) project and replace the `<zap-api-key-here>` value in the config.local.json file.
+Take the Zap API Key that you set-up in the [purpleteam-s2-containers](https://github.com/purpleteam-labs/purpleteam-s2-containers) project and replace the `<zap-api-key-here>` value in the config.local.json file.
 
 The following two values should be the same. They should also match the value of the orchestrator `outcomes.dir`:
 

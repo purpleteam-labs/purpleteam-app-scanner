@@ -11,6 +11,7 @@
     "deps": "npm-check",
     "update:deps": "npm-check -u",
     "test": "lab --assert @hapi/code --coverage",
+    "test:coveralls": "lab --assert @hapi/code --reporter lcov -o ./coverage/lcov.info",
     "test:nolint": "lab --assert @hapi/code --coverage",
     "test:debug": "node --inspect-brk ./node_modules/.bin/lab --assert @hapi/code --timeout 0",
     "pretest": "npm run lint",
@@ -22,7 +23,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/purpleteam-labs/purpleteam-app-scanner.git"
+    "url": "git+https://github.com/purpleteam-labs/purpleteam-app-scanner.git"
   },
   "keywords": [
     "agile",
@@ -61,9 +62,9 @@
   "author": "Kim Carter",
   "license": "AGPL-3.0-only",
   "bugs": {
-    "url": "https://gitlab.com/purpleteam-labs/purpleteam/issues"
+    "url": "https://github.com/purpleteam-labs/purpleteam/issues"
   },
-  "homepage": "https://gitlab.com/purpleteam-labs/purpleteam-app-scanner/blob/master/README.md",
+  "homepage": "https://purpleteam-labs.com",
   "// Old version of gherkin is required to satisfy src/scripts/cucumber-redacted.js": "Hopefully cucumber will reinstate the cucumber-redacted functionality at some stage.",
   "dependencies": {
     "@cucumber/cucumber": "^7.0.0-rc.0",
