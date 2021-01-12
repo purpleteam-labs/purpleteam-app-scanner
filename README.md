@@ -1,7 +1,7 @@
 <div align="center">
   <br/>
   <a href="https://purpleteam-labs.com" title="purpleteam">
-    <img width=900px src="https://gitlab.com/purpleteam-labs/purpleteam/raw/main/assets/images/purpleteam-banner.png" alt="purpleteam logo">
+    <img width=900px src="https://github.com/purpleteam-labs/purpleteam/blob/main/assets/images/purpleteam-banner.png" alt="purpleteam logo">
   </a>
   <br/>
 <br/>
