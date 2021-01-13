@@ -19,7 +19,7 @@ const publisher = (runParams) => {
   const { model, model: { log, publisher: p }, sessionsProps } = runParams;
 
   setInterval(() => {
-    model.slavesDeployed = true;
+    model.emissariesDeployed = true;
     const sessionId = `${sessionsProps[0].testSession.id}`;
     log.debug('publishing to redis', { tags: ['app', sessionId] });
     try {

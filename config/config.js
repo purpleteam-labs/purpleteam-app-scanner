@@ -74,19 +74,19 @@ const schema = {
       }
     }
   },
-  slave: {
+  emissary: {
     protocol: {
-      doc: 'The protocol that the slave is listening as.',
+      doc: 'The protocol that the emissary is listening as.',
       format: ['https', 'http'],
       default: 'https'
     },
     hostname: {
-      doc: 'The hostname (IP or name) address of the slave host.',
+      doc: 'The hostname (IP or name) address of the emissary host.',
       format: String,
       default: '240.0.0.0'
     },
     port: {
-      doc: 'The port that the slave is listening on.',
+      doc: 'The port that the emissary is listening on.',
       format: 'port',
       default: 8080
     },
@@ -125,8 +125,8 @@ const schema = {
         default: 10
       }
     },
-    shutdownSlavesAfterTest: {
-      doc: 'Useful for inspecting slave containers during debugging.',
+    shutdownEmissariesAfterTest: {
+      doc: 'Useful for inspecting emissary containers during debugging.',
       format: 'Boolean',
       default: true
     }

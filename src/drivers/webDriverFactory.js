@@ -43,7 +43,7 @@ class WebDriverFactory {
   // eslint-disable-next-line class-methods-use-this
   async webDriver(options) {
     ({ log } = options);
-    const { sutProtocol, browser, slave: { hostname: slaveHostname, port: slavePort }, selenium: { seleniumContainerName, seleniumPort } } = options;
+    const { sutProtocol, browser, emissary: { hostname: emissaryHostname, port: emissaryPort }, selenium: { seleniumContainerName, seleniumPort } } = options;
     if (webDriver) return webDriver;
     log.debug(`The server is: http://${seleniumContainerName}:${seleniumPort}/wd/hub`, { tags: [`pid-${process.pid}`, 'webDriverFactory'] });
     try {
@@ -52,7 +52,7 @@ class WebDriverFactory {
         .setChromeOptions(chromeOptions)
         .setFirefoxOptions(firefoxOptions)
         // Set proxy based on the type (protocol) of web requests being proxied through the proxy. This is not the protocol of the proxy itself.
-        .setProxy(proxy.manual({ [sutProtocol]: `${slaveHostname}:${slavePort}` }))
+        .setProxy(proxy.manual({ [sutProtocol]: `${emissaryHostname}:${emissaryPort}` }))
         .usingServer(`http://${seleniumContainerName}:${seleniumPort}/wd/hub`)
         .build();
     } catch (error) {

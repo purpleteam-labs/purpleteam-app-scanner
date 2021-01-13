@@ -111,15 +111,15 @@ const getProperties = (selecter) => {
 };
 
 
-const initialiseBrowser = async (slaveProperties, selenium) => {
-  const { knownZapErrorsWithHelpMessageForBuildUser: knownZapFormatStringErrorsWithHelpMessageForBuildUser } = slaveProperties;
+const initialiseBrowser = async (emissaryProperties, selenium) => {
+  const { knownZapErrorsWithHelpMessageForBuildUser: knownZapFormatStringErrorsWithHelpMessageForBuildUser } = emissaryProperties;
   const webDriverFactory = new WebDriverFactory();
   log.debug(`selenium is: ${JSON.stringify(selenium)}`, { tags: [`pid-${process.pid}`, 'sut', 'initialiseBrowser'] });
   webDriver = await webDriverFactory.webDriver({
     log,
     selenium,
     browser: properties.browser,
-    slave: slaveProperties,
+    emissary: emissaryProperties,
     sutProtocol: properties.protocol
   });
 

@@ -39,7 +39,7 @@ const sequential = (runParams) => {
     stdout: cucumberCliStdout
   });
 
-  model.slavesDeployed = true;
+  model.emissariesDeployed = true;
   // If you want to debug the tests before execution returns, uncomment the await, make this function async and add await to the calling function.
   /* await */cucumberCliInstance.run()
     .then(async (succeeded) => {

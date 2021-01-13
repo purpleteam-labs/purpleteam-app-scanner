@@ -5,7 +5,7 @@
   "host": {
     "host": "172.25.0.120"
   },
-  "slave": {
+  "emissary": {
     "protocol": "http",
     "hostname": "172.17.0.2",
     "apiKey": "<zap-api-key-here>",

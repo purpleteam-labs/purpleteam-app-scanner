@@ -29,11 +29,11 @@ const statusMap = {
 
 class App {
   constructor(options) {
-    const { log, strings, slave, cucumber: cucumberConfig, results, publisher, runType, cloud, debug } = options;
+    const { log, strings, emissary, cucumber: cucumberConfig, results, publisher, runType, cloud, debug } = options;
 
     this.log = log;
     this.strings = strings;
-    this.slave = slave;
+    this.emissary = emissary;
     this.cucumber = cucumberConfig;
     this.results = results;
     this.publisher = publisher;
@@ -89,24 +89,24 @@ class App {
     return testPlan;
   }
 
-  // Receiving appSlavePort and seleniumPort are only essential if running in cloud environment.
-  createCucumberArgs({ sessionProps = {}, slaveHost = this.slave.hostname, seleniumContainerName = '', appSlavePort = this.slave.port, seleniumPort = 4444 }) {
+  // Receiving appEmissaryPort and seleniumPort are only essential if running in cloud environment.
+  createCucumberArgs({ sessionProps = {}, emissaryHost = this.emissary.hostname, seleniumContainerName = '', appEmissaryPort = this.emissary.port, seleniumPort = 4444 }) {
     // sut.validateProperties(sutProperties);
     this.log.debug(`seleniumContainerName is: ${seleniumContainerName}`, { tags: ['app'] });
-    const slaveProperties = {
-      hostname: slaveHost,
-      protocol: this.slave.protocol,
-      port: appSlavePort,
-      apiKey: this.slave.apiKey,
-      apiFeedbackSpeed: this.slave.apiFeedbackSpeed,
-      reportDir: this.slave.report.dir,
-      spider: this.slave.spider
+    const emissaryProperties = {
+      hostname: emissaryHost,
+      protocol: this.emissary.protocol,
+      port: appEmissaryPort,
+      apiKey: this.emissary.apiKey,
+      apiFeedbackSpeed: this.emissary.apiFeedbackSpeed,
+      reportDir: this.emissary.report.dir,
+      spider: this.emissary.spider
     };
 
-    // zap.validateProperties(slaveProperties);
+    // zap.validateProperties(emissaryProperties);
 
     const cucumberParameters = {
-      slaveProperties,
+      emissaryProperties,
       seleniumContainerName,
       seleniumPort,
       sutProperties: sessionProps,

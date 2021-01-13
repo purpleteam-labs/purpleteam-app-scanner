@@ -26,7 +26,7 @@ const zapSchema = Joi.object({
   port: Joi.number().required().port(),
   apiKey: Joi.string().required(),
   apiFeedbackSpeed: Joi.number().integer().positive(),
-  reportDir: Joi.string().required().valid(config.get('slave.report.dir')),
+  reportDir: Joi.string().required().valid(config.get('emissary.report.dir')),
   spider: Joi.object({
     maxDepth: Joi.number().integer().positive(),
     threadCount: Joi.number().integer().min(0).max(20),
@@ -52,8 +52,8 @@ const knownZapErrorsWithHelpMessageForBuildUser = [
   // ,{ More errors with help messages... as we find out about them }
 ];
 
-const validateProperties = (slaveProperties) => {
-  const result = zapSchema.validate(slaveProperties);
+const validateProperties = (emissaryProperties) => {
+  const result = zapSchema.validate(emissaryProperties);
   // log.debug(`result: ${JSON.stringify(result)}`);
   if (result.error) {
     log.error(result.error.message, { tags: ['zap'] });
@@ -65,7 +65,7 @@ const validateProperties = (slaveProperties) => {
 
 const init = (options) => {
   ({ log } = options);
-  properties = { knownZapErrorsWithHelpMessageForBuildUser, ...validateProperties(options.slaveProperties) };
+  properties = { knownZapErrorsWithHelpMessageForBuildUser, ...validateProperties(options.emissaryProperties) };
 
   const zapOptions = {
     apiKey: properties.apiKey,

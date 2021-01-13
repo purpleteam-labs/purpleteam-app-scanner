@@ -22,7 +22,7 @@ const messagePublisher = require(`${process.cwd()}/src/publishers/messagePublish
 const { setWorldConstructor, setDefaultTimeout } = require('@cucumber/cucumber');
 
 const sut = require(`${process.cwd()}/src/api/app/do/sut`); // eslint-disable-line import/no-dynamic-require
-const zap = require(`${process.cwd()}/src/slaves/zap`); // eslint-disable-line import/no-dynamic-require
+const zap = require(`${process.cwd()}/src/emissaries/zap`); // eslint-disable-line import/no-dynamic-require
 const strings = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
 
 let timeout;
@@ -42,7 +42,7 @@ class CustomWorld {
     this.sut = sut;
     this.sut.init({ log, publisher: this.publisher, sutProperties });
     this.zap = zap;
-    this.zap.init({ log, slaveProperties: { ...parameters.slaveProperties } });
+    this.zap.init({ log, emissaryProperties: { ...parameters.emissaryProperties } });
     this.strings = strings;
 
     timeout = parameters.cucumber.timeOut;

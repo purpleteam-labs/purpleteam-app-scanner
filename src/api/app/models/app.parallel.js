@@ -49,10 +49,10 @@ const internals = {
   numberOfTestSessions: 0,
   testSessionDoneCount: 0,
   // In the Cloud we use ECS Tasks which combine the two image types, so we do both in the single Lambda invocation.
-  // Locally we need to provision app slaves and selenium standalones separately.
+  // Locally we need to provision app emissaries and selenium standalones separately.
   lambdaProvisioningFuncNames: {
-    cloud: ['provisionAppSlaves'],
-    local: ['provisionAppSlaves', 'provisionSeleniumStandalones']
+    cloud: ['provisionAppEmissaries'],
+    local: ['provisionAppEmissaries', 'provisionSeleniumStandalones']
   },
   // These environment variables are set in IaC ecs.tf and only used in cloud environment.
   // Doc: https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html
@@ -60,7 +60,7 @@ const internals = {
     Custom: {
       customer: process.env.CUSTOMER,
       customerClusterArn: process.env.CUSTOMER_CLUSTER_ARN,
-      serviceDiscoveryServices: Object.entries(process.env).filter(([key]) => key.startsWith('s2_app_slave_')).reduce((accumulator, [key, value]) => ({ ...accumulator, [key]: value }), {})
+      serviceDiscoveryServices: Object.entries(process.env).filter(([key]) => key.startsWith('s2_app_emissary_')).reduce((accumulator, [key, value]) => ({ ...accumulator, [key]: value }), {})
     }
   },
   isCloudEnv: process.env.NODE_ENV === 'cloud'
@@ -146,7 +146,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   const provisionedViaLambdaDtoItems = provisionedViaLambdaDtoCollection.map((provisionedViaLambdaDto) => provisionedViaLambdaDto.items);
   // local may look like this:
   // provisionedViaLambdaDtoItems = [
-  //   [    // Result of provisionAppSlaves
+  //   [    // Result of provisionAppEmissaries
   //     {testSessionId: 'lowPrivUser', ...},
   //     {testSessionId: 'adminUser', ...},
   //     {testSessionId: 'anotherExample', ...}
@@ -161,7 +161,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   // Todo: The following will require more testing, especially in local env.
   for (let i = 0; i < numberOfItems; i += 1) { // 3 items for example
     const itemCollector = [];
-    provisionedViaLambdaDtoItems.forEach((items) => { // 2. provisionAppSlaves and provisionSeleniumStandalones ... if running in local env.
+    provisionedViaLambdaDtoItems.forEach((items) => { // 2. provisionAppEmissaries and provisionSeleniumStandalones ... if running in local env.
       itemCollector.push(items[i]);
     });
     toMerge.push(itemCollector);
@@ -169,13 +169,13 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   // If running in local env:
   // toMerge = [
   //   [
-  //     {testSessionId: 'lowPrivUser', ...},    // Result of provisionAppSlaves
+  //     {testSessionId: 'lowPrivUser', ...},    // Result of provisionAppEmissaries
   //     {testSessionId: 'lowPrivUser', ...}     // Result of provisionSeleniumStandalones
   //   ], [
-  //     {testSessionId: 'adminUser', ...},      // Result of provisionAppSlaves
+  //     {testSessionId: 'adminUser', ...},      // Result of provisionAppEmissaries
   //     {testSessionId: 'adminUser', ...}       // Result of provisionSeleniumStandalones
   //   ], [
-  //     {testSessionId: 'anotherExample', ...}, // Result of provisionAppSlaves
+  //     {testSessionId: 'anotherExample', ...}, // Result of provisionAppEmissaries
   //     {testSessionId: 'anotherExample', ...}  // Result of provisionSeleniumStandalones
   //   ]
   // ]
@@ -185,14 +185,14 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   mergedProvisionedViaLambdaDto.items = toMerge.map((mCV) => {
     // If running in local env:
     // First iteration: mCV = [
-    //   {testSessionId: 'lowPrivUser', ...},    // Result of provisionAppSlaves
+    //   {testSessionId: 'lowPrivUser', ...},    // Result of provisionAppEmissaries
     //   {testSessionId: 'lowPrivUser', ...}     // Result of provisionSeleniumStandalones
     // ]
     const { browser, testSessionId } = mCV[0];
     return {
       browser,
       testSessionId,
-      appSlaveContainerName: mCV.find((e) => e.appSlaveContainerName).appSlaveContainerName,
+      appEmissaryContainerName: mCV.find((e) => e.appEmissaryContainerName).appEmissaryContainerName,
       seleniumContainerName: mCV.find((e) => e.seleniumContainerName).seleniumContainerName,
       ...(isCloudEnv && { appEcsServiceName: mCV.find((e) => e.appEcsServiceName).appEcsServiceName }),
       ...(isCloudEnv && { seleniumEcsServiceName: mCV.find((e) => e.seleniumEcsServiceName).seleniumEcsServiceName }),
@@ -224,15 +224,15 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
   // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#constructor-property
   const lambda = new Lambda(cloudFuncOpts);
 
-  // local env calls two lambda functions which each start app slave zap or app slave selenium,
-  // cloud env calls one lambda function which starts app slave zap and app slave selenium tasks.
+  // local env calls two lambda functions which each start app emissary zap or app emissary selenium,
+  // cloud env calls one lambda function which starts app emissary zap and app emissary selenium tasks.
   const collectionOfWrappedProvisionedViaLambdaDtos = lambdaFuncNames.map((f) => provisionContainers({ lambda, provisionViaLambdaDto, lambdaFunc: f }));
 
   const provisionedViaLambdaDtoCollection = await resolvePromises(collectionOfWrappedProvisionedViaLambdaDtos);
   // local may look like this,
-  // where as cloud will only have the provisionAppSlaves result with each item containing both app slave and selenium values for each test session:
+  // where as cloud will only have the provisionAppEmissaries result with each item containing both app emissary and selenium values for each test session:
   // provisionedViaLambdaDtoCollection = [
-  //   { // Result of provisionAppSlaves
+  //   { // Result of provisionAppEmissaries
   //     items: [
   //       {testSessionId: 'lowPrivUser', ...},
   //       {testSessionId: 'adminUser', ...},
@@ -256,7 +256,7 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
 
 internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts }) => {
   // Todo: port should be more specific, I.E. zap container port (container port): https://gitlab.com/purpleteam-labs/purpleteam/-/issues/26
-  const { log, model: { slave: { protocol, port } } } = internals;
+  const { log, model: { emissary: { protocol, port } } } = internals;
   log.notice('Checking whether S2 app containers are ready yet.', { tags: ['app.parallel'] });
   let containersAreReady = false;
 
@@ -265,8 +265,8 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
     //   https://github.com/zaproxy/zaproxy/issues/3796#issuecomment-319376915
     //   https://github.com/zaproxy/zaproxy/issues/3594
     {
-      cloud() { return axios.get(`${protocol}://zap:${port}/UI`, { httpAgent: new HttpProxyAgent(`${protocol}://${mCV.appSlaveHostName}:${mCV.appSlavePort}`) }); },
-      local() { return axios.get(`${protocol}://${mCV.appSlaveHostName}:${mCV.appSlavePort}/UI`); }
+      cloud() { return axios.get(`${protocol}://zap:${port}/UI`, { httpAgent: new HttpProxyAgent(`${protocol}://${mCV.appEmissaryHostName}:${mCV.appEmissaryPort}`) }); },
+      local() { return axios.get(`${protocol}://${mCV.appEmissaryHostName}:${mCV.appEmissaryPort}/UI`); }
     }[process.env.NODE_ENV](),
     axios.get(`http://${mCV.seleniumHostName}:${mCV.seleniumPort}/wd/hub/status`)
   ]);
@@ -280,7 +280,7 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
         log.warning(`${error.response.status}`, { tags: ['app.parallel'] });
         log.warning(`${error.response.headers}`, { tags: ['app.parallel'] });
       } else if (error.request && error.message) {
-        log.warning(`The request was made to check slave health but no response was received.\nThe error.message was: ${error.message}\nThe error.stack was: ${error.stack}`, { tags: ['app.parallel'] });
+        log.warning(`The request was made to check emissary health but no response was received.\nThe error.message was: ${error.message}\nThe error.stack was: ${error.stack}`, { tags: ['app.parallel'] });
       } else {
         log.warning('Something happened in setting up the request that triggered an Error', { tags: ['app.parallel'] });
         log.warning(`${error.message}`, { tags: ['app.parallel'] });
@@ -289,10 +289,10 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
 
   if (results) {
     const isReady = {
-      appSlave: (response) => (typeof response.data === 'string') && response.data.includes('ZAP API UI'),
+      appEmissary: (response) => (typeof response.data === 'string') && response.data.includes('ZAP API UI'),
       seleniumContainer: (response) => response.data.value.ready === true
     };
-    const containersThatAreNotReady = results.filter((e) => !(isReady.appSlave(e) || isReady.seleniumContainer(e)));
+    const containersThatAreNotReady = results.filter((e) => !(isReady.appEmissary(e) || isReady.seleniumContainer(e)));
     log.debug(`containersThatAreNotReady is: ${JSON.stringify(containersThatAreNotReady)}`, { tags: ['app.parallel', 's2ContainersReady'] });
     containersAreReady = !containersThatAreNotReady.length;
   }
@@ -359,8 +359,8 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
         log.debug(`The value of allS2ServiceDiscoveryServiceInstancesNowAvailable is: ${allS2ServiceDiscoveryServiceInstancesNowAvailable}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
         if (allS2ServiceDiscoveryServiceInstancesNowAvailable) {
           collectionOfS2ContainerHostNamesWithPorts = collectionOfS2ServiceDiscoveryServiceInstances.map((mCV) => ({
-            appSlaveHostName: mCV.s2AppServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_IPV4,
-            appSlavePort: mCV.s2AppServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_PORT,
+            appEmissaryHostName: mCV.s2AppServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_IPV4,
+            appEmissaryPort: mCV.s2AppServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_PORT,
             seleniumHostName: mCV.s2SeleniumServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_IPV4,
             seleniumPort: mCV.s2SeleniumServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_PORT
           }));
@@ -378,8 +378,8 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
     log.debug('Called setTimeout for the first time.', { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
   } else {
     collectionOfS2ContainerHostNamesWithPorts = provisionedViaLambdaDto.items.map((mCV) => ({
-      appSlaveHostName: mCV.appSlaveContainerName,
-      appSlavePort: model.slave.port,
+      appEmissaryHostName: mCV.appEmissaryContainerName,
+      appEmissaryPort: model.emissary.port,
       seleniumHostName: mCV.seleniumContainerName,
       seleniumPort: '4444'
     }));
@@ -488,7 +488,7 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
     const message = `child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}".`;
     log.notice(message, { tags: ['app.parallel'] });
     internals.testSessionDoneCount += 1;
-    if (model.slave.shutdownSlavesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions) {
+    if (model.emissary.shutdownEmissariesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions) {
       internals.testSessionDoneCount = 0;
       internals.deprovisionS2ContainersViaLambda(cloudFuncOpts, deprovisionViaLambdaDto);
     }
@@ -521,7 +521,7 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
     items: sessionsProps.map((s) => ({
       testSessionId: s.testSession.id,
       browser: s.browser,
-      appSlaveContainerName: null,
+      appEmissaryContainerName: null,
       seleniumContainerName: null,
       appEcsServiceName: null, // Populated in the cloud lambda function, so we can destroy the ECS services after testing.
       seleniumEcsServiceName: null // Populated in the cloud lambda function, so we can destroy the ECS services after testing.
@@ -532,7 +532,7 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
   log.debug(`The value of provisionedViaLambdaDto is: ${JSON.stringify(provisionedViaLambdaDto)}`, { tags: ['app.parallel', 'parallel'] });
 
   const deprovisionViaLambdaDto = {
-    local: { items: ['app-slave', 'selenium-standalone'] },
+    local: { items: ['app-emissary', 'selenium-standalone'] },
     cloud: { items: provisionedViaLambdaDto.items.flatMap((cV) => [cV.appEcsServiceName, cV.seleniumEcsServiceName]) }
   }[process.env.NODE_ENV];
   log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto)}`, { tags: ['app.parallel', 'parallel'] });
@@ -547,9 +547,9 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
 
     const runableSessionsProps = resolved.collectionOfS2ContainerHostNamesWithPorts.map((cV, i) => ({
       sessionProps: sessionsProps[i],
-      slaveHost: cV.appSlaveHostName,
+      emissaryHost: cV.appEmissaryHostName,
       seleniumContainerName: cV.seleniumHostName,
-      appSlavePort: cV.appSlavePort,
+      appEmissaryPort: cV.appEmissaryPort,
       seleniumPort: cV.seleniumPort
     }));
     // Todo: obfuscate sensitive values from runableSessionProps.

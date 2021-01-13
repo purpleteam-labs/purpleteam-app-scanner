@@ -57,7 +57,7 @@ const domainPlugins = [
     options: {
       log,
       strings,
-      slave: config.get('slave'),
+      emissary: config.get('emissary'),
       cucumber: config.get('cucumber'),
       results: config.get('results'),
       publisher: messagePublisher,
