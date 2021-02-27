@@ -193,7 +193,7 @@ const schema = {
   },
   results: {
     dir: {
-      doc: 'The location of the results. This directory needs group rwx permissions.',
+      doc: 'The location of the results.',
       format: String,
       default: '/var/log/purpleteam/outcomes/'
     }
