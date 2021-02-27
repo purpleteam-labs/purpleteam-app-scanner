@@ -43,9 +43,3 @@ Use the config/config.js for documentation and further examples.
 
 Take the Zap API Key that you set-up in the [purpleteam-s2-containers](https://github.com/purpleteam-labs/purpleteam-s2-containers) project and replace the `<zap-api-key-here>` value in the config.local.json file.
 
-The following two values should be the same. They should also match the value of the orchestrator `outcomes.dir`:
-
-**`emissary.report.dir`** Configure this value. This needs to be a directory of your choosing that both the orchestrator and app-scanner containers use. The directory you choose and configure needs group `rwx` permissions applied to it because the orchestrator and tester containers share the same group, they also read, write and delete outcome files within this directory.
-
-**`results.dir`** Configure this value. This needs to be a directory of your choosing that both the orchestrator and app-scanner containers use. The directory you choose and configure needs group `rwx` permissions applied to it because the orchestrator and tester containers share the same group, they also read, write and delete outcome files within this directory.
-
