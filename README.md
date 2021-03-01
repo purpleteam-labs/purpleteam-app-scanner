@@ -29,6 +29,8 @@
 </div>
 
 
+If you are setting up the app-scanner, you will be targeting the `local` environment.
+
 Clone this repository.
 
 `cd` to the repository root directory and run:  
@@ -42,4 +44,8 @@ Copy the config/config.example.json to config/config.local.json.
 Use the config/config.js for documentation and further examples.  
 
 Take the Zap API Key that you set-up in the [purpleteam-s2-containers](https://github.com/purpleteam-labs/purpleteam-s2-containers) project and replace the `<zap-api-key-here>` value in the config.local.json file.
+
+<br>
+
+Once you have cloned, installed and configured the app-scanner, head back to the [local setup](https://doc.purpleteam-labs.com/local/local-setup.html) documentation to continue setting up the other purpleteam components.
 
