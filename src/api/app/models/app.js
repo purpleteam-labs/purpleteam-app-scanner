@@ -16,7 +16,8 @@
 
 const { readFile } = require('fs').promises;
 const cucumber = require('@cucumber/cucumber');
-const { getActiveTestCasesFromFilesystem } = require('src/scripts/cucumber-redacted');
+const Gherkin = require('@cucumber/gherkin');
+const { getActiveTestCasesFromFilesystem } = require('src/scripts/cucumber-redacted'); // Todo: Remove
 
 const model = require('.');
 
@@ -138,16 +139,47 @@ class App {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  async getActiveTestCases(cucumberCli) {
+  async oldGetActiveTestCases(cucumberCli) {
     const configuration = await cucumberCli.getConfiguration();
     const activeTestCases = await getActiveTestCasesFromFilesystem({
-      cwd: process.cwd(),
+      cwd: process.cwd(), // '/usr/src/app'
       eventBroadcaster: (() => new (require('events'))())(), // eslint-disable-line global-require
-      featureDefaultLanguage: configuration.featureDefaultLanguage,
-      featurePaths: configuration.featurePaths,
+      featureDefaultLanguage: configuration.featureDefaultLanguage, // 'en'
+      featurePaths: configuration.featurePaths, // ['/usr/src/app/src/features/app_scan.feature', '/usr/src/app/src/features/simple_math.feature']
       pickleFilter: (() => new (require('@cucumber/cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions))() // eslint-disable-line global-require, new-cap
+      // pickleFilterOptions: '{"cwd":"/usr/src/app","featurePaths":["src/features"],"names":[],"tagExpression":"(@app_scan)"}'
     });
     return activeTestCases;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async getActiveTestCases(cucumberCli) {
+    const configuration = await cucumberCli.getConfiguration();
+
+
+    const activeTestCasesReadableStream = await Gherkin.fromPaths(configuration.featurePaths, { includePickles: true });
+
+    // const parser = new Gherkin.Parser();
+    // const gherkinDocument = parser.parse(`Feature: /usr/src/app/src/features/app_scan.feature`);
+    // const pickles = new Gherkin.Compiler().compile(gherkinDocument);
+
+
+    // var Gherkin = require("gherkin");
+    // var parser = new Gherkin.Parser();
+    // var gherkinDocument = parser.parse("Feature: /usr/src/app/src/features/app_scan.feature");
+    // var pickles = new Gherkin.Compiler().compile(gherkinDocument);
+
+
+    activeTestCasesReadableStream.on('data', (chunk) => {
+      console.log(chunk); // eslint-disable-line
+    });
+
+    activeTestCasesReadableStream.on('end', (chunk) => {
+      console.log(chunk); // eslint-disable-line
+    });
+
+
+    return 'Working on a fix...........';
   }
 
   // eslint-disable-next-line class-methods-use-this
