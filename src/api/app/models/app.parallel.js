@@ -306,7 +306,7 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
 
   if (isCloudEnv) {
     // Todo: Abstract hard coded timeouts. There is also one in parallel function. https://gitlab.com/purpleteam-labs/purpleteam/-/issues/27
-    const timeOut = 70000;
+    const timeOut = 80000;
     let countDown = timeOut;
     const decrementInterval = 5000; // 1000 === one second.
     log.debug(`cloudFuncOpts for ServiceDiscovery is: ${JSON.stringify(cloudFuncOpts)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
