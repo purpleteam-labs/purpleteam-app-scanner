@@ -16,8 +16,7 @@
 
 const { readFile } = require('fs').promises;
 const cucumber = require('@cucumber/cucumber');
-const Gherkin = require('@cucumber/gherkin');
-const { getActiveTestCasesFromFilesystem } = require('src/scripts/cucumber-redacted'); // Todo: Remove
+const GherkinStreams = require('@cucumber/gherkin/dist/src/stream/GherkinStreams').default;
 
 const model = require('.');
 
@@ -85,9 +84,9 @@ class App {
       cwd: process.cwd(),
       stdout: process.stdout
     });
-    const activeTestCases = await this.getActiveTestCases(cucumberCliInstance);
-    const testPlan = await this.testPlanText(activeTestCases);
-    return testPlan;
+    const activeFeatureFileUris = await this.getActiveFeatureFileUris(cucumberCliInstance);
+    const testPlanText = await this.getTestPlanText(activeFeatureFileUris);
+    return testPlanText;
   }
 
   // Receiving appEmissaryPort and seleniumPort are only essential if running in cloud environment.
@@ -139,57 +138,40 @@ class App {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  async oldGetActiveTestCases(cucumberCli) {
+  async getActiveFeatureFileUris(cucumberCli) {
     const configuration = await cucumberCli.getConfiguration();
-    const activeTestCases = await getActiveTestCasesFromFilesystem({
-      cwd: process.cwd(), // '/usr/src/app'
-      eventBroadcaster: (() => new (require('events'))())(), // eslint-disable-line global-require
-      featureDefaultLanguage: configuration.featureDefaultLanguage, // 'en'
-      featurePaths: configuration.featurePaths, // ['/usr/src/app/src/features/app_scan.feature', '/usr/src/app/src/features/simple_math.feature']
-      pickleFilter: (() => new (require('@cucumber/cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions))() // eslint-disable-line global-require, new-cap
-      // pickleFilterOptions: '{"cwd":"/usr/src/app","featurePaths":["src/features"],"names":[],"tagExpression":"(@app_scan)"}'
+    const pickleFilter = (() => new (require('@cucumber/cucumber/lib/pickle_filter')).default(configuration.pickleFilterOptions))(); // eslint-disable-line global-require, new-cap
+
+    const flatten = (o) => [].concat(...Object.keys(o)
+      .map((k) => (typeof o[k] === 'object'
+        ? flatten(o[k])
+        : ({ [k]: o[k] }))));
+
+    const activeTags = flatten(pickleFilter.tagFilter.tagExpressionNode).map((tagObj) => tagObj.value);
+
+    const streamToArray = async (readableStream) => new Promise((resolve, reject) => {
+      const items = [];
+      readableStream.on('data', (item) => items.push(item));
+      readableStream.on('error', (err) => reject(err));
+      readableStream.on('end', () => resolve(items));
     });
-    return activeTestCases;
+
+    const activeFeatureFileUris = async () => {
+      const envelopes = await streamToArray(GherkinStreams.fromPaths(configuration.featurePaths, { includeSource: false, includeGherkinDocument: false, includePickles: true }));
+      const tagUriMaps = envelopes.map((e) => ({ tagName: e.pickle.tags[0].name, fileUri: e.pickle.uri }));
+      const activeTagUriMaps = tagUriMaps.filter((tU) => activeTags.includes(tU.tagName));
+      const activeUris = activeTagUriMaps.reduce((accum, cV) => [...accum, ...(accum.includes(cV.fileUri) ? [] : [cV.fileUri])], []);
+      return activeUris;
+    };
+
+    return activeFeatureFileUris();
   }
 
   // eslint-disable-next-line class-methods-use-this
-  async getActiveTestCases(cucumberCli) {
-    const configuration = await cucumberCli.getConfiguration();
-
-
-    const activeTestCasesReadableStream = await Gherkin.fromPaths(configuration.featurePaths, { includePickles: true });
-
-    // const parser = new Gherkin.Parser();
-    // const gherkinDocument = parser.parse(`Feature: /usr/src/app/src/features/app_scan.feature`);
-    // const pickles = new Gherkin.Compiler().compile(gherkinDocument);
-
-
-    // var Gherkin = require("gherkin");
-    // var parser = new Gherkin.Parser();
-    // var gherkinDocument = parser.parse("Feature: /usr/src/app/src/features/app_scan.feature");
-    // var pickles = new Gherkin.Compiler().compile(gherkinDocument);
-
-
-    activeTestCasesReadableStream.on('data', (chunk) => {
-      console.log(chunk); // eslint-disable-line
-    });
-
-    activeTestCasesReadableStream.on('end', (chunk) => {
-      console.log(chunk); // eslint-disable-line
-    });
-
-
-    return 'Working on a fix...........';
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async testPlanText(activeTestCases) {
-    const activeTestFileUris = activeTestCases
-      .map((currentValue) => currentValue.uri);
-      // .filter((currentValue, currentElementIndex, urisOfActiveTestCases) => urisOfActiveTestCases.indexOf(currentValue) === currentElementIndex); // Was there a point to this line?
-    return (await Promise.all(activeTestFileUris
-      .map((featureFileUri) => readFile(`${process.cwd()}/${featureFileUri}`, { encoding: 'utf8' }))))
-      .reduce((accumulatedFeatures, feature) => accumulatedFeatures.concat(...['\n\n', feature]));
+  async getTestPlanText(activeFeatureFileUris) {
+    return (await Promise.all(activeFeatureFileUris
+      .map((aFFU) => readFile(aFFU, { encoding: 'utf8' }))))
+      .reduce((accumulatedFeatures, feature) => `${accumulatedFeatures}${!accumulatedFeatures.length > 0 ? feature : `\n\n${feature}`}`, '');
   }
 }
 
