@@ -23,3 +23,6 @@ src/features/*.*
 
 reports/*
 
+# avajs
+.nyc_output
+coverage/

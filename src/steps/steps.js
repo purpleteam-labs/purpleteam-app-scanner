@@ -1,6 +1,6 @@
 // features/support/steps.js
 const { Given, When, Then } = require('@cucumber/cucumber');
-const { expect } = require('@hapi/code');
+const assert = require('assert');
 
 // Cucumber expects a non arrow function in order for the this to refer to the world.
 /* eslint-disable func-names */
@@ -13,6 +13,6 @@ When('I increment the variable by {int}', function (number) {
 });
 
 Then('the variable should contain {int}', function (number) {
-  expect(this.variable).to.equal(number);
+  assert(this.variable === number);
 });
 /* eslint-enable func-names */

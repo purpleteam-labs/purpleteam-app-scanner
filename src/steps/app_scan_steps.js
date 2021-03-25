@@ -15,9 +15,6 @@
 // along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
 
 const { /* Before, */ Given, When, Then /* , setDefaultTimeout */, After } = require('@cucumber/cucumber');
-const Code = require('@hapi/code');
-
-const { expect } = Code;
 const fs = require('fs');
 
 /*
@@ -385,7 +382,6 @@ When('the active scan is run', async function () {
       });
   }
 
-
   this.zap.numberOfAlertsForSesh(numberOfAlertsForSesh);
 });
 
@@ -400,7 +396,7 @@ Then('the vulnerability count should not exceed the build user defined threshold
     this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Search the generated report for the routes: [${routes}], to see the ${numberOfAlertsForSesh - alertThreshold} vulnerabilities that exceed the Build User defined threshold of "${alertThreshold}" for the session with id "${testSessionId}".`, tagObj: { tags: ['app_scan_steps'] } });
   }
 
-  expect(numberOfAlertsForSesh).to.be.at.most(alertThreshold);
+  if (numberOfAlertsForSesh > alertThreshold) throw new Error(`The number of alerts (${numberOfAlertsForSesh}) should be no greater than the alert threshold (${alertThreshold}).`);
 });
 
 
