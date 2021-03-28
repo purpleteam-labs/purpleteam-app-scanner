@@ -7,11 +7,10 @@
     "purpleteamParallelCucumber": "./bin/purpleteamParallelCucumber"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint .",
+    "lint": "eslint .",
     "deps": "npm-check",
     "update:deps": "npm-check -u",
     "test": "nyc --reporter=lcov --reporter=text-summary ava",
-    "test:coveralls": "nyc --reporter=lcov --reporter=text-summary ava",
     "test:nolint": "nyc --reporter=lcov --reporter=text-summary ava",
     "test:debug": "ava debug --break ./test/api/app/models/app.js",
     "pretest": "npm run lint",
