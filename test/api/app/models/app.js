@@ -28,6 +28,7 @@ test('Given tagExpression: (@app_scan) - when getActiveFeatureFileUris is invoke
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
+  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
   const tagExpression = '(@app_scan)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`]);
@@ -37,6 +38,7 @@ test('Given tagExpression: (@simple_math) - when getActiveFeatureFileUris is inv
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
+  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
   const tagExpression = '(@simple_math)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/simple_math.feature`]);
@@ -46,15 +48,19 @@ test('Given tagExpression: (@app_scan or @simple_math) - when getActiveFeatureFi
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
+  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
   const tagExpression = '(@app_scan or @simple_math)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`, `${appRootDir}/testResources/features/simple_math.feature`]);
 });
 
+// Since cucumber.getTestCasesFromFilesystem was removed, the following test cases fail, including the ones not yet implemented.
+
 test.failing('Given tagExpression: (@app_scan and @simple_math) - when getActiveFeatureFileUris is invoked - then no active feature file Uris should be returned', async (t) => {
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
+  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
   const tagExpression = '(@app_scan and @simple_math)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, []);
@@ -65,11 +71,26 @@ test.failing('Given tagExpression: (not @simple_math) - when getActiveFeatureFil
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
+  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
   const tagExpression = '(not @simple_math)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`]);
   // What we get is: [`${appRootDir}/testResources/features/simple_math.feature`]
 });
+
+// The following are also not catered for currently.
+// Ideas for creating feature files with tags to test for here: https://cucumber.io/docs/cucumber/api/#tags
+
+// @wip and not @slow
+// Scenarios tagged with @wip that are not also tagged with @slow
+
+// (@smoke or @ui) and (not @slow)
+// Scenarios tagged with @smoke or @ui that are not also tagged with @slow
+
+// not @foo and (@bar or @zap)
+// Scenarios tagged with @bar or @zap that are not also tagged with @foo
+
+// Continue implementing failing tests?
 
 // ////////////////////////////////////////////////
 // getTestPlanText
