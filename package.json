@@ -81,7 +81,7 @@
     "http-proxy-agent": "^4.0.1",
     "joi": "^17.3.0",
     "purpleteam-logger": "^1.0.2",
-    "redis": "^3.0.2",
+    "redis": "^3.1.1",
     "selenium-webdriver": "^4.0.0-alpha.7",
     "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#68fc8c8a169f39ab415acf3d38b6ac7051caef8a"
   },
