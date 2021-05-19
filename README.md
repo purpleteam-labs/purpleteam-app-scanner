@@ -21,10 +21,6 @@
   <img src='https://coveralls.io/repos/github/purpleteam-labs/purpleteam-app-scanner/badge.svg?branch=main' alt='test coverage'>
 </a>
 
-<a href="https://snyk.io/test/github/purpleteam-labs/purpleteam-app-scanner?targetFile=package.json" title="known vulnerabilities">
-  <img src="https://snyk.io/test/github/purpleteam-labs/purpleteam-app-scanner/badge.svg?targetFile=package.json" alt="known vulnerabilities"/>
-</a>
-
 <a href="https://github.com/purpleteam-labs/purpleteam-app-scanner/releases" title="latest release">
   <img src="https://img.shields.io/github/v/release/purpleteam-labs/purpleteam-app-scanner?color=%23794fb8&include_prereleases" alt="GitHub release (latest SemVer including pre-releases)">
 </a>
