@@ -4,4 +4,4 @@
 //   then modified
 
 require('app-module-path/cwd');
-require('../src/scripts/runCuc.js').default();
+require('../src/scripts/runCuc').default();

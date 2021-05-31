@@ -38,6 +38,10 @@ const cucumberCliStdout = {
   write(...writeParams) {
     const [str] = writeParams;
     publisher.pubLog({ testSessionId, logLevel: 'notice', textData: str, tagObj: { tags: [`pid-${process.pid}`, 'runCuc', 'cucumberCLI-stdout-write'] } });
+  },
+  on(error, handler) { // eslint-disable-line no-unused-vars
+    // In cucumber 7.1.0 (https://github.com/cucumber/cucumber-js/blob/main/CHANGELOG.md#710-2021-04-06) in https://github.com/cucumber/cucumber-js/pull/1608/files
+    // lib/cli/index.js initializeFormatters added a stream.on which ment we had to add this.
   }
 };
 
