@@ -16,7 +16,7 @@
 
 const { readFile } = require('fs').promises;
 const cucumber = require('@cucumber/cucumber');
-const GherkinStreams = require('@cucumber/gherkin/dist/src/stream/GherkinStreams').default;
+const { GherkinStreams } = require('@cucumber/gherkin-streams');
 
 const model = require('.');
 
