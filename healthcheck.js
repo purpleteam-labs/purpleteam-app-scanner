@@ -16,7 +16,7 @@
 
 const http = require('http');
 require('convict');
-const config = require('./config/config.js');
+const config = require('./config/config');
 
 const options = {
   host: config.get('host.host'),

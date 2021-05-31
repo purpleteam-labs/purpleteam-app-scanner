@@ -15,11 +15,9 @@
     "test:debug": "ava debug --break ./test/api/app/models/app.js",
     "pretest": "npm run lint",
     "debug": "node --inspect-brk ./index.js",
-    "start": "node ./index.js"
+    "start": "node ./index.js",
+    "prepare": "husky install"
   },
-  "pre-commit": [
-    "test"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/purpleteam-labs/purpleteam-app-scanner.git"
@@ -70,32 +68,41 @@
     "@cucumber/gherkin": "^17.0.2",
     "@hapi/bourne": "^2.0.0",
     "@hapi/good": "^9.0.1",
-    "@hapi/hapi": "^20.0.3",
+    "@hapi/hapi": "^20.1.3",
     "app-module-path": "^2.2.0",
-    "aws-sdk": "^2.799.0",
+    "aws-sdk": "^2.918.0",
     "axios": "^0.21.1",
-    "convict": "^6.0.0",
-    "convict-format-with-moment": "^6.0.0",
-    "convict-format-with-validator": "^6.0.0",
+    "convict": "^6.1.0",
+    "convict-format-with-moment": "^6.0.1",
+    "convict-format-with-validator": "^6.0.1",
     "hapi-good-winston": "^3.0.1",
     "http-proxy-agent": "^4.0.1",
-    "joi": "^17.3.0",
-    "purpleteam-logger": "^1.0.2",
-    "redis": "^3.0.2",
-    "selenium-webdriver": "^4.0.0-alpha.7",
+    "joi": "^17.4.0",
+    "purpleteam-logger": "^1.1.2",
+    "redis": "^3.1.2",
+    "selenium-webdriver": "^4.0.0-beta.3",
     "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#68fc8c8a169f39ab415acf3d38b6ac7051caef8a"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {
     "ava": "^3.15.0",
-    "eslint": "^7.23.0",
+    "eslint": "^7.27.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-ava": "^12.0.0",
-    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-import": "^2.23.3",
     "npm-check": "^5.9.2",
     "nyc": "^15.1.0",
-    "pre-commit": "^1.2.2",
     "rewire": "^5.0.0",
-    "sinon": "^10.0.0"
-  }
+    "sinon": "^11.1.1",
+    "husky": "^6.0.0"
+  },
+  "files": [
+    "index.js",
+    "Dockerfile",
+    "healthcheck.js",
+    "bin",
+    "config",
+    "src",
+    "testResources"
+  ]
 }
