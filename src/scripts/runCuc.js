@@ -16,6 +16,7 @@
 
 const cucumber = require('@cucumber/cucumber');
 const Bourne = require('@hapi/bourne');
+const { Writable } = require('stream');
 
 const config = require('config/config');
 const log = require('purpleteam-logger').init(config.get('logger'));
@@ -33,17 +34,24 @@ function exitWithError(error) {
 
 let testSessionId = 'To be assigned';
 
-const cucumberCliStdout = {
-  publisher,
-  write(...writeParams) {
-    const [str] = writeParams;
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: str, tagObj: { tags: [`pid-${process.pid}`, 'runCuc', 'cucumberCLI-stdout-write'] } });
-  },
-  on(error, handler) { // eslint-disable-line no-unused-vars
-    // In cucumber 7.1.0 (https://github.com/cucumber/cucumber-js/blob/main/CHANGELOG.md#710-2021-04-06) in https://github.com/cucumber/cucumber-js/pull/1608/files
-    // lib/cli/index.js initializeFormatters added a stream.on which ment we had to add this.
+
+// Details around implementing: https://github.com/cucumber/common/issues/1586
+// This must be an IFormatterStream: https://github.com/cucumber/cucumber-js/blob/2e744ae80d84ed996e198769bb9cb33568ec5d5f/src/formatter/index.ts#L12
+// Node Doc: https://nodejs.org/docs/latest-v14.x/api/stream.html#stream_implementing_a_writable_stream
+const cucumberCliStdout = new Writable({
+  decodeStrings: false, // This keeps the string as a string.
+  write(chunk, encoding, callback) {
+    // There is a toString for string and buffer, so we're going with simple and easy.
+    // If it turns out we get multi-byte buffers, we'll need to use string_decoder: https://nodejs.org/docs/latest-v14.x/api/stream.html#stream_decoding_buffers_in_a_writable_stream
+    try {
+      publisher.pubLog({ testSessionId, logLevel: 'notice', textData: chunk.toString(), tagObj: { tags: [`pid-${process.pid}`, 'runCuc', 'cucumberCLI-stdout-write'] } });
+    } catch (e) {
+      callback(new Error(`There was a problem publishing to publisher.pubLog in runCuc. The error was: ${e}`));
+      return;
+    }
+    callback();
   }
-};
+});
 
 exports.default = async function run() {
   const cwd = process.cwd();
