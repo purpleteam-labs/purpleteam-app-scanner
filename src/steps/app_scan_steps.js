@@ -204,22 +204,36 @@ Given('all active scanners are enabled', async function () {
 
   const scanPolicyName = null;
   const policyid = null;
+  const domXssScannerId = 40026;
 
   await zaproxy.ascan.enableAllScanners(scanPolicyName)
     .then(
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Enable all active scanners was called, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to enable all active scanners, for test session with id: "${testSessionId}". Error was: ${err.message}.`
     );
+  // Disable DOM XSS active scanner because on some routes it can take far too long (30 minutes on NodeGoat /memos).
+  // The DOM XSS was a new add-on in Zap 2.10.0 https://www.zaproxy.org/docs/desktop/releases/2.10.0/#new-add-ons
+  // If you query the scanners: http://zap:8080/HTML/ascan/view/scanners/ you'll also see that it is beta quality when writing this (2021-06-03)
+  await zaproxy.ascan.disableScanners(domXssScannerId, scanPolicyName)
+    .then(
+      (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Disable DOM XSS active scanner was called, for test session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
+      (err) => `Error occurred while attempting to disable DOM XSS active scanner, for test session with id: "${testSessionId}". Error was: ${err.message}.`
+    );
   await zaproxy.ascan.scanners(scanPolicyName, policyid).then(
     (resp) => {
       aScanners = resp.scanners;
-      this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Obtained all ${aScanners.length} active scanners from Zap, for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } });
+      this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Obtained all ${aScanners.length} active scanners from Zap, for test session with id: "${testSessionId}\n".`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } });
     },
     (err) => `Error occurred while attempting to get all active scanners from Zap, for test session with id: "${testSessionId}". Error was: ${err.message}.`
   );
   // Zap seems to have some sort of ordering problem if we use a Promise.all
   // Optimising this would only save milliseconds, & the entire testing process takes minutes, ignoring this chance for micro-optimisation.
-  for (const ascanner of aScanners) { // eslint-disable-line no-restricted-syntax
+
+  const enabledAScanners = aScanners.filter((e) => e.enabled === 'true');
+
+  this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Setting attack strengths and alert thresholds for the ${enabledAScanners.length} enabled active scanners for test session with id: "${testSessionId}\n".`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } });
+
+  for (const ascanner of enabledAScanners) { // eslint-disable-line no-restricted-syntax
     // eslint-disable-next-line no-await-in-loop
     await zaproxy.ascan.setScannerAttackStrength(ascanner.id, aScannerAttackStrength, scanPolicyName).then(
       (result) => this.publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Attack strength has been set, for test session with id: "${testSessionId}": ${JSON.stringify(result)} for active scanner: { id: ${ascanner.id.padEnd(5)}, name: ${ascanner.name}}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
@@ -436,3 +450,4 @@ After({ tags: '@app_scan' }, async function () {
   const reportPromises = reportFormats.map((format) => zaproxy.core[`${format}report`]().then(zapApiReportFuncCallback, (err) => `Error occured while attempting to create Zap ${format} report, for test session with id: "${testSessionId}". Error was: ${err.message}.`));
   await Promise.all(reportPromises);
 });
+
