@@ -101,7 +101,8 @@
     "Dockerfile",
     "healthcheck.js",
     "bin",
-    "config",
+    "config/config.js",
+    "config/config.example.json",
     "src",
     "testResources"
   ]
