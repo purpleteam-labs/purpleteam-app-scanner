@@ -15,10 +15,13 @@
 // along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
 
 const { spawn } = require('child_process');
-// Doc: https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
-// Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html
-// Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ServiceDiscovery.html
-const { Lambda, ServiceDiscovery } = require('aws-sdk');
+// Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/index.html
+// Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/classes/invokecommand.html
+// Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-servicediscovery/index.html
+// Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-servicediscovery/classes/listinstancescommand.html
+// Doc: https://docs.aws.amazon.com/code-samples/latest/catalog/javascriptv3-lambda-src-MyLambdaApp-index.ts.html
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
+const { ServiceDiscoveryClient, ListInstancesCommand } = require('@aws-sdk/client-servicediscovery');
 const axios = require('axios');
 const HttpProxyAgent = require('http-proxy-agent');
 const Bourne = require('@hapi/bourne');
@@ -69,7 +72,7 @@ const internals = {
 internals.serialiseClientContext = (clientContext) => Buffer.from(JSON.stringify(clientContext)).toString('base64');
 
 
-internals.provisionContainers = ({ lambda, provisionViaLambdaDto, lambdaFunc }) => {
+internals.provisionContainers = async ({ lambdaClient, provisionViaLambdaDto, lambdaFunc }) => {
   const { log, clientContext, isCloudEnv, serialiseClientContext } = internals;
   const lambdaParams = {
     // https://github.com/awslabs/aws-sam-cli/pull/749
@@ -78,29 +81,26 @@ internals.provisionContainers = ({ lambda, provisionViaLambdaDto, lambdaFunc }) 
     Payload: JSON.stringify({ provisionViaLambdaDto }),
     ClientContext: serialiseClientContext(clientContext)
   };
+  const command = new InvokeCommand(lambdaParams);
 
   isCloudEnv && log.debug(`The deserialised clientContext is: ${JSON.stringify(clientContext)}`, { tags: ['app.parallel', 'provisionContainers'] });
 
-  const response = lambda.invoke(lambdaParams);
-  const promise = response.promise();
-  return { functionName: lambdaFunc, responseBodyProp: 'provisionViaLambdaDto', promise };
+  const data = await lambdaClient.send(command);
+  return { functionName: lambdaFunc, responseBodyProp: 'provisionViaLambdaDto', data };
 };
 
 
-internals.resolvePromises = async (provisionFeedback) => {
+internals.resolvePromises = async (promisesFromLambdas) => {
   const { log } = internals;
-  const promisesFromLambdas = provisionFeedback.map((p) => p.promise);
-
-  const responses = await Promise.all(promisesFromLambdas).catch((err) => {
+  const provisionContainersResult = await Promise.all(promisesFromLambdas).catch((err) => {
     // This gets hit if the Lambda timeout (not the S2_PROVISIONING_TIMEOUT) is too short, and maybe possibly with other faults.
     log.crit(`Unhandled error occurred from the Lambda service while attempting to start S2 app containers. Error was: ${err.message}.`, { tags: ['app.parallel'] });
     throw err; // Todo: As we learn more about the types of failures, we are going to have to provide non fatal workarounds: https://gitlab.com/purpleteam-labs/purpleteam/-/issues/22
   });
-  log.debug(`The value of responses is: ${JSON.stringify(responses)}.`, { tags: ['app.parallel, resolvePromises'] });
   let provisionedViaLambdaDtoCollection;
   try {
-    provisionedViaLambdaDtoCollection = responses.map((r) => {
-      const payload = Bourne.parse(r.Payload);
+    provisionedViaLambdaDtoCollection = provisionContainersResult.map((r) => {
+      const payload = Bourne.parse(new TextDecoder('utf-8').decode(r.data.Payload));
       const provisionedViaLambdaDto = Object.prototype.hasOwnProperty.call(payload, 'body') ? payload.body.provisionedViaLambdaDto : undefined;
       return provisionedViaLambdaDto;
     });
@@ -135,7 +135,6 @@ internals.resolvePromises = async (provisionFeedback) => {
     return false; // Check for error in each of the provisionedViaLambdaDtos. Only short-circut on fatal.
   });
 
-  log.debug(`The value of provisionedViaLambdaDtoCollection is: ${JSON.stringify(provisionedViaLambdaDtoCollection)}.`, { tags: ['app.parallel', 'resolvePromises'] });
   return provisionedViaLambdaDtoCollection;
 };
 
@@ -157,7 +156,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   //   ]
   // ]
   const numberOfItems = provisionedViaLambdaDtoItems[0].length;
-  log.debug(`The value of provisionedViaLambdaDtoItems is: ${JSON.stringify(provisionedViaLambdaDtoItems)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
+  log.debug(`The value of provisionedViaLambdaDtoItems is: ${JSON.stringify(provisionedViaLambdaDtoItems, null, 2)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
   // Todo: The following will require more testing, especially in local env.
   for (let i = 0; i < numberOfItems; i += 1) { // 3 items for example
     const itemCollector = [];
@@ -179,7 +178,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   //     {testSessionId: 'anotherExample', ...}  // Result of provisionSeleniumStandalones
   //   ]
   // ]
-  log.debug(`The value of toMerge is: ${JSON.stringify(toMerge)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
+  log.debug(`The value of toMerge is: ${JSON.stringify(toMerge, null, 2)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
   const mergedProvisionedViaLambdaDto = {};
 
   mergedProvisionedViaLambdaDto.items = toMerge.map((mCV) => {
@@ -207,7 +206,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   //     {testSessionId: 'anotherExample', ...}
   //   ]
   // }
-  log.debug(`The value of mergedProvisionedViaLambdaDto is: ${JSON.stringify(mergedProvisionedViaLambdaDto)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
+  log.debug(`The value of mergedProvisionedViaLambdaDto is: ${JSON.stringify(mergedProvisionedViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
   return mergedProvisionedViaLambdaDto;
 };
 
@@ -222,11 +221,11 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
   } = internals;
 
   // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lambda.html#constructor-property
-  const lambda = new Lambda(cloudFuncOpts);
+  const lambdaClient = new LambdaClient(cloudFuncOpts);
 
   // local env calls two lambda functions which each start app emissary zap or app emissary selenium,
   // cloud env calls one lambda function which starts app emissary zap and app emissary selenium tasks.
-  const collectionOfWrappedProvisionedViaLambdaDtos = lambdaFuncNames.map((f) => provisionContainers({ lambda, provisionViaLambdaDto, lambdaFunc: f }));
+  const collectionOfWrappedProvisionedViaLambdaDtos = lambdaFuncNames.map((f) => provisionContainers({ lambdaClient, provisionViaLambdaDto, lambdaFunc: f }));
 
   const provisionedViaLambdaDtoCollection = await resolvePromises(collectionOfWrappedProvisionedViaLambdaDtos);
   // local may look like this,
@@ -246,7 +245,7 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
   //     ]
   //   }
   // ]
-  log.debug(`The value of provisionedViaLambdaDtoCollection is: ${JSON.stringify(provisionedViaLambdaDtoCollection)}`, { tags: ['app.parallel', 'provisionViaLamda'] });
+  log.debug(`The value of provisionedViaLambdaDtoCollection is: ${JSON.stringify(provisionedViaLambdaDtoCollection, null, 2)}`, { tags: ['app.parallel', 'provisionViaLamda'] });
   return mergeProvisionedViaLambdaDtoCollection(provisionedViaLambdaDtoCollection);
 };
 
@@ -310,7 +309,7 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
     let countDown = timeOut;
     const decrementInterval = 5000; // 1000 === one second.
     log.debug(`cloudFuncOpts for ServiceDiscovery is: ${JSON.stringify(cloudFuncOpts)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-    const serviceDiscovery = new ServiceDiscovery(cloudFuncOpts);
+    const serviceDiscoveryClient = new ServiceDiscoveryClient(cloudFuncOpts);
     const check = async () => {
       log.debug(`Inside check function with countDown value of: ${countDown}.`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
       countDown -= decrementInterval;
@@ -323,22 +322,12 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
           log.debug(`selenium Service Discovery Service Id for testSessionId "${mCV.testSessionId}", with seleniumEcsServiceName "${mCV.seleniumEcsServiceName}" is "${seleniumServiceDiscoveryServiceId}".`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
 
           // Lookup requests charge: $1.00 per million discovery API calls.
-          const promiseOfS2AppServiceDiscoveryServiceInstances = serviceDiscovery.listInstances({ ServiceId: appServiceDiscoveryServiceId })
-            .promise();
-          const promiseOfS2SeleniumServiceDiscoveryServiceInstances = serviceDiscovery.listInstances({ ServiceId: seleniumServiceDiscoveryServiceId })
-            .promise();
-          let s2AppServiceDiscoveryServiceInstances;
-          let s2SeleniumServiceDiscoveryServiceInstances;
-          // Todo: Look at tidying up and optimising the below awaits.
-          await Promise.resolve(promiseOfS2AppServiceDiscoveryServiceInstances).then((value) => {
-            s2AppServiceDiscoveryServiceInstances = value;
-            log.debug(`The resolved promiseOfS2AppServiceDiscoveryServiceInstances is: ${JSON.stringify(s2AppServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-          });
-          await Promise.resolve(promiseOfS2SeleniumServiceDiscoveryServiceInstances).then((value) => {
-            s2SeleniumServiceDiscoveryServiceInstances = value;
-            log.debug(`The resolved promiseOfS2SeleniumServiceDiscoveryServiceInstances is: ${JSON.stringify(s2SeleniumServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-          });
-
+          const listAppInstancesCommand = new ListInstancesCommand({ ServiceId: appServiceDiscoveryServiceId });
+          const s2AppServiceDiscoveryServiceInstances = await serviceDiscoveryClient.send(listAppInstancesCommand);
+          log.debug(`The s2AppServiceDiscoveryServiceInstances are: ${JSON.stringify(s2AppServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+          const listSeleniumInstancesCommand = new ListInstancesCommand({ ServiceId: seleniumServiceDiscoveryServiceId });
+          const s2SeleniumServiceDiscoveryServiceInstances = await serviceDiscoveryClient.send(listSeleniumInstancesCommand);
+          log.debug(`The s2SeleniumServiceDiscoveryServiceInstances are: ${JSON.stringify(s2SeleniumServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
           return { s2AppServiceDiscoveryServiceInstances, s2SeleniumServiceDiscoveryServiceInstances };
         }));
 
@@ -398,7 +387,7 @@ internals.waitForS2ContainersReady = async ({
   let collectionOfS2ContainerHostNamesWithPorts;
   await getS2ContainerHostNamesWithPorts({ provisionedViaLambdaDto, cloudFuncOpts }).then((resolved) => {
     collectionOfS2ContainerHostNamesWithPorts = resolved;
-    log.debug(`The value of collectionOfS2ContainerHostNamesWithPorts is: ${JSON.stringify(collectionOfS2ContainerHostNamesWithPorts)}`, { tags: ['app.parallel', 'waitForS2ContainersReady'] });
+    log.debug(`The value of collectionOfS2ContainerHostNamesWithPorts is: ${JSON.stringify(collectionOfS2ContainerHostNamesWithPorts, null, 2)}`, { tags: ['app.parallel', 'waitForS2ContainersReady'] });
   }).catch((error) => {
     // One of the reasons this happens is when services have been brought down and requested to be brought up again before draining.
     //   As per the error 'Unable to Start a service that is still Draining.' in resolvePromises sent back from the lambda.
@@ -429,7 +418,7 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
     serialiseClientContext,
     clientContext: { Custom: { customer, customerClusterArn /* no need for serviceDiscoveryServices in deprovision, so leave out */ } }
   } = internals;
-  const lambda = new Lambda(cloudFuncOpts);
+  const lambdaClient = new LambdaClient(cloudFuncOpts);
   const lambdaParams = {
     // https://github.com/awslabs/aws-sam-cli/pull/749
     InvocationType: 'RequestResponse',
@@ -437,16 +426,13 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
     Payload: JSON.stringify({ deprovisionViaLambdaDto }),
     ClientContext: serialiseClientContext({ Custom: { customer, customerClusterArn } })
   };
-
-  const response = lambda.invoke(lambdaParams);
-  const promise = response.promise();
-  const resolved = await promise;
-
+  const command = new InvokeCommand(lambdaParams);
+  const response = await lambdaClient.send(command);
   let item;
   let error;
   let unhandledErrorMessageFromWithinLambda;
   try {
-    const payload = Bourne.parse(resolved.Payload);
+    const payload = Bourne.parse(new TextDecoder('utf-8').decode(response.Payload));
     const deprovisionedViaLambdaDto = Object.prototype.hasOwnProperty.call(payload, 'body') ? payload.body.deprovisionedViaLambdaDto : undefined;
     unhandledErrorMessageFromWithinLambda = Object.prototype.hasOwnProperty.call(payload, 'errorMessage') && payload.errorMessage;
     ({ item, error } = deprovisionedViaLambdaDto || { item: undefined, error: undefined });
@@ -529,13 +515,13 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
   };
 
   const provisionedViaLambdaDto = await internals.provisionViaLambda({ cloudFuncOpts: { region, endpoint: lambdaEndpoint }, provisionViaLambdaDto });
-  log.debug(`The value of provisionedViaLambdaDto is: ${JSON.stringify(provisionedViaLambdaDto)}`, { tags: ['app.parallel', 'parallel'] });
+  log.debug(`The value of provisionedViaLambdaDto is: ${JSON.stringify(provisionedViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
 
   const deprovisionViaLambdaDto = {
     local: { items: ['app-emissary', 'selenium-standalone'] },
     cloud: { items: provisionedViaLambdaDto.items.flatMap((cV) => [cV.appEcsServiceName, cV.seleniumEcsServiceName]) }
   }[process.env.NODE_ENV];
-  log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto)}`, { tags: ['app.parallel', 'parallel'] });
+  log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
   let returnStatus;
   let cloudFuncOpts;
   await waitForS2ContainersReady({
@@ -553,7 +539,7 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
       seleniumPort: cV.seleniumPort
     }));
     // Todo: obfuscate sensitive values from runableSessionProps.
-    log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps)}`, { tags: ['app.parallel', 'parallel'] });
+    log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
 
     cloudFuncOpts = { region, endpoint: lambdaEndpoint };
     runableSessionsProps.forEach((rSP) => {
