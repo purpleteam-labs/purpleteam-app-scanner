@@ -56,7 +56,7 @@ test('Given tagExpression: (@app_scan or @simple_math) - when getActiveFeatureFi
 
 // Since cucumber.getTestCasesFromFilesystem was removed, the following test cases fail, including the ones not yet implemented.
 
-test.failing('Given tagExpression: (@app_scan and @simple_math) - when getActiveFeatureFileUris is invoked - then no active feature file Uris should be returned', async (t) => {
+test('Given tagExpression: (@app_scan and @simple_math) - when getActiveFeatureFileUris is invoked - then no active feature file Uris should be returned', async (t) => {
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
@@ -64,10 +64,9 @@ test.failing('Given tagExpression: (@app_scan and @simple_math) - when getActive
   const tagExpression = '(@app_scan and @simple_math)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, []);
-  // What we get is: [`${appRootDir}/testResources/features/app_scan.feature`, `${appRootDir}/testResources/features/simple_math.feature`]
 });
 
-test.failing('Given tagExpression: (not @simple_math) - when getActiveFeatureFileUris is invoked - then active feature file Uris app_scan.feature should be returned', async (t) => {
+test('Given tagExpression: (not @simple_math) - when getActiveFeatureFileUris is invoked - then active feature file Uris app_scan.feature should be returned', async (t) => {
   t.plan(1);
   // Active feature files are based on the cucumber.tagExpression defined in config.
   // https://cucumber.io/docs/cucumber/api/#tag-expressions
@@ -75,10 +74,8 @@ test.failing('Given tagExpression: (not @simple_math) - when getActiveFeatureFil
   const tagExpression = '(not @simple_math)';
   const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
   t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`]);
-  // What we get is: [`${appRootDir}/testResources/features/simple_math.feature`]
 });
 
-// The following are also not catered for currently.
 // Ideas for creating feature files with tags to test for here: https://cucumber.io/docs/cucumber/api/#tags
 
 // @wip and not @slow
