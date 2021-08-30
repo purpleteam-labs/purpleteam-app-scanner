@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
-module.exports = [{
-  method: 'GET',
-  path: '/status',
-  handler: () => 'app-scanner is up'
-}];
+const hapiEventHandler = require('./hapiEventHandler');
+
+module.exports = { hapiEventHandler };

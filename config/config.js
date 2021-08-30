@@ -1,26 +1,26 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const convict = require('convict');
-const convictFormatWithMoment = require('convict-format-with-moment');
-const convictFormatWithValidator = require('convict-format-with-validator');
+const { duration } = require('convict-format-with-moment');
+const { url } = require('convict-format-with-validator');
 const path = require('path');
 
-convict.addFormat(convictFormatWithMoment.duration);
-convict.addFormat(convictFormatWithValidator.url);
+convict.addFormat(duration);
+convict.addFormat(url);
 
 const internals = { aws_region: process.env.AWS_REGION || 'dummy-region' };
 
@@ -36,6 +36,18 @@ const schema = {
       doc: 'Write all log events with this level and below. Syslog levels used: https://github.com/winstonjs/winston#logging-levels',
       format: ['emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug'],
       default: 'notice'
+    }
+  },
+  processMonitoring: {
+    on: {
+      doc: 'Whether or not to capture and log process events.',
+      format: 'Boolean',
+      default: false
+    },
+    interval: {
+      doc: 'The interval in milliseconds to capture and log the process events.',
+      format: 'duration',
+      default: 10000
     }
   },
   debug: {
@@ -74,19 +86,45 @@ const schema = {
       }
     }
   },
+  s2Containers: {
+    serviceDiscoveryServiceInstances: {
+      timeoutToBeAvailable: {
+        doc: 'The duration in milliseconds before giving up on waiting for the s2 Service Discovery Service Instances to be available.',
+        format: 'duration',
+        default: 120000
+      },
+      retryIntervalToBeAvailable: {
+        doc: 'The retry interval for the s2 Service Discovery Service Instances to be available.',
+        format: 'duration',
+        default: 5000
+      }
+    },
+    responsive: {
+      timeout: {
+        doc: 'The duration in milliseconds before giving up on waiting for the s2 containers to be responsive.',
+        format: 'duration',
+        default: 30000
+      },
+      retryInterval: {
+        doc: 'The retry interval for the s2 containers to be responsive.',
+        format: 'duration',
+        default: 2000
+      }
+    }
+  },
   emissary: {
     protocol: {
-      doc: 'The protocol that the emissary is listening as.',
+      doc: 'The protocol that the Emissary is listening as.',
       format: ['https', 'http'],
       default: 'https'
     },
     hostname: {
-      doc: 'The hostname (IP or name) address of the emissary host.',
+      doc: 'The hostname (IP or name) address of the Emissary host.',
       format: String,
       default: '240.0.0.0'
     },
     port: {
-      doc: 'The port that the emissary is listening on.',
+      doc: 'The port that the Emissary is listening on.',
       format: 'port',
       default: 8080
     },
@@ -106,6 +144,11 @@ const schema = {
         doc: 'The location of the report.',
         format: String,
         default: '/var/log/purpleteam/outcomes/'
+      },
+      formats: {
+        doc: 'The supported formats that reports will be written in.',
+        format: Array,
+        default: ['html', 'json', 'md']
       }
     },
     spider: {
@@ -126,7 +169,7 @@ const schema = {
       }
     },
     shutdownEmissariesAfterTest: {
-      doc: 'Useful for inspecting emissary containers during debugging.',
+      doc: 'Useful for inspecting Emissary containers during debugging.',
       format: 'Boolean',
       default: true
     }
@@ -143,12 +186,12 @@ const schema = {
       default: 'LOW'
     },
     alertThreshold: {
-      doc: 'The number of alerts specified by the build user that the alerts found by Zap should not exceed.',
+      doc: 'The number of alerts specified by the Build User that the alerts found by Zap should not exceed.',
       format: 'int',
       default: 0
     },
     method: {
-      doc: 'The method used to attack the build user supplied route.',
+      doc: 'The method used to attack the Build User supplied route.',
       format: ['GET', 'POST', 'PUT'],
       default: 'POST'
     },
@@ -156,11 +199,6 @@ const schema = {
       doc: 'The type of browser to run tests through.',
       format: ['chrome', 'firefox'],
       default: 'chrome'
-    },
-    reportFormat: {
-      doc: 'The supported formats that reports may be written in.',
-      format: ['html', 'json', 'md'],
-      default: 'html'
     }
   },
   cucumber: {
@@ -185,7 +223,7 @@ const schema = {
       // default: `${process.cwd()}/node_modules/.bin/cucumber-js`
       default: `${process.cwd()}/bin/purpleteamParallelCucumber`
     },
-    timeOut: {
+    timeout: {
       doc: 'The value used to set the timeout (https://github.com/cucumber/cucumber-js/blob/master/docs/support_files/timeouts.md)',
       format: 'duration',
       default: 5000

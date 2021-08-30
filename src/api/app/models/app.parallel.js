@@ -1,18 +1,18 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const { spawn } = require('child_process');
 // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/index.html
@@ -46,9 +46,10 @@ const Bourne = require('@hapi/bourne');
 
 const internals = {
   log: undefined,
-  debug: undefined,
-  nextChildProcessInspectPort: undefined,
   model: undefined,
+  debug: undefined,
+  s2Containers: undefined,
+  nextChildProcessInspectPort: undefined,
   numberOfTestSessions: 0,
   testSessionDoneCount: 0,
   // In the Cloud we use ECS Tasks which combine the two image types, so we do both in the single Lambda invocation.
@@ -229,7 +230,7 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
 
   const provisionedViaLambdaDtoCollection = await resolvePromises(collectionOfWrappedProvisionedViaLambdaDtos);
   // local may look like this,
-  // where as cloud will only have the provisionAppEmissaries result with each item containing both app emissary and selenium values for each test session:
+  // where as cloud will only have the provisionAppEmissaries result with each item containing both app emissary and selenium values for each Test Session:
   // provisionedViaLambdaDtoCollection = [
   //   { // Result of provisionAppEmissaries
   //     items: [
@@ -256,7 +257,7 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
 internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts }) => {
   // Todo: port should be more specific, I.E. zap container port (container port): https://gitlab.com/purpleteam-labs/purpleteam/-/issues/26
   const { log, model: { emissary: { protocol, port } } } = internals;
-  log.notice('Checking whether S2 app containers are ready yet.', { tags: ['app.parallel'] });
+  log.info('Checking whether S2 app containers are ready yet.', { tags: ['app.parallel'] });
   let containersAreReady = false;
 
   const containerReadyPromises = collectionOfS2ContainerHostNamesWithPorts.flatMap((mCV) => [
@@ -292,7 +293,7 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
       seleniumContainer: (response) => response.data.value.ready === true
     };
     const containersThatAreNotReady = results.filter((e) => !(isReady.appEmissary(e) || isReady.seleniumContainer(e)));
-    log.debug(`containersThatAreNotReady is: ${JSON.stringify(containersThatAreNotReady)}`, { tags: ['app.parallel', 's2ContainersReady'] });
+    log.notice(`containersThatAreNotReady is: ${JSON.stringify(containersThatAreNotReady)}`, { tags: ['app.parallel', 's2ContainersReady'] });
     containersAreReady = !containersThatAreNotReady.length;
   }
   return containersAreReady;
@@ -300,14 +301,12 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
 
 
 internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFuncOpts }) => new Promise((resolve, reject) => {
-  const { model, log, isCloudEnv } = internals;
+  const { model, log, isCloudEnv, s2Containers: { serviceDiscoveryServiceInstances: { timeoutToBeAvailable, retryIntervalToBeAvailable } } } = internals;
   let collectionOfS2ContainerHostNamesWithPorts = [];
 
   if (isCloudEnv) {
-    // Todo: Abstract hard coded timeouts. There is also one in parallel function. https://gitlab.com/purpleteam-labs/purpleteam/-/issues/27
-    const timeOut = 80000;
-    let countDown = timeOut;
-    const decrementInterval = 5000; // 1000 === one second.
+    let countDown = timeoutToBeAvailable;
+    const decrementInterval = retryIntervalToBeAvailable;
     log.debug(`cloudFuncOpts for ServiceDiscovery is: ${JSON.stringify(cloudFuncOpts)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
     const serviceDiscoveryClient = new ServiceDiscoveryClient(cloudFuncOpts);
     const check = async () => {
@@ -357,7 +356,7 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
 
         return allS2ServiceDiscoveryServiceInstancesNowAvailable;
       })()) {
-        log.notice('All S2 Service Discovery Service Instance are now available.', { tags: ['app.parallel'] });
+        log.info('All S2 Service Discovery Service Instance are now available.', { tags: ['app.parallel'] });
         resolve(collectionOfS2ContainerHostNamesWithPorts);
       } else if (countDown < 0) reject(new Error('Timed out while waiting for S2 Service Discovery Service Instances to be available.'));
       else setTimeout(check, decrementInterval);
@@ -380,9 +379,9 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
 internals.waitForS2ContainersReady = async ({
   provisionedViaLambdaDto,
   cloudFuncOpts,
-  waitForS2ContainersTimeOut: timeOut
+  waitForS2ContainersTimeOut: timeout
 }) => {
-  const { log, getS2ContainerHostNamesWithPorts, s2ContainersReady } = internals;
+  const { log, getS2ContainerHostNamesWithPorts, s2ContainersReady, s2Containers: { responsive: { retryInterval } } } = internals;
   log.debug('About to call getS2ContainerHostNamesWithPorts.', { tags: ['app.parallel', 'waitForS2ContainersReady'] });
   let collectionOfS2ContainerHostNamesWithPorts;
   await getS2ContainerHostNamesWithPorts({ provisionedViaLambdaDto, cloudFuncOpts }).then((resolved) => {
@@ -396,17 +395,15 @@ internals.waitForS2ContainersReady = async ({
   });
 
   const s2ContainersReadyOrNot = () => new Promise((resolve, reject) => {
-    let countDown = timeOut;
-    const decrementInterval = 2000;
+    let countDown = timeout;
     const check = async () => {
-      countDown -= decrementInterval;
+      countDown -= retryInterval;
       if (await s2ContainersReady({ collectionOfS2ContainerHostNamesWithPorts })) resolve({ collectionOfS2ContainerHostNamesWithPorts, message: 'S2 app containers are ready to take orders.' });
       else if (countDown < 0) reject(new Error('Timed out while waiting for S2 app containers to be ready.'));
-      else setTimeout(check, decrementInterval);
+      else setTimeout(check, retryInterval);
     };
-    setTimeout(check, decrementInterval);
+    setTimeout(check, retryInterval);
   });
-
   return s2ContainersReadyOrNot();
 };
 
@@ -450,7 +447,7 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
     log.crit(errorMessage);
     throw new Error(errorMessage);
   }
-  model.status('awaiting job');
+  model.status('Awaiting Job.');
 };
 
 internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLambdaDto) => {
@@ -459,8 +456,8 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
 
   const cucCli = spawn('node', [...(execArgvDebugString ? [`${execArgvDebugString}:${internals.nextChildProcessInspectPort}`] : []), ...cucumberArgs], { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
   internals.nextChildProcessInspectPort += 1;
-  log.notice(`cucCli process with PID "${cucCli.pid}" has been spawned for test session with Id "${runableSessionProps.sessionProps.testSession.id}"`, { tags: ['app.parallel'] });
-  model.status('app tests are running');
+  log.info(`cucCli process with PID "${cucCli.pid}" has been spawned for Test Session with Id "${runableSessionProps.sessionProps.testSession.id}"`, { tags: ['app.parallel'] });
+  model.status('App tests are running.');
 
   cucCli.stdout.on('data', (data) => {
     process.stdout.write(data);
@@ -470,9 +467,9 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
     process.stdout.write(data);
   });
 
-  cucCli.on('exit', async (code, signal) => {
-    const message = `child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}".`;
-    log.notice(message, { tags: ['app.parallel'] });
+  cucCli.on('exit', async (code, signal) => { // Do we need this async?
+    const message = `Child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}".`;
+    log.info(message, { tags: ['app.parallel'] });
     internals.testSessionDoneCount += 1;
     if (model.emissary.shutdownEmissariesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions) {
       internals.testSessionDoneCount = 0;
@@ -482,12 +479,21 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
 
   cucCli.on('close', (code) => {
     const message = `"close" event was emitted with code: "${code}" for "cucumber Cli" running session with id "${runableSessionProps.sessionProps.testSession.id}".`;
-    log.notice(message, { tags: ['app.parallel'] });
+    log[`${code === 0 ? 'info' : 'error'}`](message, { tags: ['app.parallel'] });
   });
 
   cucCli.on('error', (err) => {
     process.stdout.write(`Failed to start sub-process. The error was: ${err}.`, { tags: ['app.parallel'] });
-    model.status('awaiting job');
+    model.status('Awaiting Job.');
+  });
+};
+
+const startCucs = (testingProps) => {
+  const { runableSessionsProps, cloudFuncOpts, deprovisionViaLambdaDto } = testingProps;
+  const { runTestSession } = internals;
+
+  runableSessionsProps.forEach((rSP) => {
+    runTestSession(cloudFuncOpts, rSP, deprovisionViaLambdaDto);
   });
 };
 
@@ -495,11 +501,12 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
 // parallel is the exported function that drives this model.
 // ////////////////////////////////////////////////////////////////
 
-const parallel = async ({ model, model: { log, debug, cloud: { function: { region, lambdaEndpoint, serviceDiscoveryEndpoint } } }, sessionsProps }) => {
-  const { waitForS2ContainersReady, runTestSession } = internals;
+const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { function: { region, lambdaEndpoint, serviceDiscoveryEndpoint } } }, sessionsProps }) => {
+  const { waitForS2ContainersReady } = internals;
   internals.log = log;
   internals.model = model;
   internals.debug = debug;
+  internals.s2Containers = s2Containers;
   internals.nextChildProcessInspectPort = debug.firstChildProcessInspectPort;
   internals.numberOfTestSessions = sessionsProps.length;
 
@@ -522,14 +529,13 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
     cloud: { items: provisionedViaLambdaDto.items.flatMap((cV) => [cV.appEcsServiceName, cV.seleniumEcsServiceName]) }
   }[process.env.NODE_ENV];
   log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
-  let returnStatus;
-  let cloudFuncOpts;
+  const returnResult = { status: null, testingProps: null };
   await waitForS2ContainersReady({
     provisionedViaLambdaDto,
-    waitForS2ContainersTimeOut: 30000 /* 10000 */,
+    waitForS2ContainersTimeOut: s2Containers.responsive.timeout,
     cloudFuncOpts: { cloud: { region, endpoint: serviceDiscoveryEndpoint }, local: null }[process.env.NODE_ENV]
   }).then((resolved) => {
-    log.notice(resolved.message, { tags: ['app.parallel'] });
+    log.info(resolved.message, { tags: ['app.parallel'] });
 
     const runableSessionsProps = resolved.collectionOfS2ContainerHostNamesWithPorts.map((cV, i) => ({
       sessionProps: sessionsProps[i],
@@ -541,19 +547,21 @@ const parallel = async ({ model, model: { log, debug, cloud: { function: { regio
     // Todo: obfuscate sensitive values from runableSessionProps.
     log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
 
-    cloudFuncOpts = { region, endpoint: lambdaEndpoint };
-    runableSessionsProps.forEach((rSP) => {
-      runTestSession(cloudFuncOpts, rSP, deprovisionViaLambdaDto);
-    });
-    returnStatus = model.status('app tests are running');
+    returnResult.testingProps = { runableSessionsProps, cloudFuncOpts: { region, endpoint: lambdaEndpoint }, deprovisionViaLambdaDto };
+    returnResult.status = model.status('Tester initialised.');
   }).catch((error) => {
     log.error(error.message, { tags: ['app.parallel'] });
-    log.notice('Attempting to bring S2 containers down.', { tags: ['app.parallel'] });
+    log.info('Attempting to bring S2 containers down.', { tags: ['app.parallel'] });
+    const cloudFuncOpts = { region, endpoint: lambdaEndpoint };
+    internals.testSessionDoneCount = 0;
     internals.deprovisionS2ContainersViaLambda(cloudFuncOpts, deprovisionViaLambdaDto);
-    returnStatus = 'Back-end failure: S2 app containers were not ready.';
+    returnResult.status = 'Tester failure: S2 app containers were not ready.';
   });
 
-  return returnStatus;
+  return returnResult;
 };
 
-module.exports = parallel;
+module.exports = {
+  parallel,
+  startCucs
+};

@@ -16,7 +16,7 @@
   },
   "cucumber": {
     "tagExpression": "@app_scan",
-    "timeOut": 1800000
+    "timeout": 1800000
   },
   "runType": "parallel",
   "results": {

@@ -1,18 +1,18 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const redis = require('redis');
 
@@ -28,11 +28,11 @@ const publish = (testSessionId, data, event = 'testerProgress') => {
 
   const eventNoFirstWord = event.split('tester')[1];
   const eventProperty = `${eventNoFirstWord.charAt(0).toLowerCase()}${eventNoFirstWord.substring(1)}`;
-  const message = JSON.stringify({ timestamp: Date.now(), event, data: { [eventProperty]: data } });
+  const message = JSON.stringify({ id: Date.now(), event, data: { [eventProperty]: data } });
 
   const channel = `${baseChannel}${testSessionId ? `-${testSessionId}` : ''}`;
   try {
-    // log.debug(`Redis client publishing to the channel: "${channel}".`, { tags: ['messagePublisher'] });
+    // log.debug(`Redis client publishing to the channel: "${channel}", message: ${message}`, { tags: ['messagePublisher'] });
     client.publish(channel, message);
   } catch (e) {
     log.warning(`The redis client failed to publish to the channel: "${channel}". The error was: ${e}`, { tags: ['messagePublisher'] });

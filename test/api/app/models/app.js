@@ -104,18 +104,18 @@ Feature: Web application free of security vulnerabilities known to Zap
 # Before hooks are run before Background
 
 Background:
-  Given a new test session based on each build user supplied testSession
-  And each build user supplied route of each testSession is navigated
-  And a new scanning session based on each build user supplied testSession
-  And the application is spidered for each testSession
+  Given a new Test Session based on each Build User supplied appScanner resourceObject
+  And each Build User supplied route of each appScanner resourceObject is navigated
+  And a new scanning session based on each Build User supplied appScanner resourceObject
+  And the application is spidered for each appScanner resourceObject
   And all active scanners are disabled
 
-Scenario: The application should not contain vulnerabilities known to Zap that exceed the build user defined threshold
+Scenario: The application should not contain vulnerabilities known to Zap that exceed the Build User defined threshold
   Given all active scanners are enabled 
   When the active scan is run
-  Then the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap
+  Then the vulnerability count should not exceed the Build User defined threshold of vulnerabilities known to Zap
 
-  `;
+`;
   const testPlanText = await app.getTestPlanText(activeFeatureFileUris);
   t.deepEqual(testPlanText, expectedTestPlanText);
 });
@@ -131,18 +131,18 @@ Feature: Web application free of security vulnerabilities known to Zap
 # Before hooks are run before Background
 
 Background:
-  Given a new test session based on each build user supplied testSession
-  And each build user supplied route of each testSession is navigated
-  And a new scanning session based on each build user supplied testSession
-  And the application is spidered for each testSession
+  Given a new Test Session based on each Build User supplied appScanner resourceObject
+  And each Build User supplied route of each appScanner resourceObject is navigated
+  And a new scanning session based on each Build User supplied appScanner resourceObject
+  And the application is spidered for each appScanner resourceObject
   And all active scanners are disabled
 
-Scenario: The application should not contain vulnerabilities known to Zap that exceed the build user defined threshold
+Scenario: The application should not contain vulnerabilities known to Zap that exceed the Build User defined threshold
   Given all active scanners are enabled 
   When the active scan is run
-  Then the vulnerability count should not exceed the build user defined threshold of vulnerabilities known to Zap
+  Then the vulnerability count should not exceed the Build User defined threshold of vulnerabilities known to Zap
 
-  
+
 
 @simple_math
 Feature: Simple maths
@@ -165,6 +165,7 @@ Feature: Simple maths
       | 100 |         5 |    105 |
       |  99 |      1234 |   1333 |
       |  12 |         5 |     17 |
+
 `;
   const testPlanText = await app.getTestPlanText(activeFeatureFileUris);
   t.deepEqual(testPlanText, expectedTestPlanText);

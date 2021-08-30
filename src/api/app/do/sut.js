@@ -1,18 +1,18 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const Joi = require('joi');
 
@@ -22,17 +22,19 @@ const browser = require(`${process.cwd()}/src/clients/browser`);
 const config = require(`${process.cwd()}/config/config`);
 /* eslint-enable import/no-dynamic-require */
 
-const configSchemaProps = config.getSchema()._cvtProperties; // eslint-disable-line no-underscore-dangle
+const internals = {
+  configSchemaProps: config.getSchema()._cvtProperties, // eslint-disable-line no-underscore-dangle
+  log: undefined,
+  publisher: undefined,
+  properties: undefined,
+  webDriver: undefined
+};
 
-let log;
-let publisher;
-
-// Todo: KC: Will need quite a bit of testing around schemas.
-const sutSchema = Joi.object({
+internals.sutSchema = Joi.object({
   protocol: Joi.string().required().valid('https', 'http'),
   ip: Joi.string().hostname().required(),
   port: Joi.number().port().required(),
-  browser: Joi.string().valid(...configSchemaProps.sut._cvtProperties.browser.format).lowercase().default(config.get('sut.browser')), // eslint-disable-line no-underscore-dangle
+  browser: Joi.string().valid(...internals.configSchemaProps.sut._cvtProperties.browser.format).lowercase().default(config.get('sut.browser')), // eslint-disable-line no-underscore-dangle
   loggedInIndicator: Joi.string(),
   context: Joi.object({ // Zap context
     iD: Joi.number().integer().positive(),
@@ -45,16 +47,15 @@ const sutSchema = Joi.object({
     submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
     expectedPageSourceSuccess: Joi.string().min(2).max(200).required()
   }),
-  reportFormats: Joi.array().items(Joi.string().valid(...configSchemaProps.sut._cvtProperties.reportFormat.format).lowercase()).unique().default([config.get('sut.reportFormat')]), // eslint-disable-line no-underscore-dangle
   testSession: Joi.object({
-    type: Joi.string().valid('testSession').required(),
-    id: Joi.string().alphanum(),
+    type: Joi.string().valid('appScanner').required(),
+    id: Joi.string().alphanum().required(),
     attributes: Joi.object({
       username: Joi.string().min(2),
       password: Joi.string().min(2),
-      aScannerAttackStrength: Joi.string().valid(...configSchemaProps.sut._cvtProperties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')), // eslint-disable-line no-underscore-dangle
-      aScannerAlertThreshold: Joi.string().valid(...configSchemaProps.sut._cvtProperties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')), // eslint-disable-line no-underscore-dangle
-      alertThreshold: Joi.number().integer().positive().default(config.get('sut.alertThreshold'))
+      aScannerAttackStrength: Joi.string().valid(...internals.configSchemaProps.sut._cvtProperties.aScannerAttackStrength.format).uppercase().default(config.get('sut.aScannerAttackStrength')), // eslint-disable-line no-underscore-dangle
+      aScannerAlertThreshold: Joi.string().valid(...internals.configSchemaProps.sut._cvtProperties.aScannerAlertThreshold.format).uppercase().default(config.get('sut.aScannerAlertThreshold')), // eslint-disable-line no-underscore-dangle
+      alertThreshold: Joi.number().integer().min(0).max(1000).default(config.get('sut.alertThreshold'))
     }),
     relationships: Joi.object({
       data: Joi.array().items(Joi.object({
@@ -72,21 +73,16 @@ const sutSchema = Joi.object({
         value: Joi.string().empty('').default(''),
         visible: Joi.boolean()
       })),
-      method: Joi.string().valid(...configSchemaProps.sut._cvtProperties.method.format).uppercase().default(config.get('sut.method')), // eslint-disable-line no-underscore-dangle
+      method: Joi.string().valid(...internals.configSchemaProps.sut._cvtProperties.method.format).uppercase().default(config.get('sut.method')), // eslint-disable-line no-underscore-dangle
       submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i)
     })
   }))
 });
 
-
-let properties;
-let webDriver;
-
-
 const validateProperties = (sutProperties) => {
-  const result = sutSchema.validate(sutProperties);
+  const result = internals.sutSchema.validate(sutProperties);
   if (result.error) {
-    log.error(result.error.message, { tags: ['testing', 'validation'] });
+    internals.log.error(result.error.message, { tags: ['sut'] });
     throw new Error(result.error.message);
   }
   return result.value;
@@ -94,28 +90,28 @@ const validateProperties = (sutProperties) => {
 
 
 const initialiseProperties = (sutProperties) => {
-  properties = validateProperties(sutProperties);
+  internals.properties = validateProperties(sutProperties);
 };
 
-
 const init = (options) => {
-  ({ log, publisher } = options);
+  internals.log = options.log;
+  internals.publisher = options.publisher;
   initialiseProperties(options.sutProperties);
 };
 
-
 const getProperties = (selecter) => {
+  const { properties } = internals;
   if (typeof selecter === 'string') return properties[selecter];
   if (Array.isArray(selecter)) return selecter.reduce((accum, propertyName) => ({ ...accum, [propertyName]: properties[propertyName] }), {});
   return properties;
 };
 
-
 const initialiseBrowser = async (emissaryProperties, selenium) => {
+  const { log, publisher, properties } = internals;
   const { knownZapErrorsWithHelpMessageForBuildUser: knownZapFormatStringErrorsWithHelpMessageForBuildUser } = emissaryProperties;
   const webDriverFactory = new WebDriverFactory();
   log.debug(`selenium is: ${JSON.stringify(selenium)}`, { tags: [`pid-${process.pid}`, 'sut', 'initialiseBrowser'] });
-  webDriver = await webDriverFactory.webDriver({
+  internals.webDriver = await webDriverFactory.webDriver({
     log,
     selenium,
     browser: properties.browser,
@@ -141,17 +137,15 @@ const initialiseBrowser = async (emissaryProperties, selenium) => {
       helpMessageForBuildUser: replaceStringSubstitutionsWithSutPropertyValues(k.helpMessageForBuildUser)
     }));
 
-  browser.init({ log, publisher, knownZapErrorsWithHelpMessageForBuildUser, webDriver });
+  browser.init({ log, publisher, knownZapErrorsWithHelpMessageForBuildUser, webDriver: internals.webDriver });
 };
 
 
 module.exports = {
-  validateProperties,
   init,
-  properties,
   initialiseBrowser,
   getProperties,
   // Zap Spider normalises port if it's a default port based on the protocol/scheme, so if the sut is listening on a default port, we remove it here.
-  baseUrl: () => `${properties.protocol}://${properties.ip}${{ http: 80, https: 443 }[properties.protocol] === properties.port ? '' : `:${properties.port}`}`,
+  baseUrl: () => `${internals.properties.protocol}://${internals.properties.ip}${{ http: 80, https: 443 }[internals.properties.protocol] === internals.properties.port ? '' : `:${internals.properties.port}`}`,
   getBrowser: () => browser
 };

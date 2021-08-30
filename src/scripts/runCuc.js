@@ -1,18 +1,18 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const cucumber = require('@cucumber/cucumber');
 const Bourne = require('@hapi/bourne');
@@ -44,7 +44,7 @@ const cucumberCliStdout = new Writable({
     // There is a toString for string and buffer, so we're going with simple and easy.
     // If it turns out we get multi-byte buffers, we'll need to use string_decoder: https://nodejs.org/docs/latest-v14.x/api/stream.html#stream_decoding_buffers_in_a_writable_stream
     try {
-      publisher.pubLog({ testSessionId, logLevel: 'notice', textData: chunk.toString(), tagObj: { tags: [`pid-${process.pid}`, 'runCuc', 'cucumberCLI-stdout-write'] } });
+      publisher.pubLog({ testSessionId, logLevel: 'info', textData: chunk.toString(), tagObj: { tags: [`pid-${process.pid}`, 'runCuc', 'cucumberCLI-stdout-write'] } });
     } catch (e) {
       callback(new Error(`There was a problem publishing to publisher.pubLog in runCuc. The error was: ${e}`));
       return;
@@ -63,7 +63,7 @@ exports.default = async function run() {
   publisher.pubLog({
     testSessionId,
     logLevel: 'notice',
-    textData: `The world parameters for this test session are:\n${JSON.stringify(worldParameters, null, 2)} `,
+    textData: `The world parameters for this Test Session are:\n${JSON.stringify(worldParameters, null, 2)} `,
     tagObj: { tags: ['runCuc', 'cucumberCLI-stdout-write'] }
   });
   */
@@ -77,8 +77,8 @@ exports.default = async function run() {
   let result;
   try {
     result = await cucumberCliInstance.run();
-    log.info(`The cucumber result for testSession: ${testSessionId} was ${JSON.stringify(result)}.`, { tags: ['runCuc'] });
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Tester finished: {sessionId: ${testSessionId}, tester: app}.`, tagObj: { tags: ['runCuc'] } });
+    log.info(`The cucumber result for testSession: ${testSessionId} was ${JSON.stringify(result)}.`, { tags: [`pid-${process.pid}`, 'runCuc'] });
+    publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Tester finished: {sessionId: ${testSessionId}, Tester: app}.`, tagObj: { tags: [`pid-${process.pid}`, 'runCuc'] } });
   } catch (error) {
     exitWithError(error);
   }

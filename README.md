@@ -6,7 +6,7 @@
   <br/>
 <br/>
 <h2>purpleteam application scanner</h2><br/>
-  Application scanning component of <a href="https://purpleteam-labs.com/" title="purpleteam">purpleteam</a> - Currently in alpha
+  Application scanning component of <a href="https://purpleteam-labs.com/" title="purpleteam"><em>PurpleTeam</em></a> - Currently in alpha
 <br/><br/>
 
 <a href="https://www.gnu.org/licenses/agpl-3.0" title="license">
@@ -26,7 +26,9 @@
 
 If you are setting up the app-scanner, you will be targeting the `local` environment.
 
-Clone this repository.
+Clone or fork this repository.
+
+If you are developing this project:
 
 `cd` to the repository root directory and run:  
 ```shell
@@ -42,5 +44,4 @@ Take the Zap API Key that you set-up in the [purpleteam-s2-containers](https://g
 
 <br>
 
-Once you have cloned, installed and configured the app-scanner, head back to the [local setup](https://doc.purpleteam-labs.com/local/local-setup.html) documentation to continue setting up the other purpleteam components.
-
+Once you have worked through the above steps, head back to the [local setup](https://purpleteam-labs.com/doc/local/set-up/) documentation to continue setting up the other _PurpleTeam_ components.

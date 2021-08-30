@@ -1,18 +1,18 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const { By } = require('selenium-webdriver');
 
@@ -29,25 +29,25 @@ const authenticated = async (expectedPageSourceSuccess) => {
 
 
 const findElementThenClick = async (searchText, testSessionId, expectedPageSourceSuccess) => {
-  const authenticatedFeedback = async () => (expectedPageSourceSuccess ? `. User was ${await authenticated(expectedPageSourceSuccess) ? 'authenticated' : '***not*** authenticated, check the login credentials you supplied in the buildUserConfig'}` : '');
+  const authenticatedFeedback = async () => (expectedPageSourceSuccess ? `. User was ${await authenticated(expectedPageSourceSuccess) ? 'authenticated' : '***not*** authenticated, check the login credentials you supplied in the Job'}` : '');
   try {
     await driver.findElement(By.id(searchText)).click();
-    return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using id="${searchText}", and clicked it${await authenticatedFeedback()} for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using id="${searchText}", and clicked it${await authenticatedFeedback()} for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${searchText}" for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${searchText}" for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   }
   try {
     await driver.findElement(By.className(searchText)).click();
-    return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using className="${searchText}", and clicked it${await authenticatedFeedback()} for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using className="${searchText}", and clicked it${await authenticatedFeedback()} for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using className="${searchText}" for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using className="${searchText}" for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   }
   try {
     await driver.findElement(By.name(searchText)).click();
-    return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using name="${searchText}", and clicked it${await authenticatedFeedback()} for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using name="${searchText}", and clicked it${await authenticatedFeedback()} for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   } catch (e) {
-    const logText = `Unable to locate element using id, className, or name of "${searchText}" for test session with id: "${testSessionId}".`;
-    publisher.pubLog({ testSessionId, logLevel: 'crit', textData: `Unable to locate element using id, className, or name of "${searchText}" for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    const logText = `Unable to locate element using id, className, or name of "${searchText}" for Test Session with id: "${testSessionId}".`;
+    publisher.pubLog({ testSessionId, logLevel: 'crit', textData: `Unable to locate element using id, className, or name of "${searchText}" for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     throw new Error(logText);
   }
 };
@@ -57,27 +57,27 @@ const findElementThenClear = async (attackField, testSessionId) => {
   try {
     if (attackField && attackField.visible) {
       await driver.findElement(By.id(attackField.name)).clear();
-      return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using id="${attackField.name}" and cleared it's value for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using id="${attackField.name}" and cleared it's value for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${attackField.name}" to clear it's value for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${attackField.name}" to clear it's value for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   }
   try {
     if (attackField && attackField.visible) {
       await driver.findElement(By.className(attackField.name)).clear();
-      return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using className="${attackField.name}" and cleared it's value for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using className="${attackField.name}" and cleared it's value for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using className="${attackField.name}" to clear it's value for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using className="${attackField.name}" to clear it's value for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   }
   try {
     if (attackField && attackField.visible) {
       await driver.findElement(By.name(attackField.name)).clear();
-      return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using name="${attackField.name}" and cleared it's value for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using name="${attackField.name}" and cleared it's value for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using name="${attackField.name}" to clear it's value for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
-    throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}". For test session with id: "${testSessionId}".`);
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using name="${attackField.name}" to clear it's value for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}". For Test Session with id: "${testSessionId}".`);
   }
   return ''; // Keep eslint happy
 };
@@ -87,27 +87,27 @@ const findElementThenSendKeys = async (attackField, testSessionId) => {
   try {
     if (attackField && attackField.visible) {
       await driver.findElement(By.id(attackField.name)).sendKeys(attackField.value);
-      return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using id="${attackField.name}" and sent keys for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using id="${attackField.name}" and sent keys for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${attackField.name}" for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using id="${attackField.name}" for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   }
   try {
     if (attackField && attackField.visible) {
       await driver.findElement(By.className(attackField.name)).sendKeys(attackField.value);
-      return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using className="${attackField.name}" and sent keys for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using className="${attackField.name}" and sent keys for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using className="${attackField.name}" for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using className="${attackField.name}" for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
   }
   try {
     if (attackField && attackField.visible) {
       await driver.findElement(By.name(attackField.name)).sendKeys(attackField.value);
-      return publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Located element using name="${attackField.name}" and sent keys for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      return publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Located element using name="${attackField.name}" and sent keys for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     }
   } catch (e) {
-    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using name="${attackField.name}" for test session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
-    throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}". For test session with id: "${testSessionId}".`);
+    publisher.pubLog({ testSessionId, logLevel: 'notice', textData: `Unable to locate element using name="${attackField.name}" for Test Session with id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+    throw new Error(`Unable to locate element using id, className, or name of "${attackField.name}". For Test Session with id: "${testSessionId}".`);
   }
   return ''; // Keep eslint happy
 };
@@ -120,9 +120,9 @@ const checkAndNotifyBuildUserIfAnyKnownBrowserErrors = async (testSessionId) => 
     const knownZapErrorWithHelpMessageForBuildUser = knownZapErrorsWithHelpMessageForBuildUser.find((k) => pageSource.includes(k.zapMessage));
 
     if (knownZapErrorWithHelpMessageForBuildUser) {
-      publisher.pubLog({ testSessionId, logLevel: 'error', textData: `${knownZapErrorWithHelpMessageForBuildUser.helpMessageForBuildUser} The message received in the browser was: "${knownZapErrorWithHelpMessageForBuildUser.zapMessage}" ... for test session id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+      publisher.pubLog({ testSessionId, logLevel: 'error', textData: `${knownZapErrorWithHelpMessageForBuildUser.helpMessageForBuildUser} The message received in the browser was: "${knownZapErrorWithHelpMessageForBuildUser.zapMessage}" ... for Test Session id: "${testSessionId}".`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
     } else {
-      const messageForUnknownZapError = `An unknown Zap Error was received in the browser for test session id: "${testSessionId}".`;
+      const messageForUnknownZapError = `An unknown Zap Error was received in the browser for Test Session id: "${testSessionId}".`;
       log.error(`${messageForUnknownZapError} The page source was: ${pageSource}`, { tags: [`pid-${process.pid}`, 'browser'] });
       publisher.publish(testSessionId, `${messageForUnknownZapError} If running local: inspect the app-scanner log, if running in cloud: Ask @binarymist for further details.`);
     }

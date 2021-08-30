@@ -1,45 +1,49 @@
 // Copyright (C) 2017-2021 BinaryMist Limited. All rights reserved.
 
-// This file is part of purpleteam.
+// This file is part of PurpleTeam.
 
-// purpleteam is free software: you can redistribute it and/or modify
+// PurpleTeam is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation version 3.
 
-// purpleteam is distributed in the hope that it will be useful,
+// PurpleTeam is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Affero General Public License for more details.
 
 // You should have received a copy of the GNU Affero General Public License
-// along with purpleteam. If not, see <https://www.gnu.org/licenses/>.
+// along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
-const { readFile } = require('fs').promises;
+const { promises: fsPromises } = require('fs');
 const cucumber = require('@cucumber/cucumber');
 const { GherkinStreams } = require('@cucumber/gherkin-streams');
 
 const model = require('.');
 
 const statusMap = {
-  'awaiting job': true,
-  'initialising job': false,
-  'app tests are running': false
+  'Awaiting Job.': true,
+  'Initialising Tester.': false,
+  'Tester initialised.': false,
+  'App tests are running.': false
 };
+
+let testingProps = null;
 
 
 class App {
   constructor(options) {
-    const { log, strings, emissary, cucumber: cucumberConfig, results, publisher, runType, cloud, debug } = options;
+    const { log, strings, emissary, cucumber: cucumberConfig, results, publisher, runType, cloud, debug, s2Containers } = options;
 
     this.log = log;
     this.strings = strings;
     this.emissary = emissary;
     this.cucumber = cucumberConfig;
     this.results = results;
-    this.publisher = publisher;
+    this.publisher = publisher; // Todo: Remove publisher as it's not used.
     this.runType = runType;
     this.cloud = cloud;
     this.debug = debug;
+    this.s2Containers = s2Containers;
     this.status = (state) => {
       if (state) {
         Object.keys(statusMap).forEach((k) => { statusMap[k] = false; });
@@ -51,13 +55,12 @@ class App {
     };
   }
 
-  async runJob(testJob) {
+  async initTester(testJob) {
     this.log.info(`Status currently set to: "${this.status()}"`, { tags: ['app'] });
-    if (this.status() !== 'awaiting job') return this.status();
-    this.status('initialising job');
+    if (this.status() !== 'Awaiting Job.') return this.status();
+    this.status('Initialising Tester.');
     const testRoutes = testJob.included.filter((resourceObject) => resourceObject.type === 'route');
-    const testSessions = testJob.included.filter((resourceObject) => resourceObject.type === 'testSession');
-
+    const testSessions = testJob.included.filter((resourceObject) => resourceObject.type === 'appScanner');
 
     const sessionsProps = testSessions.map((sesh) => ({
       testRoutes,
@@ -68,12 +71,19 @@ class App {
       loggedInIndicator: testJob.data.attributes.loggedInIndicator,
       context: { name: `${sesh.id}_Context` },
       authentication: testJob.data.attributes.sutAuthentication,
-      reportFormats: testJob.data.attributes.reportFormats,
       testSession: sesh // The data array contains the relationships to the testSessions
     }));
 
-    const returnStatus = await model[this.runType]({ model: this, sessionsProps });
-    return returnStatus; // This is propagated per session in the CLI model.
+    // const returnStatus = await model[this.runType]({ model: this, sessionsProps });
+    const returnResult = await model.parallel.parallel({ model: this, sessionsProps });
+    testingProps = returnResult.testingProps;
+
+
+    return returnResult.status; // This is propagated per session in the CLI model.
+  }
+
+  startCucs() { // eslint-disable-line class-methods-use-this
+    model.parallel.startCucs(testingProps);
   }
 
 
@@ -91,7 +101,6 @@ class App {
 
   // Receiving appEmissaryPort and seleniumPort are only essential if running in cloud environment.
   createCucumberArgs({ sessionProps = {}, emissaryHost = this.emissary.hostname, seleniumContainerName = '', appEmissaryPort = this.emissary.port, seleniumPort = 4444 }) {
-    // sut.validateProperties(sutProperties);
     this.log.debug(`seleniumContainerName is: ${seleniumContainerName}`, { tags: ['app'] });
     const emissaryProperties = {
       hostname: emissaryHost,
@@ -103,14 +112,12 @@ class App {
       spider: this.emissary.spider
     };
 
-    // zap.validateProperties(emissaryProperties);
-
     const cucumberParameters = {
       emissaryProperties,
       seleniumContainerName,
       seleniumPort,
       sutProperties: sessionProps,
-      cucumber: { timeOut: this.cucumber.timeOut }
+      cucumber: { timeout: this.cucumber.timeout }
     };
 
     const parameters = JSON.stringify(cucumberParameters);
@@ -123,7 +130,7 @@ class App {
       '--require',
       this.cucumber.steps,
       /* '--exit', */
-      `--format=message:${this.results.dir}result_testSessionId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.NDJSON`,
+      `--format=message:${this.results.dir}result_appScannerId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.NDJSON`,
       /* Todo: Provide ability for Build User to pass flag to disable colours */
       '--format-options',
       '{"colorsEnabled": true}',
@@ -174,7 +181,7 @@ class App {
   // eslint-disable-next-line class-methods-use-this
   async getTestPlanText(activeFeatureFileUris) {
     return (await Promise.all(activeFeatureFileUris
-      .map((aFFU) => readFile(aFFU, { encoding: 'utf8' }))))
+      .map((aFFU) => fsPromises.readFile(aFFU, { encoding: 'utf8' }))))
       .reduce((accumulatedFeatures, feature) => `${accumulatedFeatures}${!accumulatedFeatures.length > 0 ? feature : `\n\n${feature}`}`, '');
   }
 }
