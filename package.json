@@ -1,6 +1,6 @@
 {
   "name": "purpleteam-app-scanner",
-  "version": "0.2.0-alpha.1",
+  "version": "1.0.0-alpha.3",
   "description": "Application scanning component of purpleteam -- security regression testing SaaS",
   "main": "index.js",
   "bin": {
@@ -61,7 +61,7 @@
     "@aws-sdk/client-servicediscovery": "^3.18.0",
     "@cucumber/cucumber": "^7.2.1",
     "@cucumber/gherkin-streams": "2.0.2",
-    "@hapi/bourne": "^2.0.0",    
+    "@hapi/bourne": "^2.0.0",
     "@hapi/hapi": "^20.1.3",
     "app-module-path": "^2.2.0",
     "axios": "^0.21.1",

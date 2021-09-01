@@ -67,21 +67,6 @@ internals.validateProperties = (emissaryProperties) => {
   return result.value;
 };
 
-const init = (options) => {
-  internals.log = options.log;
-  internals.publisher = options.publisher;
-  const { emissaryProperties } = options;
-  const { validateProperties } = internals;
-  internals.properties = { knownZapErrorsWithHelpMessageForBuildUser: internals.knownZapErrorsWithHelpMessageForBuildUser, ...validateProperties(emissaryProperties) };
-
-  const zapOptions = {
-    apiKey: internals.properties.apiKey,
-    proxy: `${internals.properties.protocol}://${internals.properties.hostname}:${internals.properties.port}/`
-  };
-
-  internals.zaproxy = new ZapClient(zapOptions);
-};
-
 const getProperties = (selecter) => {
   const { properties } = internals;
   if (typeof selecter === 'string') return properties[selecter];
@@ -158,12 +143,26 @@ const createReports = async ({ testSessionId }) => {
   await Promise.all(reportPromises);
 };
 
+const init = (options) => {
+  internals.log = options.log;
+  internals.publisher = options.publisher;
+  const { emissaryProperties } = options;
+  const { validateProperties } = internals;
+  internals.properties = { knownZapErrorsWithHelpMessageForBuildUser: internals.knownZapErrorsWithHelpMessageForBuildUser, ...validateProperties(emissaryProperties) };
+
+  const zapOptions = {
+    apiKey: internals.properties.apiKey,
+    proxy: `${internals.properties.protocol}://${internals.properties.hostname}:${internals.properties.port}/`
+  };
+
+  internals.zaproxy = new ZapClient(zapOptions);
+};
 
 module.exports = {
-  init,
   getProperties,
   getZaproxy: () => internals.zaproxy,
   getPropertiesForBrowser: () => getProperties(['protocol', 'hostname', 'port', 'knownZapErrorsWithHelpMessageForBuildUser']),
   numberOfAlertsForSesh,
-  createReports
+  createReports,
+  init
 };
