@@ -94,7 +94,7 @@ const schema = {
         default: 120000
       },
       retryIntervalToBeAvailable: {
-        doc: 'The retry interval for the s2 Service Discovery Service Instances to be available.',
+        doc: 'The retry interval in milliseconds for the s2 Service Discovery Service Instances to be available.',
         format: 'duration',
         default: 5000
       }
@@ -106,7 +106,7 @@ const schema = {
         default: 30000
       },
       retryInterval: {
-        doc: 'The retry interval for the s2 containers to be responsive.',
+        doc: 'The retry interval in milliseconds for the s2 containers to be responsive.',
         format: 'duration',
         default: 2000
       }
@@ -135,7 +135,7 @@ const schema = {
       default: ''
     },
     apiFeedbackSpeed: {
-      doc: 'The speed to poll the Zap API for feedback of test progress',
+      doc: 'The speed in milliseconds to poll the Zap API for feedback of test progress',
       format: 'duration',
       default: 5000
     },
