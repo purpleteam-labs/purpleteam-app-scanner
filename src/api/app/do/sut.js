@@ -41,7 +41,7 @@ internals.sutSchema = Joi.object({
     name: Joi.string().token()
   }),
   authentication: Joi.object({
-    route: Joi.string().min(2).regex(/^\/[-\\w/]+/i),
+    route: Joi.string().min(2).regex(/^\/[-\w/]{1,200}$/),
     usernameFieldLocater: Joi.string().min(2).required(),
     passwordFieldLocater: Joi.string().min(2).required(),
     submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
@@ -60,13 +60,13 @@ internals.sutSchema = Joi.object({
     relationships: Joi.object({
       data: Joi.array().items(Joi.object({
         type: Joi.string().valid('route').required(),
-        id: Joi.string().min(2).regex(/^\/[-\\w/]+/i).required()
+        id: Joi.string().min(2).regex(/^\/[-\w/]{1,200}$/).required()
       }))
     })
   }),
   testRoutes: Joi.array().items(Joi.object({
     type: Joi.string().valid('route').required(),
-    id: Joi.string().min(2).regex(/^\/[-\\w/]+/i).required(),
+    id: Joi.string().min(2).regex(/^\/[-\w/]{1,200}$/).required(),
     attributes: Joi.object({
       attackFields: Joi.array().items(Joi.object({
         name: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
