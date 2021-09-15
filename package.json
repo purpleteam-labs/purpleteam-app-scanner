@@ -78,10 +78,11 @@
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {
     "ava": "^3.15.0",
-    "eslint": "^7.27.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-ava": "^12.0.0",
-    "eslint-plugin-import": "^2.23.3",
+    "eslint-plugin-import": "^2.24.2",
     "npm-check": "^5.9.2",
     "nyc": "^15.1.0",
     "rewire": "^5.0.0",

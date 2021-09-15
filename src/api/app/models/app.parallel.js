@@ -408,9 +408,8 @@ internals.waitForS2ContainersReady = async ({
 };
 
 
-internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionViaLambdaDto) => {
+internals.deprovisionS2ContainersViaLambda = async ({ cloudFuncOpts, deprovisionViaLambdaDto }) => {
   const {
-    model,
     log,
     serialiseClientContext,
     clientContext: { Custom: { customer, customerClusterArn /* no need for serviceDiscoveryServices in deprovision, so leave out */ } }
@@ -437,7 +436,7 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
     log.crit(`Unhandled error occurred from Lambda service while attempting to stop S2 app containers with function "${lambdaParams.FunctionName}". Error was: ${e.message}`, { tags: ['app.parallel'] });
     throw e; // Todo: As we learn more about the types of failures, we are going to have to provide non fatal workarounds.
   }
-  // purpleteam-labs need to know about this,
+  // PurpleTeam-Labs need to know about this,
   // but the call to bring the containers down will still more than likely be successful, so no point in notifying the Build User.
   // Possibly set-up a cloudwatch alarm or similar... https://gitlab.com/purpleteam-labs/purpleteam-iac/-/issues/11
   !!error && log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${error}`, { tags: ['app.parallel'] });
@@ -447,11 +446,19 @@ internals.deprovisionS2ContainersViaLambda = async (cloudFuncOpts, deprovisionVi
     log.crit(errorMessage);
     throw new Error(errorMessage);
   }
+};
+
+internals.reset = async ({ cloudFuncOpts, deprovisionViaLambdaDto }) => {
+  // Assumption is that cucCli isn't running.
+  const { model, deprovisionS2ContainersViaLambda } = internals;
+  internals.testSessionDoneCount = 0;
+  internals.numberOfTestSessions = 0;
+  await deprovisionS2ContainersViaLambda({ cloudFuncOpts, deprovisionViaLambdaDto });
   model.status('Awaiting Job.');
 };
 
 internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLambdaDto) => {
-  const { model, log, numberOfTestSessions, debug: { execArgvDebugString } } = internals;
+  const { model, log, numberOfTestSessions, reset, debug: { execArgvDebugString } } = internals;
   const cucumberArgs = model.createCucumberArgs(runableSessionProps);
 
   const cucCli = spawn('node', [...(execArgvDebugString ? [`${execArgvDebugString}:${internals.nextChildProcessInspectPort}`] : []), ...cucumberArgs], { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
@@ -471,10 +478,7 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
     const message = `Child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}".`;
     log.info(message, { tags: ['app.parallel'] });
     internals.testSessionDoneCount += 1;
-    if (model.emissary.shutdownEmissariesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions) {
-      internals.testSessionDoneCount = 0;
-      internals.deprovisionS2ContainersViaLambda(cloudFuncOpts, deprovisionViaLambdaDto);
-    }
+    model.emissary.shutdownEmissariesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions && reset({ cloudFuncOpts, deprovisionViaLambdaDto });
   });
 
   cucCli.on('close', (code) => {
@@ -484,7 +488,7 @@ internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLa
 
   cucCli.on('error', (err) => {
     process.stdout.write(`Failed to start sub-process. The error was: ${err}.`, { tags: ['app.parallel'] });
-    model.status('Awaiting Job.');
+    model.emissary.shutdownEmissariesAfterTest && reset({ cloudFuncOpts, deprovisionViaLambdaDto });
   });
 };
 
@@ -502,7 +506,7 @@ const startCucs = (testingProps) => {
 // ////////////////////////////////////////////////////////////////
 
 const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { function: { region, lambdaEndpoint, serviceDiscoveryEndpoint } } }, sessionsProps }) => {
-  const { waitForS2ContainersReady } = internals;
+  const { waitForS2ContainersReady, reset } = internals;
   internals.log = log;
   internals.model = model;
   internals.debug = debug;
@@ -547,14 +551,14 @@ const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { fun
     // Todo: obfuscate sensitive values from runableSessionProps.
     log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
 
-    returnResult.testingProps = { runableSessionsProps, cloudFuncOpts: { region, endpoint: lambdaEndpoint }, deprovisionViaLambdaDto };
+    returnResult.testingProps = { runableSessionsProps, deprovisionViaLambdaDto, cloudFuncOpts: { region, endpoint: lambdaEndpoint } };
     returnResult.status = model.status('Tester initialised.');
   }).catch((error) => {
     log.error(error.message, { tags: ['app.parallel'] });
     log.info('Attempting to bring S2 containers down.', { tags: ['app.parallel'] });
     const cloudFuncOpts = { region, endpoint: lambdaEndpoint };
-    internals.testSessionDoneCount = 0;
-    internals.deprovisionS2ContainersViaLambda(cloudFuncOpts, deprovisionViaLambdaDto);
+    reset({ cloudFuncOpts, deprovisionViaLambdaDto });
+    returnResult.testingProps = { deprovisionViaLambdaDto, cloudFuncOpts: { region, endpoint: lambdaEndpoint } };
     returnResult.status = 'Tester failure: S2 app containers were not ready.';
   });
 
@@ -562,6 +566,7 @@ const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { fun
 };
 
 module.exports = {
+  async reset(parameters) { await internals.reset(parameters); },
   parallel,
   startCucs
 };

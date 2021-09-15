@@ -27,10 +27,9 @@ const statusMap = {
   'App tests are running.': false
 };
 
-let testingProps = null;
-
-
 class App {
+  #testingProps;
+
   constructor(options) {
     const { log, strings, emissary, cucumber: cucumberConfig, results, publisher, runType, cloud, debug, s2Containers } = options;
 
@@ -44,6 +43,7 @@ class App {
     this.cloud = cloud;
     this.debug = debug;
     this.s2Containers = s2Containers;
+    this.#testingProps = null;
     this.status = (state) => {
       if (state) {
         Object.keys(statusMap).forEach((k) => { statusMap[k] = false; });
@@ -76,14 +76,20 @@ class App {
 
     // const returnStatus = await model[this.runType]({ model: this, sessionsProps });
     const returnResult = await model.parallel.parallel({ model: this, sessionsProps });
-    testingProps = returnResult.testingProps;
+    this.#testingProps = returnResult.testingProps;
 
 
     return returnResult.status; // This is propagated per session in the CLI model.
   }
 
+  async reset() {
+    const { deprovisionViaLambdaDto, cloudFuncOpts } = this.#testingProps;
+    await model.parallel.reset({ deprovisionViaLambdaDto, cloudFuncOpts });
+    this.#testingProps = null;
+  }
+
   startCucs() { // eslint-disable-line class-methods-use-this
-    model.parallel.startCucs(testingProps);
+    model.parallel.startCucs(this.#testingProps);
   }
 
 
