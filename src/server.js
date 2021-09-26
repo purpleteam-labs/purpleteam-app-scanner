@@ -22,7 +22,6 @@ const app = require('src/api/app');
 const host = config.get('host.host');
 const server = Hapi.server({ port: config.get('host.port'), host });
 const log = require('purpleteam-logger').init(config.get('logger'));
-const messagePublisher = require('src/publishers/messagePublisher').init({ log, redis: config.get('redis.clientCreationOptions') });
 const strings = require('src/strings');
 
 const plugins = [
@@ -42,8 +41,6 @@ const plugins = [
       emissary: config.get('emissary'),
       cucumber: config.get('cucumber'),
       results: config.get('results'),
-      publisher: messagePublisher,
-      runType: config.get('runType'),
       cloud: config.get('cloud'),
       debug: config.get('debug'),
       s2Containers: config.get('s2Containers')

@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
-const { spawn } = require('child_process');
 // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/index.html
 // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-lambda/classes/invokecommand.html
 // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-servicediscovery/index.html
@@ -46,12 +45,8 @@ const Bourne = require('@hapi/bourne');
 
 const internals = {
   log: undefined,
-  model: undefined,
-  debug: undefined,
+  emissary: undefined,
   s2Containers: undefined,
-  nextChildProcessInspectPort: undefined,
-  numberOfTestSessions: 0,
-  testSessionDoneCount: 0,
   // In the Cloud we use ECS Tasks which combine the two image types, so we do both in the single Lambda invocation.
   // Locally we need to provision app emissaries and selenium standalones separately.
   lambdaProvisioningFuncNames: {
@@ -67,11 +62,9 @@ const internals = {
       serviceDiscoveryServices: Object.entries(process.env).filter(([key]) => key.startsWith('s2_app_emissary_')).reduce((accumulator, [key, value]) => ({ ...accumulator, [key]: value }), {})
     }
   },
-  isCloudEnv: process.env.NODE_ENV === 'cloud'
+  isCloudEnv: process.env.NODE_ENV === 'cloud',
+  serialiseClientContext: (clientContext) => Buffer.from(JSON.stringify(clientContext)).toString('base64')
 };
-
-internals.serialiseClientContext = (clientContext) => Buffer.from(JSON.stringify(clientContext)).toString('base64');
-
 
 internals.provisionContainers = async ({ lambdaClient, provisionViaLambdaDto, lambdaFunc }) => {
   const { log, clientContext, isCloudEnv, serialiseClientContext } = internals;
@@ -84,18 +77,17 @@ internals.provisionContainers = async ({ lambdaClient, provisionViaLambdaDto, la
   };
   const command = new InvokeCommand(lambdaParams);
 
-  isCloudEnv && log.debug(`The deserialised clientContext is: ${JSON.stringify(clientContext)}`, { tags: ['app.parallel', 'provisionContainers'] });
+  isCloudEnv && log.debug(`The deserialised clientContext is: ${JSON.stringify(clientContext)}`, { tags: ['app.emissary', 'provisionContainers'] });
 
   const data = await lambdaClient.send(command);
   return { functionName: lambdaFunc, responseBodyProp: 'provisionViaLambdaDto', data };
 };
 
-
 internals.resolvePromises = async (promisesFromLambdas) => {
   const { log } = internals;
   const provisionContainersResult = await Promise.all(promisesFromLambdas).catch((err) => {
     // This gets hit if the Lambda timeout (not the S2_PROVISIONING_TIMEOUT) is too short, and maybe possibly with other faults.
-    log.crit(`Unhandled error occurred from the Lambda service while attempting to start S2 app containers. Error was: ${err.message}.`, { tags: ['app.parallel'] });
+    log.crit(`Unhandled error occurred from the Lambda service while attempting to start S2 app containers. Error was: ${err.message}.`, { tags: ['app.emissary'] });
     throw err; // Todo: As we learn more about the types of failures, we are going to have to provide non fatal workarounds: https://gitlab.com/purpleteam-labs/purpleteam/-/issues/22
   });
   let provisionedViaLambdaDtoCollection;
@@ -106,12 +98,12 @@ internals.resolvePromises = async (promisesFromLambdas) => {
       return provisionedViaLambdaDto;
     });
   } catch (e) {
-    log.crit(`Unhandled error occurred from Lambda service while attempting to start S2 app containers. Error was: ${e.message}.`, { tags: ['app.parallel'] });
+    log.crit(`Unhandled error occurred from Lambda service while attempting to start S2 app containers. Error was: ${e.message}.`, { tags: ['app.emissary'] });
     throw e;
   }
 
   const processNonFatal = (error) => { log.error(error); };
-  const processFatal = (error) => { log.crit(error, { tags: ['app.parallel'] }); throw new Error(error); };
+  const processFatal = (error) => { log.crit(error, { tags: ['app.emissary'] }); throw new Error(error); };
 
   provisionedViaLambdaDtoCollection.some((e) => {
     (!e || !e.items) && processFatal('Unexpected error in Lambda occurred. There were no items returned for one or more provisionedViaLambdaDto. Check the Lambda logs for details.'); // This can also be due to Lambda timeout.
@@ -139,7 +131,6 @@ internals.resolvePromises = async (promisesFromLambdas) => {
   return provisionedViaLambdaDtoCollection;
 };
 
-
 internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoCollection) => {
   const { log, isCloudEnv } = internals;
   const toMerge = [];
@@ -157,7 +148,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   //   ]
   // ]
   const numberOfItems = provisionedViaLambdaDtoItems[0].length;
-  log.debug(`The value of provisionedViaLambdaDtoItems is: ${JSON.stringify(provisionedViaLambdaDtoItems, null, 2)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
+  log.debug(`The value of provisionedViaLambdaDtoItems is: ${JSON.stringify(provisionedViaLambdaDtoItems, null, 2)}`, { tags: ['app.emissary', 'mergeProvisionedViaLambdaDtoCollection'] });
   // Todo: The following will require more testing, especially in local env.
   for (let i = 0; i < numberOfItems; i += 1) { // 3 items for example
     const itemCollector = [];
@@ -179,7 +170,7 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   //     {testSessionId: 'anotherExample', ...}  // Result of provisionSeleniumStandalones
   //   ]
   // ]
-  log.debug(`The value of toMerge is: ${JSON.stringify(toMerge, null, 2)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
+  log.debug(`The value of toMerge is: ${JSON.stringify(toMerge, null, 2)}`, { tags: ['app.emissary', 'mergeProvisionedViaLambdaDtoCollection'] });
   const mergedProvisionedViaLambdaDto = {};
 
   mergedProvisionedViaLambdaDto.items = toMerge.map((mCV) => {
@@ -207,10 +198,9 @@ internals.mergeProvisionedViaLambdaDtoCollection = (provisionedViaLambdaDtoColle
   //     {testSessionId: 'anotherExample', ...}
   //   ]
   // }
-  log.debug(`The value of mergedProvisionedViaLambdaDto is: ${JSON.stringify(mergedProvisionedViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'mergeProvisionedViaLambdaDtoCollection'] });
+  log.debug(`The value of mergedProvisionedViaLambdaDto is: ${JSON.stringify(mergedProvisionedViaLambdaDto, null, 2)}`, { tags: ['app.emissary', 'mergeProvisionedViaLambdaDtoCollection'] });
   return mergedProvisionedViaLambdaDto;
 };
-
 
 internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) => {
   const {
@@ -246,7 +236,7 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
   //     ]
   //   }
   // ]
-  log.debug(`The value of provisionedViaLambdaDtoCollection is: ${JSON.stringify(provisionedViaLambdaDtoCollection, null, 2)}`, { tags: ['app.parallel', 'provisionViaLamda'] });
+  log.debug(`The value of provisionedViaLambdaDtoCollection is: ${JSON.stringify(provisionedViaLambdaDtoCollection, null, 2)}`, { tags: ['app.emissary', 'provisionViaLamda'] });
   return mergeProvisionedViaLambdaDtoCollection(provisionedViaLambdaDtoCollection);
 };
 
@@ -255,9 +245,8 @@ internals.provisionViaLambda = async ({ cloudFuncOpts, provisionViaLambdaDto }) 
 // ////////////////////////////////////////////////////////////////
 
 internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts }) => {
-  // Todo: port should be more specific, I.E. zap container port (container port): https://gitlab.com/purpleteam-labs/purpleteam/-/issues/26
-  const { log, model: { emissary: { protocol, port } } } = internals;
-  log.info('Checking whether S2 app containers are ready yet.', { tags: ['app.parallel'] });
+  const { log, emissary: { protocol, port } } = internals;
+  log.info('Checking whether S2 app containers are ready yet.', { tags: ['app.emissary'] });
   let containersAreReady = false;
 
   const containerReadyPromises = collectionOfS2ContainerHostNamesWithPorts.flatMap((mCV) => [
@@ -273,17 +262,17 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
 
   const results = await Promise.all(containerReadyPromises)
     .catch((error) => {
-      log.warning('Error occurred while testing that s2 app containers were up/responsive', { tags: ['app.parallel'] });
+      log.warning('Error occurred while testing that s2 app containers were up/responsive', { tags: ['app.emissary'] });
       if (error.response) {
-        log.warning('The request was made and the server responded with a status code that falls out of the range of 2xx', { tags: ['app.parallel'] });
-        log.warning(`${error.response.data}`, { tags: ['app.parallel'] });
-        log.warning(`${error.response.status}`, { tags: ['app.parallel'] });
-        log.warning(`${error.response.headers}`, { tags: ['app.parallel'] });
+        log.warning('The request was made and the server responded with a status code that falls out of the range of 2xx', { tags: ['app.emissary'] });
+        log.warning(`${error.response.data}`, { tags: ['app.emissary'] });
+        log.warning(`${error.response.status}`, { tags: ['app.emissary'] });
+        log.warning(`${error.response.headers}`, { tags: ['app.emissary'] });
       } else if (error.request && error.message) {
-        log.warning(`The request was made to check emissary health but no response was received.\nThe error.message was: ${error.message}\nThe error.stack was: ${error.stack}`, { tags: ['app.parallel'] });
+        log.warning(`The request was made to check emissary health but no response was received.\nThe error.message was: ${error.message}\nThe error.stack was: ${error.stack}`, { tags: ['app.emissary'] });
       } else {
-        log.warning('Something happened in setting up the request that triggered an Error', { tags: ['app.parallel'] });
-        log.warning(`${error.message}`, { tags: ['app.parallel'] });
+        log.warning('Something happened in setting up the request that triggered an Error', { tags: ['app.emissary'] });
+        log.warning(`${error.message}`, { tags: ['app.emissary'] });
       }
     });
 
@@ -293,58 +282,57 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
       seleniumContainer: (response) => response.data.value.ready === true
     };
     const containersThatAreNotReady = results.filter((e) => !(isReady.appEmissary(e) || isReady.seleniumContainer(e)));
-    log.notice(`containersThatAreNotReady is: ${JSON.stringify(containersThatAreNotReady)}`, { tags: ['app.parallel', 's2ContainersReady'] });
+    log.notice(`containersThatAreNotReady is: ${JSON.stringify(containersThatAreNotReady)}`, { tags: ['app.emissary', 's2ContainersReady'] });
     containersAreReady = !containersThatAreNotReady.length;
   }
   return containersAreReady;
 };
 
-
 internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFuncOpts }) => new Promise((resolve, reject) => {
-  const { model, log, isCloudEnv, s2Containers: { serviceDiscoveryServiceInstances: { timeoutToBeAvailable, retryIntervalToBeAvailable } } } = internals;
+  const { log, isCloudEnv, s2Containers: { serviceDiscoveryServiceInstances: { timeoutToBeAvailable, retryIntervalToBeAvailable } }, emissary: { port } } = internals;
   let collectionOfS2ContainerHostNamesWithPorts = [];
 
   if (isCloudEnv) {
     let countDown = timeoutToBeAvailable;
     const decrementInterval = retryIntervalToBeAvailable;
-    log.debug(`cloudFuncOpts for ServiceDiscovery is: ${JSON.stringify(cloudFuncOpts)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+    log.debug(`cloudFuncOpts for ServiceDiscovery is: ${JSON.stringify(cloudFuncOpts)}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
     const serviceDiscoveryClient = new ServiceDiscoveryClient(cloudFuncOpts);
     const check = async () => {
-      log.debug(`Inside check function with countDown value of: ${countDown}.`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+      log.debug(`Inside check function with countDown value of: ${countDown}.`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
       countDown -= decrementInterval;
       if (await (async () => {
-        log.debug(`Inside if statement with countDown value of ${countDown}.`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+        log.debug(`Inside if statement with countDown value of ${countDown}.`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
         const collectionOfS2ServiceDiscoveryServiceInstances = await Promise.all(provisionedViaLambdaDto.items.map(async (mCV) => {
           const appServiceDiscoveryServiceId = mCV.appServiceDiscoveryServiceArn.split('/')[1];
           const seleniumServiceDiscoveryServiceId = mCV.seleniumServiceDiscoveryServiceArn.split('/')[1];
-          log.debug(`app Service Discovery Service Id for testSessionId "${mCV.testSessionId}", with appEcsServiceName "${mCV.appEcsServiceName}" is "${appServiceDiscoveryServiceId}".`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-          log.debug(`selenium Service Discovery Service Id for testSessionId "${mCV.testSessionId}", with seleniumEcsServiceName "${mCV.seleniumEcsServiceName}" is "${seleniumServiceDiscoveryServiceId}".`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`app Service Discovery Service Id for testSessionId "${mCV.testSessionId}", with appEcsServiceName "${mCV.appEcsServiceName}" is "${appServiceDiscoveryServiceId}".`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`selenium Service Discovery Service Id for testSessionId "${mCV.testSessionId}", with seleniumEcsServiceName "${mCV.seleniumEcsServiceName}" is "${seleniumServiceDiscoveryServiceId}".`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
 
           // Lookup requests charge: $1.00 per million discovery API calls.
           const listAppInstancesCommand = new ListInstancesCommand({ ServiceId: appServiceDiscoveryServiceId });
           const s2AppServiceDiscoveryServiceInstances = await serviceDiscoveryClient.send(listAppInstancesCommand);
-          log.debug(`The s2AppServiceDiscoveryServiceInstances are: ${JSON.stringify(s2AppServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`The s2AppServiceDiscoveryServiceInstances are: ${JSON.stringify(s2AppServiceDiscoveryServiceInstances)}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
           const listSeleniumInstancesCommand = new ListInstancesCommand({ ServiceId: seleniumServiceDiscoveryServiceId });
           const s2SeleniumServiceDiscoveryServiceInstances = await serviceDiscoveryClient.send(listSeleniumInstancesCommand);
-          log.debug(`The s2SeleniumServiceDiscoveryServiceInstances are: ${JSON.stringify(s2SeleniumServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`The s2SeleniumServiceDiscoveryServiceInstances are: ${JSON.stringify(s2SeleniumServiceDiscoveryServiceInstances)}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
           return { s2AppServiceDiscoveryServiceInstances, s2SeleniumServiceDiscoveryServiceInstances };
         }));
 
-        log.debug(`Just mapped over provisionedViaLambdaDto.items. countDown value is: ${countDown}.`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-        log.debug(`The collectionOfS2ServiceDiscoveryServiceInstances is: ${JSON.stringify(collectionOfS2ServiceDiscoveryServiceInstances)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+        log.debug(`Just mapped over provisionedViaLambdaDto.items. countDown value is: ${countDown}.`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
+        log.debug(`The collectionOfS2ServiceDiscoveryServiceInstances is: ${JSON.stringify(collectionOfS2ServiceDiscoveryServiceInstances)}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
         let allS2ServiceDiscoveryServiceInstancesNowAvailable = false;
 
         // Todo: We may need some sort of short circuit,
         // or at least handle scenario where we don't get all service instances (tasks) registered with service discovery
         // due to lack of AMI instance resources.
         allS2ServiceDiscoveryServiceInstancesNowAvailable = collectionOfS2ServiceDiscoveryServiceInstances.every((element) => {
-          log.debug(`The value of element is: ${JSON.stringify(element)}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-          log.debug(`The value of element.s2AppServiceDiscoveryServiceInstances.Instances.length is: ${element.s2AppServiceDiscoveryServiceInstances.Instances.length}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
-          log.debug(`The value of element.s2SeleniumServiceDiscoveryServiceInstances.Instances.length is: ${element.s2SeleniumServiceDiscoveryServiceInstances.Instances.length}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`The value of element is: ${JSON.stringify(element)}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`The value of element.s2AppServiceDiscoveryServiceInstances.Instances.length is: ${element.s2AppServiceDiscoveryServiceInstances.Instances.length}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
+          log.debug(`The value of element.s2SeleniumServiceDiscoveryServiceInstances.Instances.length is: ${element.s2SeleniumServiceDiscoveryServiceInstances.Instances.length}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
           return element.s2AppServiceDiscoveryServiceInstances.Instances.length > 0
             && element.s2SeleniumServiceDiscoveryServiceInstances.Instances.length > 0;
         });
-        log.debug(`The value of allS2ServiceDiscoveryServiceInstancesNowAvailable is: ${allS2ServiceDiscoveryServiceInstancesNowAvailable}`, { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+        log.debug(`The value of allS2ServiceDiscoveryServiceInstancesNowAvailable is: ${allS2ServiceDiscoveryServiceInstancesNowAvailable}`, { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
         if (allS2ServiceDiscoveryServiceInstancesNowAvailable) {
           collectionOfS2ContainerHostNamesWithPorts = collectionOfS2ServiceDiscoveryServiceInstances.map((mCV) => ({
             appEmissaryHostName: mCV.s2AppServiceDiscoveryServiceInstances.Instances[0].Attributes.AWS_INSTANCE_IPV4,
@@ -356,18 +344,18 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
 
         return allS2ServiceDiscoveryServiceInstancesNowAvailable;
       })()) {
-        log.info('All S2 Service Discovery Service Instance are now available.', { tags: ['app.parallel'] });
+        log.info('All S2 Service Discovery Service Instance are now available.', { tags: ['app.emissary'] });
         resolve(collectionOfS2ContainerHostNamesWithPorts);
       } else if (countDown < 0) reject(new Error('Timed out while waiting for S2 Service Discovery Service Instances to be available.'));
       else setTimeout(check, decrementInterval);
     };
-    log.debug('About to call setTimeout for the first time.', { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+    log.debug('About to call setTimeout for the first time.', { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
     setTimeout(check, decrementInterval);
-    log.debug('Called setTimeout for the first time.', { tags: ['app.parallel', 'getS2ContainerHostNamesWithPorts'] });
+    log.debug('Called setTimeout for the first time.', { tags: ['app.emissary', 'getS2ContainerHostNamesWithPorts'] });
   } else {
     collectionOfS2ContainerHostNamesWithPorts = provisionedViaLambdaDto.items.map((mCV) => ({
       appEmissaryHostName: mCV.appEmissaryContainerName,
-      appEmissaryPort: model.emissary.port,
+      appEmissaryPort: port,
       seleniumHostName: mCV.seleniumContainerName,
       seleniumPort: '4444'
     }));
@@ -375,22 +363,21 @@ internals.getS2ContainerHostNamesWithPorts = ({ provisionedViaLambdaDto, cloudFu
   }
 });
 
-
 internals.waitForS2ContainersReady = async ({
   provisionedViaLambdaDto,
   cloudFuncOpts,
   waitForS2ContainersTimeOut: timeout
 }) => {
   const { log, getS2ContainerHostNamesWithPorts, s2ContainersReady, s2Containers: { responsive: { retryInterval } } } = internals;
-  log.debug('About to call getS2ContainerHostNamesWithPorts.', { tags: ['app.parallel', 'waitForS2ContainersReady'] });
+  log.debug('About to call getS2ContainerHostNamesWithPorts.', { tags: ['app.emissary', 'waitForS2ContainersReady'] });
   let collectionOfS2ContainerHostNamesWithPorts;
   await getS2ContainerHostNamesWithPorts({ provisionedViaLambdaDto, cloudFuncOpts }).then((resolved) => {
     collectionOfS2ContainerHostNamesWithPorts = resolved;
-    log.debug(`The value of collectionOfS2ContainerHostNamesWithPorts is: ${JSON.stringify(collectionOfS2ContainerHostNamesWithPorts, null, 2)}`, { tags: ['app.parallel', 'waitForS2ContainersReady'] });
+    log.debug(`The value of collectionOfS2ContainerHostNamesWithPorts is: ${JSON.stringify(collectionOfS2ContainerHostNamesWithPorts, null, 2)}`, { tags: ['app.emissary', 'waitForS2ContainersReady'] });
   }).catch((error) => {
     // One of the reasons this happens is when services have been brought down and requested to be brought up again before draining.
     //   As per the error 'Unable to Start a service that is still Draining.' in resolvePromises sent back from the lambda.
-    log.crit(`A failure occurred while attempting to get S2 Container Host Names with ports, The error message was: ${error.message}`, { tags: ['app.parallel'] });
+    log.crit(`A failure occurred while attempting to get S2 Container Host Names with ports, The error message was: ${error.message}`, { tags: ['app.emissary'] });
     throw error;
   });
 
@@ -407,8 +394,7 @@ internals.waitForS2ContainersReady = async ({
   return s2ContainersReadyOrNot();
 };
 
-
-internals.deprovisionS2ContainersViaLambda = async ({ cloudFuncOpts, deprovisionViaLambdaDto }) => {
+const deprovisionS2ContainersViaLambda = async ({ cloudFuncOpts, deprovisionViaLambdaDto }) => {
   const {
     log,
     serialiseClientContext,
@@ -433,14 +419,14 @@ internals.deprovisionS2ContainersViaLambda = async ({ cloudFuncOpts, deprovision
     unhandledErrorMessageFromWithinLambda = Object.prototype.hasOwnProperty.call(payload, 'errorMessage') && payload.errorMessage;
     ({ item, error } = deprovisionedViaLambdaDto || { item: undefined, error: undefined });
   } catch (e) {
-    log.crit(`Unhandled error occurred from Lambda service while attempting to stop S2 app containers with function "${lambdaParams.FunctionName}". Error was: ${e.message}`, { tags: ['app.parallel'] });
+    log.crit(`Unhandled error occurred from Lambda service while attempting to stop S2 app containers with function "${lambdaParams.FunctionName}". Error was: ${e.message}`, { tags: ['app.emissary'] });
     throw e; // Todo: As we learn more about the types of failures, we are going to have to provide non fatal workarounds.
   }
   // PurpleTeam-Labs need to know about this,
   // but the call to bring the containers down will still more than likely be successful, so no point in notifying the Build User.
   // Possibly set-up a cloudwatch alarm or similar... https://gitlab.com/purpleteam-labs/purpleteam-iac/-/issues/11
-  !!error && log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${error}`, { tags: ['app.parallel'] });
-  !!item && log.notice(item, { tags: ['app.parallel'] });
+  !!error && log.error(`Handled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${error}`, { tags: ['app.emissary'] });
+  !!item && log.notice(item, { tags: ['app.emissary'] });
   if (unhandledErrorMessageFromWithinLambda) {
     const errorMessage = `Unhandled error occurred within Lambda function "${lambdaParams.FunctionName}" while attempting to stop S2 app containers. Error was: ${unhandledErrorMessageFromWithinLambda}`;
     log.crit(errorMessage);
@@ -448,71 +434,11 @@ internals.deprovisionS2ContainersViaLambda = async ({ cloudFuncOpts, deprovision
   }
 };
 
-internals.reset = async ({ cloudFuncOpts, deprovisionViaLambdaDto }) => {
-  // Assumption is that cucCli isn't running.
-  const { model, deprovisionS2ContainersViaLambda } = internals;
-  internals.testSessionDoneCount = 0;
-  internals.numberOfTestSessions = 0;
-  await deprovisionS2ContainersViaLambda({ cloudFuncOpts, deprovisionViaLambdaDto });
-  model.status('Awaiting Job.');
-};
-
-internals.runTestSession = (cloudFuncOpts, runableSessionProps, deprovisionViaLambdaDto) => {
-  const { model, log, numberOfTestSessions, reset, debug: { execArgvDebugString } } = internals;
-  const cucumberArgs = model.createCucumberArgs(runableSessionProps);
-
-  const cucCli = spawn('node', [...(execArgvDebugString ? [`${execArgvDebugString}:${internals.nextChildProcessInspectPort}`] : []), ...cucumberArgs], { cwd: process.cwd(), env: process.env, argv0: process.argv[0] });
-  internals.nextChildProcessInspectPort += 1;
-  log.info(`cucCli process with PID "${cucCli.pid}" has been spawned for Test Session with Id "${runableSessionProps.sessionProps.testSession.id}"`, { tags: ['app.parallel'] });
-  model.status('App tests are running.');
-
-  cucCli.stdout.on('data', (data) => {
-    process.stdout.write(data);
-  });
-
-  cucCli.stderr.on('data', (data) => {
-    process.stdout.write(data);
-  });
-
-  cucCli.on('exit', async (code, signal) => { // Do we need this async?
-    const message = `Child process "cucumber Cli" running session with id: "${runableSessionProps.sessionProps.testSession.id}" exited with code: "${code}", and signal: "${signal}".`;
-    log.info(message, { tags: ['app.parallel'] });
-    internals.testSessionDoneCount += 1;
-    model.emissary.shutdownEmissariesAfterTest && internals.testSessionDoneCount >= numberOfTestSessions && reset({ cloudFuncOpts, deprovisionViaLambdaDto });
-  });
-
-  cucCli.on('close', (code) => {
-    const message = `"close" event was emitted with code: "${code}" for "cucumber Cli" running session with id "${runableSessionProps.sessionProps.testSession.id}".`;
-    log[`${code === 0 ? 'info' : 'error'}`](message, { tags: ['app.parallel'] });
-  });
-
-  cucCli.on('error', (err) => {
-    process.stdout.write(`Failed to start sub-process. The error was: ${err}.`, { tags: ['app.parallel'] });
-    model.emissary.shutdownEmissariesAfterTest && reset({ cloudFuncOpts, deprovisionViaLambdaDto });
-  });
-};
-
-const startCucs = (testingProps) => {
-  const { runableSessionsProps, cloudFuncOpts, deprovisionViaLambdaDto } = testingProps;
-  const { runTestSession } = internals;
-
-  runableSessionsProps.forEach((rSP) => {
-    runTestSession(cloudFuncOpts, rSP, deprovisionViaLambdaDto);
-  });
-};
-
-// ////////////////////////////////////////////////////////////////
-// parallel is the exported function that drives this model.
-// ////////////////////////////////////////////////////////////////
-
-const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { function: { region, lambdaEndpoint, serviceDiscoveryEndpoint } } }, sessionsProps }) => {
-  const { waitForS2ContainersReady, reset } = internals;
+const initEmissaries = async ({ sessionsProps, app: { log, status, s2Containers, emissary, cloud: { function: { region, lambdaEndpoint, serviceDiscoveryEndpoint } } }, appInstance }) => {
+  const { waitForS2ContainersReady } = internals;
   internals.log = log;
-  internals.model = model;
-  internals.debug = debug;
   internals.s2Containers = s2Containers;
-  internals.nextChildProcessInspectPort = debug.firstChildProcessInspectPort;
-  internals.numberOfTestSessions = sessionsProps.length;
+  internals.emissary = emissary;
 
   const provisionViaLambdaDto = {
     items: sessionsProps.map((s) => ({
@@ -526,20 +452,20 @@ const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { fun
   };
 
   const provisionedViaLambdaDto = await internals.provisionViaLambda({ cloudFuncOpts: { region, endpoint: lambdaEndpoint }, provisionViaLambdaDto });
-  log.debug(`The value of provisionedViaLambdaDto is: ${JSON.stringify(provisionedViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
+  log.debug(`The value of provisionedViaLambdaDto is: ${JSON.stringify(provisionedViaLambdaDto, null, 2)}`, { tags: ['app.emissary', 'initEmissaries'] });
 
   const deprovisionViaLambdaDto = {
     local: { items: ['app-emissary', 'selenium-standalone'] },
     cloud: { items: provisionedViaLambdaDto.items.flatMap((cV) => [cV.appEcsServiceName, cV.seleniumEcsServiceName]) }
   }[process.env.NODE_ENV];
-  log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
+  log.debug(`The value of deprovisionViaLambdaDto is: ${JSON.stringify(deprovisionViaLambdaDto, null, 2)}`, { tags: ['app.emissary', 'initEmissaries'] });
   const returnResult = { status: null, testingProps: null };
   await waitForS2ContainersReady({
     provisionedViaLambdaDto,
     waitForS2ContainersTimeOut: s2Containers.responsive.timeout,
     cloudFuncOpts: { cloud: { region, endpoint: serviceDiscoveryEndpoint }, local: null }[process.env.NODE_ENV]
   }).then((resolved) => {
-    log.info(resolved.message, { tags: ['app.parallel'] });
+    log.info(resolved.message, { tags: ['app.emissary'] });
 
     const runableSessionsProps = resolved.collectionOfS2ContainerHostNamesWithPorts.map((cV, i) => ({
       sessionProps: sessionsProps[i],
@@ -549,15 +475,13 @@ const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { fun
       seleniumPort: cV.seleniumPort
     }));
     // Todo: obfuscate sensitive values from runableSessionProps.
-    log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps, null, 2)}`, { tags: ['app.parallel', 'parallel'] });
+    log.debug(`The value of runableSessionsProps is: ${JSON.stringify(runableSessionsProps, null, 2)}`, { tags: ['app.emissary', 'initEmissaries'] });
 
     returnResult.testingProps = { runableSessionsProps, deprovisionViaLambdaDto, cloudFuncOpts: { region, endpoint: lambdaEndpoint } };
-    returnResult.status = model.status('Tester initialised.');
+    returnResult.status = status.call(appInstance, 'Tester initialised.');
   }).catch((error) => {
-    log.error(error.message, { tags: ['app.parallel'] });
-    log.info('Attempting to bring S2 containers down.', { tags: ['app.parallel'] });
-    const cloudFuncOpts = { region, endpoint: lambdaEndpoint };
-    reset({ cloudFuncOpts, deprovisionViaLambdaDto });
+    log.error(error.message, { tags: ['app.emissary'] });
+    log.info('Attempting to bring S2 containers down.', { tags: ['app.emissary'] });
     returnResult.testingProps = { deprovisionViaLambdaDto, cloudFuncOpts: { region, endpoint: lambdaEndpoint } };
     returnResult.status = 'Tester failure: S2 app containers were not ready.';
   });
@@ -566,7 +490,6 @@ const parallel = async ({ model, model: { log, debug, s2Containers, cloud: { fun
 };
 
 module.exports = {
-  async reset(parameters) { await internals.reset(parameters); },
-  parallel,
-  startCucs
+  deprovisionS2ContainersViaLambda,
+  initEmissaries
 };

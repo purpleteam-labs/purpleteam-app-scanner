@@ -18,7 +18,6 @@
     "tagExpression": "@app_scan",
     "timeout": 1800000
   },
-  "runType": "parallel",
   "results": {
     "dir": "/var/log/purpleteam/outcomes/"
   },

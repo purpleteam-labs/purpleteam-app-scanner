@@ -18,7 +18,7 @@ const setupGetActiveFeatureFileUris = async ({ tagExpression }) => {
   };
   const getConfigurationFake = sinon.fake.returns(configuration);
   const cucumberCli = { getConfiguration: getConfigurationFake };
-  const appOptions = { log: undefined, strings: undefined, emissary: undefined, cucumber: undefined, cucumberConfig: undefined, results: undefined, publisher: undefined, runType: undefined, cloud: undefined, debug: undefined }; // eslint-disable-line max-len
+  const appOptions = { log: undefined, strings: undefined, emissary: undefined, cucumber: undefined, results: undefined, cloud: undefined, debug: undefined, s2Containers: undefined }; // eslint-disable-line max-len
   const app = new App(appOptions);
 
   return app.getActiveFeatureFileUris(cucumberCli);

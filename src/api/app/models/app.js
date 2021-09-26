@@ -20,49 +20,70 @@ const { GherkinStreams } = require('@cucumber/gherkin-streams');
 
 const model = require('.');
 
-const statusMap = {
-  'Awaiting Job.': true,
-  'Initialising Tester.': false,
-  'Tester initialised.': false,
-  'App tests are running.': false
-};
-
 class App {
+  #log;
+  #strings;
+  #emissary;
+  #cucumber;
+  #results;
+  #cloud;
+  #debug;
+  #s2Containers;
   #testingProps;
+  #testSessionDoneCount;
+  #sessionsProps;
 
-  constructor(options) {
-    const { log, strings, emissary, cucumber: cucumberConfig, results, publisher, runType, cloud, debug, s2Containers } = options;
-
-    this.log = log;
-    this.strings = strings;
-    this.emissary = emissary;
-    this.cucumber = cucumberConfig;
-    this.results = results;
-    this.publisher = publisher; // Todo: Remove publisher as it's not used.
-    this.runType = runType;
-    this.cloud = cloud;
-    this.debug = debug;
-    this.s2Containers = s2Containers;
+  constructor({ log, strings, emissary, cucumber: cucumberConfig, results, cloud, debug, s2Containers }) {
+    this.#log = log;
+    this.#strings = strings;
+    this.#emissary = emissary;
+    this.#cucumber = cucumberConfig;
+    this.#results = results;
+    this.#cloud = cloud;
+    this.#debug = debug;
+    this.#s2Containers = s2Containers;
     this.#testingProps = null;
-    this.status = (state) => {
-      if (state) {
-        Object.keys(statusMap).forEach((k) => { statusMap[k] = false; });
-        statusMap[state] = true;
-        this.log.info(`Setting status to: "${state}"`, { tags: ['app'] });
-        return state;
-      }
-      return Object.entries(statusMap).find((e) => e[1] === true)[0];
-    };
+    this.#testSessionDoneCount = 0;
+  }
+
+  #statusMap = {
+    'Awaiting Job.': true,
+    'Initialising Tester.': false,
+    'Tester initialised.': false,
+    'App tests are running.': false
+  };
+
+  #status(state) {
+    if (state) {
+      Object.keys(this.#statusMap).forEach((k) => { this.#statusMap[k] = false; });
+      this.#statusMap[state] = true;
+      this.#log.info(`Setting status to: "${state}"`, { tags: ['app'] });
+      return state;
+    }
+    return Object.entries(this.#statusMap).find((e) => e[1] === true)[0];
+  }
+
+  async reset() {
+    const { deprovisionViaLambdaDto = 'empty', cloudFuncOpts = 'empty' } = this.#testingProps || {};
+    if (deprovisionViaLambdaDto === 'empty' || cloudFuncOpts === 'empty') {
+      this.#log.debug('reset() already invoked for this Test Run, not attempting to reset twice.', { tags: ['app'] });
+      return;
+    }
+    this.#testSessionDoneCount = 0;
+    this.#sessionsProps = [];
+    await model.emissary.deprovisionS2ContainersViaLambda({ cloudFuncOpts, deprovisionViaLambdaDto });
+    this.#status('Awaiting Job.');
+    this.#testingProps = null;
   }
 
   async initTester(testJob) {
-    this.log.info(`Status currently set to: "${this.status()}"`, { tags: ['app'] });
-    if (this.status() !== 'Awaiting Job.') return this.status();
-    this.status('Initialising Tester.');
+    this.#log.info(`Status currently set to: "${this.#status()}"`, { tags: ['app'] });
+    if (this.#status() !== 'Awaiting Job.') return this.#status();
+    this.#status('Initialising Tester.');
     const testRoutes = testJob.included.filter((resourceObject) => resourceObject.type === 'route');
     const testSessions = testJob.included.filter((resourceObject) => resourceObject.type === 'appScanner');
 
-    const sessionsProps = testSessions.map((sesh) => ({
+    this.#sessionsProps = testSessions.map((sesh) => ({
       testRoutes,
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
@@ -74,27 +95,47 @@ class App {
       testSession: sesh // The data array contains the relationships to the testSessions
     }));
 
-    // const returnStatus = await model[this.runType]({ model: this, sessionsProps });
-    const returnResult = await model.parallel.parallel({ model: this, sessionsProps });
-    this.#testingProps = returnResult.testingProps;
+    const initResult = await model.emissary.initEmissaries({
+      sessionsProps: this.#sessionsProps,
+      app: {
+        log: this.#log,
+        status: this.#status,
+        cloud: this.#cloud,
+        emissary: this.#emissary,
+        s2Containers: this.#s2Containers
+      },
+      appInstance: this
+    });
+    this.#testingProps = initResult.testingProps;
+    initResult.status.startsWith('Tester failure:') && await this.reset();
 
-
-    return returnResult.status; // This is propagated per session in the CLI model.
-  }
-
-  async reset() {
-    const { deprovisionViaLambdaDto, cloudFuncOpts } = this.#testingProps;
-    await model.parallel.reset({ deprovisionViaLambdaDto, cloudFuncOpts });
-    this.#testingProps = null;
+    return initResult.status; // This is propagated per session in the CLI model.
   }
 
   startCucs() { // eslint-disable-line class-methods-use-this
-    model.parallel.startCucs(this.#testingProps);
+    model.cuc.startCucs({
+      reset: this.reset,
+      app: {
+        log: this.#log,
+        status: this.#status,
+        createCucumberArgs: this.#createCucumberArgs,
+        numberOfTestSessions: this.#numberOfTestSessions,
+        testSessionDoneCount: () => this.#testSessionDoneCount,
+        incrementTestSessionDoneCount: () => { this.#testSessionDoneCount += 1; },
+        testingProps: { runableSessionsProps: this.#testingProps.runableSessionsProps },
+        emissary: { shutdownEmissariesAfterTest: this.#emissary.shutdownEmissariesAfterTest },
+        debug: {
+          execArgvDebugString: this.#debug.execArgvDebugString,
+          firstChildProcessInspectPort: this.#debug.firstChildProcessInspectPort
+        }
+      },
+      appInstance: this
+    });
   }
 
 
   async testPlan(testJob) { // eslint-disable-line no-unused-vars
-    const cucumberArgs = this.createCucumberArgs({});
+    const cucumberArgs = this.#createCucumberArgs({});
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
       cwd: process.cwd(),
@@ -105,17 +146,21 @@ class App {
     return testPlanText;
   }
 
+  #numberOfTestSessions() {
+    return Array.isArray(this.#sessionsProps) ? this.#sessionsProps.length : 0;
+  }
+
   // Receiving appEmissaryPort and seleniumPort are only essential if running in cloud environment.
-  createCucumberArgs({ sessionProps = {}, emissaryHost = this.emissary.hostname, seleniumContainerName = '', appEmissaryPort = this.emissary.port, seleniumPort = 4444 }) {
-    this.log.debug(`seleniumContainerName is: ${seleniumContainerName}`, { tags: ['app'] });
+  #createCucumberArgs({ sessionProps = {}, emissaryHost = this.#emissary.hostname, seleniumContainerName = '', appEmissaryPort = this.#emissary.port, seleniumPort = 4444 }) {
+    this.#log.debug(`seleniumContainerName is: ${seleniumContainerName}`, { tags: ['app'] });
     const emissaryProperties = {
       hostname: emissaryHost,
-      protocol: this.emissary.protocol,
+      protocol: this.#emissary.protocol,
       port: appEmissaryPort,
-      apiKey: this.emissary.apiKey,
-      apiFeedbackSpeed: this.emissary.apiFeedbackSpeed,
-      reportDir: this.emissary.report.dir,
-      spider: this.emissary.spider
+      apiKey: this.#emissary.apiKey,
+      apiFeedbackSpeed: this.#emissary.apiFeedbackSpeed,
+      reportDir: this.#emissary.report.dir,
+      spider: this.#emissary.spider
     };
 
     const cucumberParameters = {
@@ -123,25 +168,25 @@ class App {
       seleniumContainerName,
       seleniumPort,
       sutProperties: sessionProps,
-      cucumber: { timeout: this.cucumber.timeout }
+      cucumber: { timeout: this.#cucumber.timeout }
     };
 
     const parameters = JSON.stringify(cucumberParameters);
 
-    this.log.debug(`The cucumberParameters are: ${parameters}`, { tags: ['app'] });
+    this.#log.debug(`The cucumberParameters are: ${parameters}`, { tags: ['app'] });
 
     const cucumberArgs = [
-      this.cucumber.binary,
-      this.cucumber.features,
+      this.#cucumber.binary,
+      this.#cucumber.features,
       '--require',
-      this.cucumber.steps,
+      this.#cucumber.steps,
       /* '--exit', */
-      `--format=message:${this.results.dir}result_appScannerId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.strings.NowAsFileName('-')}.NDJSON`,
+      `--format=message:${this.#results.dir}result_appScannerId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.#strings.NowAsFileName('-')}.NDJSON`,
       /* Todo: Provide ability for Build User to pass flag to disable colours */
       '--format-options',
       '{"colorsEnabled": true}',
       '--tags',
-      this.cucumber.tagExpression,
+      this.#cucumber.tagExpression,
       '--world-parameters',
       parameters
     ];
