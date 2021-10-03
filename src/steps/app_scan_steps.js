@@ -42,10 +42,8 @@ Given('a new Test Session based on each Build User supplied appScanner resourceO
   await webDriver.getWindowHandle();
   await webDriver.get(`${sutBaseUrl}${loginRoute}`);
   await checkAndNotifyBuildUserIfAnyKnownBrowserErrors(id);
-  await webDriver.sleep(5000);
   await findElementThenSendKeys({ name: usernameFieldLocater, value: username, visible: true }, id);
   await findElementThenSendKeys({ name: passwordFieldLocater, value: password, visible: true }, id);
-  await webDriver.sleep(5000);
   await findElementThenClick(submit, id, expectedPageSourceSuccess);
 });
 
