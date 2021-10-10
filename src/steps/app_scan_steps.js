@@ -96,10 +96,16 @@ Given('the application is spidered for each appScanner resourceObject', async fu
   const {
     authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater },
     loggedInIndicator,
+    loggedOutIndicator,
     testSession: { id: testSessionId, attributes: { username, password }, relationships: { data: testSessionResourceIdentifiers } },
     context: { name: contextName }
-  } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'testSession', 'context']);
+  } = this.sut.getProperties(['authentication', 'loggedInIndicator', 'loggedOutIndicator', 'testSession', 'context']);
   const { percentEncode } = this.sut.getBrowser();
+
+  const loggedInOutIndicator = {
+    command: loggedInIndicator ? 'setLoggedInIndicator' : 'setLoggedOutIndicator',
+    value: loggedInIndicator || loggedOutIndicator
+  };
 
   const { maxDepth, threadCount, maxChildren } = this.zap.getProperties('spider');
   const zaproxy = this.zap.getZaproxy();
@@ -134,15 +140,13 @@ Given('the application is spidered for each appScanner resourceObject', async fu
       });
   }, []);
 
-  // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't work.
-  // https://github.com/zaproxy/zaproxy/wiki/FAQformauth
-  await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D%26_csrf%3D`)
+  // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't (or at least didn't used to) work.
+  await zaproxy.authentication.setAuthenticationMethod(contextId, authenticationMethod, `loginUrl=${sutBaseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D`)
     .then(
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set authentication method to "${authenticationMethod}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to set authentication method to "${authenticationMethod}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`
     );
-  // https://github.com/zaproxy/zap-core-help/wiki/HelpStartConceptsAuthentication
-  await zaproxy.authentication.setLoggedInIndicator(contextId, loggedInIndicator)
+  await zaproxy.authentication[loggedInOutIndicator.command](contextId, loggedInOutIndicator.value)
     .then(
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set logged in indicator "${loggedInIndicator}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to set logged in indicator to "${loggedInIndicator}", for test session with id: "${testSessionId}". Error was: ${err.message}.`
@@ -164,7 +168,7 @@ Given('the application is spidered for each appScanner resourceObject', async fu
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set forced user with Id "${internals.userId}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to set forced user "${internals.userId}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`
     );
-  await zaproxy.users.setAuthenticationCredentials(contextId, internals.userId, `username=${username}&password=${percentEncode(password)}`)
+  await zaproxy.users.setAuthenticationCredentials(contextId, internals.userId, `username=${percentEncode(username)}&password=${percentEncode(password)}`)
     .then(
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set authentication credentials, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to set authentication credentials, for Test Session with id: "${testSessionId}". Error was: ${err.message}.`

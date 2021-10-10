@@ -36,6 +36,7 @@ internals.sutSchema = Joi.object({
   port: Joi.number().port().required(),
   browser: Joi.string().valid(...internals.configSchemaProps.sut._cvtProperties.browser.format).lowercase().default(config.get('sut.browser')), // eslint-disable-line no-underscore-dangle
   loggedInIndicator: Joi.string(),
+  loggedOutIndicator: Joi.string(),
   context: Joi.object({ // Zap context
     iD: Joi.number().integer().positive(),
     name: Joi.string().token()
@@ -69,8 +70,8 @@ internals.sutSchema = Joi.object({
     id: Joi.string().min(2).regex(/^\/[-\w/]{1,200}$/).required(),
     attributes: Joi.object({
       attackFields: Joi.array().items(Joi.object({
-        name: Joi.string().min(2).regex(/^[a-z0-9_-]+/i).required(),
-        value: Joi.string().empty('').default(''),
+        name: Joi.string().min(1).max(100).regex(/^[a-z0-9._-]+/i).required(),
+        value: [Joi.string().empty('').default(''), Joi.boolean(), Joi.number()],
         visible: Joi.boolean()
       })),
       method: Joi.string().valid(...internals.configSchemaProps.sut._cvtProperties.method.format).uppercase().default(config.get('sut.method')), // eslint-disable-line no-underscore-dangle
