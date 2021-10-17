@@ -90,6 +90,7 @@ class App {
       port: testJob.data.attributes.sutPort,
       browser: testJob.data.attributes.browser,
       loggedInIndicator: testJob.data.attributes.loggedInIndicator,
+      loggedOutIndicator: testJob.data.attributes.loggedOutIndicator,
       context: { name: `${sesh.id}_Context` },
       authentication: testJob.data.attributes.sutAuthentication,
       testSession: sesh // The data array contains the relationships to the testSessions

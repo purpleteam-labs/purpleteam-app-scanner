@@ -168,7 +168,7 @@ Given('the application is spidered for each appScanner resourceObject', async fu
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set forced user with Id "${internals.userId}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to set forced user "${internals.userId}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`
     );
-  await zaproxy.users.setAuthenticationCredentials(contextId, internals.userId, `username=${percentEncode(username)}&password=${percentEncode(password)}`)
+  await zaproxy.users.setAuthenticationCredentials(contextId, internals.userId, `username=${username}&password=${percentEncode(password)}`)
     .then(
       (resp) => this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set authentication credentials, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } }),
       (err) => `Error occurred while attempting to set authentication credentials, for Test Session with id: "${testSessionId}". Error was: ${err.message}.`
@@ -262,8 +262,8 @@ When('the active scan is run', async function () {
   const { contextId, userId } = internals;
 
   const { apiFeedbackSpeed, spider: { maxChildren } } = this.zap.getProperties(['apiFeedbackSpeed', 'spider']);
-  const zaproxy = this.zap.getZaproxy();
-  const { log, publisher } = this;
+  const zaproxy = this.zap.getZaproxy(); // Deprecated.
+  const { zap, log, publisher } = this;
 
   let numberOfAlertsForSesh = 0;
   let combinedStatusValueOfRoutesForSesh = 0;
@@ -325,16 +325,18 @@ When('the active scan is run', async function () {
       let numberOfAlertsForRoute = 0;
       async function status() {
         if (!runStatus) return;
-        await zaproxy.ascan.status(internals.scanId).then(
+        await zap.ascan.status({ scanId: internals.scanId }).then(
           (result) => {
             if (result) statusValueForRoute = parseInt(result.status, 10);
             else statusValueForRoute = undefined;
           },
           (error) => {
-            if (error) zapError = (error.error.code === 'ECONNREFUSED') ? error.message : '';
+            // If we get 'ECONNREFUSED', we may need to increase the number of retries from the default (2).
+            zapError = (error.code === 'ECONNREFUSED') ? error.message : '';
+            log.error(`An error occurred while attempting to get active scan status from Zap. The error was: "${error.message}".`, { tags: [`pid-${process.pid}`, 'app_scan_steps'] });
           }
         );
-        await zaproxy.core.numberOfAlerts(sutAttackUrl).then(
+        await zap.core.numberOfAlerts({ baseurl: sutAttackUrl }).then(
           (result) => {
             if (result) numberOfAlertsForRoute = parseInt(result.numberOfAlerts, 10);
             if (runStatus) {
@@ -349,7 +351,7 @@ When('the active scan is run', async function () {
       zapInProgressIntervalId = setInterval(() => { // eslint-disable-line prefer-const
         status();
         if ((zapError && statusValueForRoute !== 100) || (statusValueForRoute === undefined)) {
-          publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Cancelling test. Zap API is unreachable. ${zapError ? `Zap Error: ${zapError}` : 'No status value available, may be due to incorrect api key.'}`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } });
+          publisher.pubLog({ testSessionId, logLevel: 'error', textData: `Cancelling test. Zap API is unreachable. Zap Error: ${zapError}`, tagObj: { tags: [`pid-${process.pid}`, 'app_scan_steps'] } });
           clearInterval(zapInProgressIntervalId);
           reject(new Error(`Test failure: ${zapError}`));
         } else if (statusValueForRoute === 100) {
@@ -382,7 +384,7 @@ When('the active scan is run', async function () {
 
     // http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.
 
-    await zaproxy.ascan.scan(sutAttackUrl, true, false, '', routeResourceObject.attributes.method, postData, contextId) // eslint-disable-line no-await-in-loop
+    await zap.ascan.scan({ url: sutAttackUrl, recurse: true, inScopeOnly: false, scanPolicyName: '', method: routeResourceObject.attributes.method, postData, contextId }) // eslint-disable-line no-await-in-loop
       .then(zapApiAscanScanPerRoute)
       // May need another then here...
       .catch((err) => { // eslint-disable-line no-loop-func

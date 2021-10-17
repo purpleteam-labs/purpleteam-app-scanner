@@ -15,7 +15,9 @@
 // along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 const Joi = require('joi');
-const ZapClient = require('zaproxy');
+const ZapClient = require('zaproxy'); // Deprecated.
+const got = require('got');
+const { HttpProxyAgent } = require('hpagent');
 const { promises: fsPromises } = require('fs');
 
 const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
@@ -39,7 +41,8 @@ const internals = {
   log: undefined,
   publisher: undefined,
   properties: undefined,
-  zaproxy: undefined,
+  zaproxy: undefined, // Deprecated.
+  zapapi: undefined,
   alertCount: undefined,
   // String substitutions (Ex: %ip ) are replaced in sut.js
   // String substitutions must be in the format %sut[[.property].path] preceded immediately and followed immediately by a space
@@ -65,6 +68,25 @@ internals.validateProperties = (emissaryProperties) => {
     throw new Error(result.error.message);
   }
   return result.value;
+};
+
+internals.initZapApi = ({ apiKey, proxy }) => {
+  internals.zapApi = got.extend({
+    headers: { 'X-ZAP-API-Key': apiKey },
+    agent: {
+      http: new HttpProxyAgent({
+        keepAlive: true,
+        keepAliveMsecs: 1000,
+        maxSockets: 256,
+        maxFreeSockets: 256,
+        scheduling: 'lifo',
+        proxy
+      })
+    },
+    responseType: 'json',
+    resolveBodyOnly: true,
+    prefixUrl: 'http://zap/JSON/'
+  });
 };
 
 const getProperties = (selecter) => {
@@ -150,19 +172,37 @@ const init = (options) => {
   const { validateProperties } = internals;
   internals.properties = { knownZapErrorsWithHelpMessageForBuildUser: internals.knownZapErrorsWithHelpMessageForBuildUser, ...validateProperties(emissaryProperties) };
 
-  const zapOptions = {
+  const zapOptions = { // Deprecated.
     apiKey: internals.properties.apiKey,
     proxy: `${internals.properties.protocol}://${internals.properties.hostname}:${internals.properties.port}/`
   };
+  const zapApiOptions = {
+    apiKey: internals.properties.apiKey,
+    proxy: `${internals.properties.protocol}://${internals.properties.hostname}:${internals.properties.port}`
+  };
 
-  internals.zaproxy = new ZapClient(zapOptions);
+  internals.zaproxy = new ZapClient(zapOptions); // Deprecated.
+  internals.initZapApi(zapApiOptions);
+};
+
+const ascan = {
+  scan: async (params) => internals.zapApi('ascan/action/scan/', { searchParams: new URLSearchParams(params) }),
+  status: async (params) => internals.zapApi('ascan/view/status/', { searchParams: new URLSearchParams(params) })
+  // Others...
+};
+const core = {
+  numberOfAlerts: async (params) => internals.zapApi('core/view/numberOfAlerts/', { searchParams: new URLSearchParams(params) })
+  // Others...
 };
 
 module.exports = {
   getProperties,
-  getZaproxy: () => internals.zaproxy,
+  getZaproxy: () => internals.zaproxy, // Deprecated
+  getZapApi: () => internals.zapApi,
   getPropertiesForBrowser: () => getProperties(['protocol', 'hostname', 'port', 'knownZapErrorsWithHelpMessageForBuildUser']),
   numberOfAlertsForSesh,
   createReports,
-  init
+  init,
+  ascan,
+  core
 };

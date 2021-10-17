@@ -68,6 +68,8 @@
     "convict": "^6.1.0",
     "convict-format-with-moment": "^6.0.1",
     "convict-format-with-validator": "^6.0.1",
+    "got": "^11.8.2",
+    "hpagent": "^0.1.2",
     "http-proxy-agent": "^4.0.1",
     "joi": "^17.4.0",
     "purpleteam-logger": "^1.1.2",
