@@ -113,25 +113,29 @@ class App {
     return initResult.status; // This is propagated per session in the CLI model.
   }
 
-  startCucs() { // eslint-disable-line class-methods-use-this
-    model.cuc.startCucs({
-      reset: this.reset,
-      app: {
-        log: this.#log,
-        status: this.#status,
-        createCucumberArgs: this.#createCucumberArgs,
-        numberOfTestSessions: this.#numberOfTestSessions,
-        testSessionDoneCount: () => this.#testSessionDoneCount,
-        incrementTestSessionDoneCount: () => { this.#testSessionDoneCount += 1; },
-        testingProps: { runableSessionsProps: this.#testingProps.runableSessionsProps },
-        emissary: { shutdownEmissariesAfterTest: this.#emissary.shutdownEmissariesAfterTest },
-        debug: {
-          execArgvDebugString: this.#debug.execArgvDebugString,
-          firstChildProcessInspectPort: this.#debug.firstChildProcessInspectPort
-        }
-      },
-      appInstance: this
-    });
+  startCucs() {
+    if (this.#testingProps) {
+      model.cuc.startCucs({
+        reset: this.reset,
+        app: {
+          log: this.#log,
+          status: this.#status,
+          createCucumberArgs: this.#createCucumberArgs,
+          numberOfTestSessions: this.#numberOfTestSessions,
+          testSessionDoneCount: () => this.#testSessionDoneCount,
+          incrementTestSessionDoneCount: () => { this.#testSessionDoneCount += 1; },
+          testingProps: { runableSessionsProps: this.#testingProps.runableSessionsProps },
+          emissary: { shutdownEmissariesAfterTest: this.#emissary.shutdownEmissariesAfterTest },
+          debug: {
+            execArgvDebugString: this.#debug.execArgvDebugString,
+            firstChildProcessInspectPort: this.#debug.firstChildProcessInspectPort
+          }
+        },
+        appInstance: this
+      });
+    } else {
+      this.#log.error('this.#testingProps was falsy. It appears that the Tester was reset between calling initTester and startCucs', { tags: ['app'] });
+    }
   }
 
 
