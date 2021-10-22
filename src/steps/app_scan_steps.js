@@ -369,6 +369,7 @@ When('the active scan is run', async function () {
     });
   };
 
+  log.debug(`spider.scanAsUser is about to receive the following arguements: contextId: "${contextId}", userId: "${userId}", sutBaseUrl: "${sutBaseUrl}", maxChildren: "${maxChildren}"".`, { tags: [`pid-${process.pid}`, 'app_scan_steps'] });
   await zaproxy.spider.scanAsUser(contextId, userId, sutBaseUrl, maxChildren)
     .then(zapApiSpiderScanAsUser)
     .catch((err) => {
