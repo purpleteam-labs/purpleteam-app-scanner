@@ -21,14 +21,17 @@ const messagePublisher = require(`${process.cwd()}/src/publishers/messagePublish
 // features/support/world.js
 const { setWorldConstructor, setDefaultTimeout } = require('@cucumber/cucumber');
 
-const sut = require(`${process.cwd()}/src/api/app/do/sut`); // eslint-disable-line import/no-dynamic-require
-const zap = require(`${process.cwd()}/src/emissaries/zap`); // eslint-disable-line import/no-dynamic-require
+const sUt = require(`${process.cwd()}/src/api/app/do`); // eslint-disable-line import/no-dynamic-require
+const zAp = require(`${process.cwd()}/src/emissaries/zAp`); // eslint-disable-line import/no-dynamic-require
 
 let timeout;
 
 class CustomWorld {
+  #sUtType;
+
   constructor({ attach, parameters }) {
-    const { seleniumContainerName, seleniumPort, sutProperties, sutProperties: { testSession: { id: testSessionId } } } = parameters;
+    const { seleniumContainerName, seleniumPort, sutProperties, sutProperties: { sUtType, testSession: { id: testSessionId } } } = parameters;
+    this.#sUtType = sUtType;
     this.log = log;
     this.log.debug(`seleniumContainerName is: ${seleniumContainerName}, seleniumPort is: ${seleniumPort}, sutProperties are: ${JSON.stringify(sutProperties)}`, { tags: [`pid-${process.pid}`, 'world'] });
     this.publisher = messagePublisher;
@@ -38,17 +41,16 @@ class CustomWorld {
     this.attach = attach;
 
     this.selenium = { seleniumContainerName, seleniumPort };
-    this.sut = sut;
-    this.sut.init({ log, publisher: this.publisher, sutProperties });
-    this.zap = zap;
-    this.zap.init({ log, publisher: this.publisher, emissaryProperties: { ...parameters.emissaryProperties } });
+    this.sUt = new sUt[sUtType]({ log, publisher: this.publisher, sutProperties });
+    this.zAp = zAp;
+    this.zAp.initialise({ log, publisher: this.publisher, emissaryProperties: { ...parameters.emissaryProperties } });
 
     timeout = parameters.cucumber.timeout;
   }
 
 
-  async initialiseBrowser() {
-    await this.sut.initialiseBrowser(this.zap.getPropertiesForBrowser(), this.selenium);
+  async initialiseSut() {
+    await this.sUt.initialise(this.zAp[`getPropertiesFor${this.#sUtType}Sut`](), this.selenium); // selenium only needed for BrowserApp.
   }
 
   // simple_math related stuff.

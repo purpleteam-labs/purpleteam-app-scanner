@@ -31,11 +31,15 @@ const internals = {
   knownZapErrorsWithHelpMessageForBuildUser: undefined,
   explicitTimeout: 10000, // 10 seconds. This is a maximum.
   authenticated: async (expectedPageSourceSuccess) => {
-    const result = await internals.driver.wait(async () => {
-      const page = await internals.driver.getPageSource();
-      return page.includes(expectedPageSourceSuccess);
-    }, internals.explicitTimeout);
-    return result;
+    try {
+      return await internals.driver.wait(async () => {
+        const page = await internals.driver.getPageSource();
+        return page.includes(expectedPageSourceSuccess);
+      }, internals.explicitTimeout);
+    } catch (err) {
+      if (err.name !== 'TimeoutError') throw err;
+      return false;
+    }
   },
   // Doc:
   //   By.js: https://www.selenium.dev/selenium/docs/api/javascript/module/selenium-webdriver/index_exports_By.html
@@ -95,6 +99,12 @@ const findElementThenSendKeys = async (attackField, testSessionId) => {
   return ''; // Keep eslint happy
 };
 
+const checkUserIsAuthenticated = async (testSessionId, expectedPageSourceSuccess) => {
+  const { publisher, authenticated } = internals;
+  const success = await authenticated(expectedPageSourceSuccess);
+  publisher.pubLog({ testSessionId, logLevel: 'info', textData: `For Test Session with id: "${testSessionId}", user was ${success ? '' : '***not*** '}authenticated.`, tagObj: { tags: [`pid-${process.pid}`, 'browser'] } });
+};
+
 const checkAndNotifyBuildUserIfAnyKnownBrowserErrors = async (testSessionId) => {
   const { log, publisher, driver, knownZapErrorsWithHelpMessageForBuildUser } = internals;
   try {
@@ -125,6 +135,7 @@ module.exports = {
   findElementThenClick,
   findElementThenClear,
   findElementThenSendKeys,
+  checkUserIsAuthenticated,
   checkAndNotifyBuildUserIfAnyKnownBrowserErrors,
   init(options) {
     internals.log = options.log;

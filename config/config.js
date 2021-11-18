@@ -151,6 +151,13 @@ const schema = {
         default: ['html', 'json', 'md']
       }
     },
+    upload: {
+      dir: {
+        doc: 'The location in the Emissary container where the app-scanner can put files for the Emissary to consume.',
+        format: String,
+        default: '/mnt/purpleteam-app-scanner/'
+      }
+    },
     spider: {
       maxDepth: {
         doc: 'Sets the maximum depth the spider can crawl, 0 for unlimited depth.',
@@ -234,6 +241,13 @@ const schema = {
       doc: 'The location of the results.',
       format: String,
       default: '/var/log/purpleteam/outcomes/'
+    }
+  },
+  upload: {
+    dir: {
+      doc: 'The location in the app-scanner container where the app-scanner can put files for the Emissary to consume.',
+      format: String,
+      default: '/mnt/purpleteam-app-scanner/'
     }
   },
   cloud: {

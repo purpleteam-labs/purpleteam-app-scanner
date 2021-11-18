@@ -85,6 +85,7 @@ class App {
 
     this.#sessionsProps = testSessions.map((sesh) => ({
       testRoutes,
+      sUtType: testJob.data.type,
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
       port: testJob.data.attributes.sutPort,
@@ -165,6 +166,7 @@ class App {
       apiKey: this.#emissary.apiKey,
       apiFeedbackSpeed: this.#emissary.apiFeedbackSpeed,
       reportDir: this.#emissary.report.dir,
+      uploadDir: this.#emissary.upload.dir,
       spider: this.#emissary.spider
     };
 

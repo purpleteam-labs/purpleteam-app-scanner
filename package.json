@@ -74,8 +74,7 @@
     "joi": "^17.4.0",
     "purpleteam-logger": "^1.1.2",
     "redis": "^3.1.2",
-    "selenium-webdriver": "^4.0.0-beta.3",
-    "zaproxy": "git+https://github.com/binarymist/zap-api-nodejs.git#68fc8c8a169f39ab415acf3d38b6ac7051caef8a"
+    "selenium-webdriver": "^4.0.0-beta.3"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {

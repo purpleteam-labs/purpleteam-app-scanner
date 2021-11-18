@@ -14,7 +14,7 @@ RUN echo user is: ${USER}, LOCAL_USER_ID is: ${LOCAL_USER_ID}, group is: ${GROUP
 #RUN apk add wget
 
 # Remove git once zaproxy from package.json is in NPM
-RUN apk add --no-cache git
+#RUN apk add --no-cache git
 # Following taken from: https://github.com/mhart/alpine-node/issues/48#issuecomment-430902787
 RUN apk add --no-cache shadow && \
     if [ -z "`getent group $LOCAL_GROUP_ID`" ]; then \

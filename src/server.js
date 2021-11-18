@@ -38,11 +38,11 @@ const plugins = [
     options: {
       log,
       strings,
+      debug: config.get('debug'),
       emissary: config.get('emissary'),
       cucumber: config.get('cucumber'),
       results: config.get('results'),
       cloud: config.get('cloud'),
-      debug: config.get('debug'),
       s2Containers: config.get('s2Containers')
     }
   }
