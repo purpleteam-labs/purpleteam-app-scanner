@@ -219,11 +219,6 @@ const schema = {
       format: String,
       default: 'src/steps'
     },
-    tagExpression: {
-      doc: 'The tag expression without the \'--tag\' to run Cucumber with.',
-      format: String,
-      default: 'not @simple_math'
-    },
     binary: {
       doc: 'The location of the Cucumber binary.',
       format: String,

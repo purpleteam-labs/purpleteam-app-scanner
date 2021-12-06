@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
-const Standard = require('./standard');
+const BrowserAppStandard = require('./browserAppStandard');
+const ApiStandard = require('./aPiStandard');
 
-module.exports = { Standard };
+module.exports = { BrowserAppStandard, ApiStandard };

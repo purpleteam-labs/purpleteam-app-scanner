@@ -15,6 +15,11 @@
 // along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
 
+const { promises: fsPromises } = require('fs');
+
+const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
+
+const rndBytes = require('util').promisify(require('crypto').randomBytes);
 const EmissaryAuthentication = require('./strategy');
 
 const { percentEncode } = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
@@ -25,11 +30,11 @@ const { percentEncode } = require(`${process.cwd()}/src/strings`); // eslint-dis
 // Doc: https://www.zaproxy.org/docs/api/
 // Doc: https://docs.google.com/document/d/1LSg8CMb4LI5yP-8jYDTVJw1ZIJD2W_WDWXLtJNk3rsQ/edit#
 
-class FormStandard extends EmissaryAuthentication {
+class MaintainJwt extends EmissaryAuthentication {
   #sutPropertiesSubSet;
   #setUserId;
   #emissaryPropertiesSubSet;
-  #fileName = 'formStandard';
+  #fileName = 'maintainJwt';
 
   constructor({ log, publisher, baseUrl, sutPropertiesSubSet, setUserId, emissaryPropertiesSubSet, zAp }) {
     super({ log, publisher, baseUrl, zAp });
@@ -41,12 +46,13 @@ class FormStandard extends EmissaryAuthentication {
   async configure() {
     const methodName = 'configure';
     const {
-      authentication: { route: loginRoute, usernameFieldLocater, passwordFieldLocater },
+      authentication: { route: loginRoute },
       loggedInIndicator,
       loggedOutIndicator,
-      testSession: { id: testSessionId, attributes: { username, password, excludedRoutes }, relationships: { data: testSessionResourceIdentifiers } },
+      testSession: { id: testSessionId, attributes: { username, excludedRoutes } },
       context: { id: contextId, name: contextName }
     } = this.#sutPropertiesSubSet;
+    const password = ''; // Seems to be required for formBasedAuthentication.
 
     const loggedInOutIndicator = {
       command: loggedInIndicator ? 'setLoggedInIndicator' : 'setLoggedOutIndicator',
@@ -54,15 +60,73 @@ class FormStandard extends EmissaryAuthentication {
       secondParamName: loggedInIndicator ? 'loggedInIndicatorRegex' : 'loggedOutIndicatorRegex'
     };
 
-    const { spider: { maxDepth, threadCount } } = this.#emissaryPropertiesSubSet;
+    const { uploadDir: emissaryUploadDir, spider: { maxDepth, threadCount } } = this.#emissaryPropertiesSubSet;
+    const { dir: appTesterUploadDir } = config.get('upload');
     const enabled = true;
     const authenticationMethod = 'formBasedAuthentication';
     let userId;
-    const authMethodConfigParams = `loginUrl=${this.baseUrl}${loginRoute}&loginRequestData=${usernameFieldLocater}%3D%7B%25username%25%7D%26${passwordFieldLocater}%3D%7B%25password%25%7D`;
-    const authCredentialsConfigParams = `username=${username}&password=${percentEncode(password)}`;
+    const script = {
+      name: 'maintainJwt',
+      fileName: 'maintainJwt.js',
+      type: 'httpsender',
+      engine: 'Oracle Nashorn',
+      sourcePath: `${process.cwd()}/src/sUtAndEmissaryStrategies/3_emissaryAuthentication/scripts/maintainJwt.js`
+    };
+    const authMethodConfigParams = `loginUrl=${percentEncode(`${this.baseUrl}${loginRoute}`)}&loginPageUrl=${percentEncode(`${this.baseUrl}${loginRoute}`)}`;
 
     this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `The ${methodName}() method of the ${super.constructor.name} strategy "${this.constructor.name}" has been invoked.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
 
+    // Need to copy file as unique name so that another Test Session is unable to delete it before we load it into the Emissary.
+    let rndFilePrefix = '';
+    await rndBytes(4)
+      .then((buf) => {
+        rndFilePrefix = buf.toString('hex');
+      })
+      .catch((err) => {
+        const adminErrorText = `Error (non fatal) occurred while attempting to get randomBytes for file prefix, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+      });
+    await fsPromises.copyFile(script.sourcePath, `${appTesterUploadDir}${rndFilePrefix}-${script.fileName}`)
+      .then(() => {
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Script: "${script.fileName}" was successfully copied to the App Tester upload directory.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+      })
+      .catch((err) => {
+        const buildUserErrorText = `Error occurred while attempting to copy the script: "${script.fileName}" to the App Tester upload directory for the Emissary consumption`;
+        const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
+        this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+        throw new Error(adminErrorText);
+      });
+    await this.zAp.aPi.script.load({ scriptName: script.name, scriptType: script.type, scriptEngine: script.engine, fileName: `${emissaryUploadDir}${rndFilePrefix}-${script.fileName}`, scriptDescription: `Used by the ${methodName}() method of the ${super.constructor.name} strategy "${this.constructor.name}"` })
+      .then((resp) => {
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Loaded: "${script.type}" script: "${script.fileName}" into the Emissary, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+      }).catch((err) => {
+        const buildUserErrorText = `Error occurred while attempting to load the: "${script.type}" script: "${script.fileName}" into the Emissary`;
+        const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
+        this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+        throw new Error(adminErrorText);
+      });
+    await this.zAp.aPi.script.enable({ scriptName: script.name })
+      .then((resp) => {
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Enabled: "${script.type}" script: "${script.fileName}" in the Emissary, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+      }).catch((err) => {
+        const buildUserErrorText = `Error occurred while attempting to load the: "${script.type}" script: "${script.fileName}" into the Emissary`;
+        const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
+        this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+        throw new Error(adminErrorText);
+      });
+    await fsPromises.rm(`${appTesterUploadDir}${rndFilePrefix}-${script.fileName}`)
+      .then(() => {
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Removed script: "${script.fileName}" from the App Tester upload directory.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+      })
+      .catch((err) => {
+        const buildUserErrorText = `Error occurred while attempting to remove the script: "${script.fileName}" from the App Tester upload directory after loading into the Emissary`;
+        const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
+        this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+      });
     await this.zAp.aPi.spider.setOptionMaxDepth({ Integer: maxDepth })
       .then((resp) => {
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set the spider max depth to: "${maxDepth}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
@@ -82,28 +146,19 @@ class FormStandard extends EmissaryAuthentication {
         throw new Error(errorText);
       });
 
-    const routes = testSessionResourceIdentifiers.filter((resourceIdentifier) => resourceIdentifier.type === 'route').map((resourceIdentifier) => resourceIdentifier.id);
-    const contextTargets = [
-      ...(routes.length > 0 ? routes.map((r) => `${this.baseUrl}${r}`) : [`${this.baseUrl}.*`])
-      // ...(loginRoute ? [`${this.baseUrl}${loginRoute}`] : []) // login route isn't needed.
-    ];
-    // Zap can't handle running many calls in parallel, so we do it sequentially.
-    await contextTargets.reduce(async (accum, cT) => {
-      await accum;
+    const contextTarget = `${this.baseUrl}.*`;
 
-      await this.zAp.aPi.context.includeInContext({ contextName, regex: cT })
-        .then((resp) => {
-          this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Added URI: "${cT}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-        })
-        .catch((err) => {
-          const errorText = `Error occurred while attempting to add URI: "${cT}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`;
-          this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-          throw new Error(errorText);
-        });
-    }, []);
-    await excludedRoutes.reduce(async (accum, eR) => {
-      await accum;
+    await this.zAp.aPi.context.includeInContext({ contextName, regex: contextTarget })
+      .then((resp) => {
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Added URI: "${contextTarget}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+      })
+      .catch((err) => {
+        const errorText = `Error occurred while attempting to add URI: "${contextTarget}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`;
+        this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        throw new Error(errorText);
+      });
 
+    await Promise.all(excludedRoutes.map(async (eR) => {
       await this.zAp.aPi.context.excludeFromContext({ contextName, regex: eR })
         .then((resp) => {
           this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Added URI: "${eR}" to Zap exclude-from-context: "${contextName}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
@@ -113,9 +168,8 @@ class FormStandard extends EmissaryAuthentication {
           this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
           throw new Error(errorText);
         });
-    }, []);
+    }));
 
-    // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't (or at least didn't used to) work.
     await this.zAp.aPi.authentication.setAuthenticationMethod({ contextId, authMethodName: authenticationMethod, authMethodConfigParams })
       .then((resp) => {
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set authentication method for contextId: "${contextId}" to: "${authenticationMethod}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
@@ -125,6 +179,7 @@ class FormStandard extends EmissaryAuthentication {
         this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
         throw new Error(errorText);
       });
+    // Tested regular expression \\b(Unauthorized|Forbidden)\\b ends up being the following in Zap: \b(Unauthorized|Forbidden)\b
     await this.zAp.aPi.authentication[loggedInOutIndicator.command]({ contextId, [loggedInOutIndicator.secondParamName]: loggedInOutIndicator.value })
       .then((resp) => {
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `${loggedInOutIndicator.command} for contextId: "${contextId}" to: "${loggedInOutIndicator.value}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
@@ -142,11 +197,12 @@ class FormStandard extends EmissaryAuthentication {
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Add the newUser: "${username}" of contextId: "${contextId}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
       })
       .catch((err) => {
-        const errorText = `Error occurred while attempting to add the newUser: "${username}" of contextId: "${contextId}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`;
+        const errorText = `Error occurred while attempting to add the newUser "${username}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`;
         this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
         throw new Error(errorText);
       });
-    await this.zAp.aPi.users.setAuthenticationCredentials({ contextId, userId, authCredentialsConfigParams })
+    // Setting a username is essential it seems, even when it's not part of the authentication strategy.
+    await this.zAp.aPi.users.setAuthenticationCredentials({ contextId, userId, authCredentialsConfigParams: `username=${username}&password=${percentEncode(password)}` })
       .then((resp) => {
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set authentication credentials, of contextId: "${contextId}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
       })
@@ -185,4 +241,4 @@ class FormStandard extends EmissaryAuthentication {
   }
 }
 
-module.exports = FormStandard;
+module.exports = MaintainJwt;

@@ -84,12 +84,12 @@ class App {
     const testSessions = testJob.included.filter((resourceObject) => resourceObject.type === 'appScanner');
 
     this.#sessionsProps = testSessions.map((sesh) => ({
-      testRoutes,
+      ...(testRoutes.length > 0 ? { testRoutes } : {/* No test routes in API schema */}),
       sUtType: testJob.data.type,
       protocol: testJob.data.attributes.sutProtocol,
       ip: testJob.data.attributes.sutIp,
       port: testJob.data.attributes.sutPort,
-      browser: testJob.data.attributes.browser,
+      browser: testJob.data.attributes.browser || 'chrome', // Todo: Needs removing for API, along with selenium containers.
       loggedInIndicator: testJob.data.attributes.loggedInIndicator,
       loggedOutIndicator: testJob.data.attributes.loggedOutIndicator,
       context: { name: `${sesh.id}_Context` },
@@ -140,8 +140,8 @@ class App {
   }
 
 
-  async testPlan(testJob) { // eslint-disable-line no-unused-vars
-    const cucumberArgs = this.#createCucumberArgs({});
+  async testPlan(testJob) {
+    const cucumberArgs = this.#createCucumberArgs({ sessionProps: { sUtType: testJob.data.type } });
     const cucumberCliInstance = new cucumber.Cli({
       argv: ['node', ...cucumberArgs],
       cwd: process.cwd(),
@@ -157,7 +157,7 @@ class App {
   }
 
   // Receiving appEmissaryPort and seleniumPort are only essential if running in cloud environment.
-  #createCucumberArgs({ sessionProps = {}, emissaryHost = this.#emissary.hostname, seleniumContainerName = '', appEmissaryPort = this.#emissary.port, seleniumPort = 4444 }) {
+  #createCucumberArgs({ sessionProps, emissaryHost = this.#emissary.hostname, seleniumContainerName = '', appEmissaryPort = this.#emissary.port, seleniumPort = 4444 }) {
     this.#log.debug(`seleniumContainerName is: ${seleniumContainerName}`, { tags: ['app'] });
     const emissaryProperties = {
       hostname: emissaryHost,
@@ -184,16 +184,16 @@ class App {
 
     const cucumberArgs = [
       this.#cucumber.binary,
-      this.#cucumber.features,
+      `${this.#cucumber.features}/${sessionProps.sUtType}`,
       '--require',
-      this.#cucumber.steps,
+      `${this.#cucumber.steps}/${sessionProps.sUtType}`,
       /* '--exit', */
       `--format=message:${this.#results.dir}result_appScannerId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.#strings.NowAsFileName('-')}.NDJSON`,
       /* Todo: Provide ability for Build User to pass flag to disable colours */
       '--format-options',
       '{"colorsEnabled": true}',
       '--tags',
-      this.#cucumber.tagExpression,
+      sessionProps.sUtType === 'BrowserApp' ? '@app_scan' : '@api_scan',
       '--world-parameters',
       parameters
     ];

@@ -17,10 +17,10 @@
 
 const Scanning = require('./strategy');
 
-class Standard extends Scanning {
+class BrowserAppStandard extends Scanning {
   #sutPropertiesSubSet;
   #emissaryPropertiesSubSet
-  #fileName = 'standard';
+  #fileName = 'browserAppStandard';
 
   constructor({ log, publisher, baseUrl, sutPropertiesSubSet, emissaryPropertiesSubSet, zAp }) {
     super({ log, publisher, baseUrl, zAp });
@@ -42,7 +42,7 @@ class Standard extends Scanning {
     } = this.#emissaryPropertiesSubSet;
     const that = this;
     const recurse = true;
-    const subtreeOnly = false;
+    const subtreeOnly = true;
 
     const routes = testSessionResourceIdentifiers.filter((resourceIdentifier) => resourceIdentifier.type === 'route').map((resourceIdentifier) => resourceIdentifier.id);
     const routeResourceObjectsOfSession = routeResourceObjects.filter((routeResourceObject) => routes.includes(routeResourceObject.id));
@@ -55,10 +55,10 @@ class Standard extends Scanning {
 
     this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `The ${methodName}() method of the ${super.constructor.name} strategy "${this.constructor.name}" has been invoked.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
 
-    const zapApiSpiderScanAsUser = (zapResult) => {
+    const zapApiSpiderScanAsUser = ({ zapResult, contextTarget }) => {
       const spiderScanId = zapResult.scanAsUser;
       let runStatus = true;
-      const spiderScanAsUserLogText = `Spider scan as user: "${userId}", for URL: "${this.baseUrl}", context: "${contextId}", with scanAsUser Id: "${spiderScanId}", with maxChildren: "${maxChildren}", with recurse: "${recurse}", with subtreeOnly: "${subtreeOnly}" was called, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(zapResult)}.`;
+      const spiderScanAsUserLogText = `Spider scan as user: "${userId}", for URL: "${contextTarget}", context: "${contextId}", with scanAsUser Id: "${spiderScanId}", with maxChildren: "${maxChildren}", with recurse: "${recurse}", with subtreeOnly: "${subtreeOnly}" was called, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(zapResult)}.`;
       this.log.info(spiderScanAsUserLogText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
       this.publisher.publish(testSessionId, spiderScanAsUserLogText);
       return new Promise((resolve, reject) => {
@@ -85,7 +85,7 @@ class Standard extends Scanning {
             clearInterval(zapInProgressIntervalId);
             reject(new Error(`Test failure: ${zapError}`));
           } else if (statusValueForSpiderScanAsUser === 100) {
-            const spiderFinishingScanAsUserLogText = `The spider is finishing scan as user: "${userId}", for URL: "${this.baseUrl}", context: "${contextId}", with scanAsUser Id: "${spiderScanId}", for Test Session with id: "${testSessionId}".`;
+            const spiderFinishingScanAsUserLogText = `The spider is finishing scan as user: "${userId}", for URL: "${contextTarget}", context: "${contextId}", with scanAsUser Id: "${spiderScanId}", for Test Session with id: "${testSessionId}".`;
             this.log.info(spiderFinishingScanAsUserLogText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
             this.publisher.publish(testSessionId, spiderFinishingScanAsUserLogText);
             clearInterval(zapInProgressIntervalId);
@@ -154,14 +154,22 @@ class Standard extends Scanning {
 
     this.log.debug(`spider.scanAsUser is about to receive the following arguements: contextId: "${contextId}", userId: "${userId}", sutBaseUrl: "${this.baseUrl}", maxChildren: "${maxChildren}".`, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
 
-    await this.zAp.aPi.spider.scanAsUser({ contextId, userId, url: this.baseUrl, maxChildren, recurse, subtreeOnly })
-      .then(zapApiSpiderScanAsUser)
-      .catch((err) => {
-        const errorText = `Error occurred in spider while attempting to scan as user. Error was: ${err.message ? err.message : err}`;
-        this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-        throw new Error(errorText);
-      });
-
+    const contextTargets = [
+      ...(routes.length > 0 ? routes.map((r) => `${this.baseUrl}${r}`) : [`${this.baseUrl}`])
+    ];
+    await contextTargets.reduce(async (accum, cT) => {
+      await accum;
+      // ZAP will run the (enabled) passive scan rules against all URLs that are either proxied through ZAP or visited by either of the spiders: https://stackoverflow.com/questions/35942385/passive-scan-in-owasp-zap
+      await this.zAp.aPi.spider.scanAsUser({ contextId, userId, url: cT, maxChildren, recurse, subtreeOnly })
+        .then(async (resp) => {
+          await zapApiSpiderScanAsUser({ zapResult: resp, contextTarget: cT });
+        })
+        .catch((err) => {
+          const errorText = `Error occurred in spider while attempting to scan: "${cT}" as user for Test Session with id: "${testSessionId}". Error was: ${err.message ? err.message : err}`;
+          this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+          throw new Error(errorText);
+        });
+    }, []);
 
     const startScanOf = {
       routeResourceObjectsOfSession: async () => {
@@ -169,7 +177,7 @@ class Standard extends Scanning {
           scanTargetIdForAscanCallback = routeResourceObject.id;
           const postData = `${routeResourceObject.attributes.attackFields.reduce((queryString, queryParameterObject) => `${queryString}${queryString === '' ? '' : '&'}${queryParameterObject.name}=${queryParameterObject.value}`, '')}`;
           sutAttackUrl = `${this.baseUrl}${routeResourceObject.id}`;
-          this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `The sutAttackUrl was: "${sutAttackUrl}". The post data was: "${postData}". The contextId was: ${contextId}`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+          this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `The sutAttackUrl is: "${sutAttackUrl}". The post data is: "${postData}". The contextId is: ${contextId}`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
 
           // http://172.17.0.2:8080/UI/acsrf/ allows to add csrf tokens.
 
@@ -185,7 +193,8 @@ class Standard extends Scanning {
       baseUrl: async () => {
         scanTargetIdForAscanCallback = this.baseUrl;
         sutAttackUrl = this.baseUrl;
-        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Their are no routeResourceObjects for this Test Session. About to scan: "${sutAttackUrl}". The contextId was: ${contextId}`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Their are no routeResourceObjects for this Test Session. About to ascan: "${sutAttackUrl}". The contextId is: ${contextId}`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        // inScopeOnly is ignored if a contextId is specified.
         await this.zAp.aPi.ascan.scan({ url: sutAttackUrl, recurse, inScopeOnly: false, scanPolicyName: '', method: '', postData: '', contextId }) // eslint-disable-line no-await-in-loop
           .then(zapApiAscanScanPerRoute)
           .catch((err) => { // eslint-disable-line no-loop-func
@@ -201,4 +210,4 @@ class Standard extends Scanning {
   }
 }
 
-module.exports = Standard;
+module.exports = BrowserAppStandard;

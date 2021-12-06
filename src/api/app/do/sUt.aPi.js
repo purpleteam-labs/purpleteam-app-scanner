@@ -29,7 +29,61 @@ class Api extends Sut {
   // ...
 
   #createSchema() {
-    this.#sutSchema = Joi.object({ });
+    this.#sutSchema = Joi.object({
+      sUtType: Joi.string().required().valid('Api'),
+      protocol: Joi.string().required().valid('https', 'http'),
+      ip: Joi.string().hostname().required(),
+      port: Joi.number().port().required(),
+      // eslint-disable-next-line no-underscore-dangle
+      browser: Joi.string().valid(...this.#configSchemaProps.sut._cvtProperties.browser.format).lowercase().default(this.config.get('sut.browser')), // Todo: Remove once selenium containers are removed.
+      loggedInIndicator: Joi.string(),
+      loggedOutIndicator: Joi.string(),
+      context: Joi.object({ // Zap context
+        id: Joi.number().integer().positive(), // Provided by Zap.
+        name: Joi.string().token() // Created in the app.js model.
+      }),
+      userId: Joi.number().integer().positive(), // Provided by Zap.
+      authentication: Joi.object({
+        emissaryAuthenticationStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('MaintainJwt'),
+        route: Joi.string().min(2).regex(/^\/[-?&=\w/]{1,1000}$/)
+      }),
+      testSession: Joi.object({
+        type: Joi.string().valid('appScanner').required(),
+        id: Joi.string().alphanum().required(),
+        attributes: Joi.object({
+          sitesTreePopulationStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ImportUrls'),
+          spiderStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
+          scannersStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ApiStandard'),
+          scanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ApiStandard'),
+          postScanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ApiStandard'),
+          reportingStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
+          username: Joi.string().min(2).required(),
+          openApi: Joi.object({
+            importFileContentBase64: Joi.string().base64({ paddingRequired: true }),
+            importUrl: Joi.string().uri({ scheme: ['https', 'http'], domain: { allowUnicode: false } })
+          }).xor('importFileContentBase64', 'importUrl'),
+          soap: Joi.object({
+            importFileContentBase64: Joi.string().base64({ paddingRequired: true }),
+            importUrl: Joi.string().uri({ scheme: ['https', 'http'], domain: { allowUnicode: false } })
+          }).xor('importFileContentBase64', 'importUrl'),
+          graphQl: Joi.object({
+            importFileContentBase64: Joi.string().base64({ paddingRequired: true }),
+            importUrl: Joi.string().uri({ scheme: ['https', 'http'], domain: { allowUnicode: false } }),
+            maxQueryDepth: Joi.number().integer().positive(), // Zaproxy default: 5
+            maxArgsDepth: Joi.number().integer().positive(), // Zaproxy default: 5
+            optionalArgsEnabled: Joi.boolean().default(true), // Zaproxy default: true
+            argsType: Joi.string().valid('INLINE', 'VARIABLES', 'BOTH'), // Zaproxy default: 'BOTH'
+            querySplitType: Joi.string().valid('LEAF', 'ROOT_FIELD', 'OPERATION'), // Zaproxy default: 'LEAF'
+            requestMethod: Joi.string().valid('POST_JSON', 'POST_GRAPHQL', 'GET') // Zaproxy default: 'POST_JSON'
+          }).xor('importFileContentBase64', 'importUrl'),
+          importUrls: Joi.object({ importFileContentBase64: Joi.string().base64({ paddingRequired: true }).required() }),
+          aScannerAttackStrength: Joi.string().valid(...this.#configSchemaProps.sut._cvtProperties.aScannerAttackStrength.format).uppercase().default(this.config.get('sut.aScannerAttackStrength')), // eslint-disable-line no-underscore-dangle
+          aScannerAlertThreshold: Joi.string().valid(...this.#configSchemaProps.sut._cvtProperties.aScannerAlertThreshold.format).uppercase().default(this.config.get('sut.aScannerAlertThreshold')), // eslint-disable-line no-underscore-dangle
+          alertThreshold: Joi.number().integer().min(0).max(1000).default(this.config.get('sut.alertThreshold')),
+          excludedRoutes: Joi.array().items(Joi.string()).default([])
+        }).xor('openApi', 'graphQl', 'soap', 'importUrls')
+      })
+    }).xor('loggedInIndicator', 'loggedOutIndicator');
   }
 
   async #selectStrategies() {
@@ -38,8 +92,6 @@ class Api extends Sut {
 
   async initialise() { // eslint-disable-line class-methods-use-this
     // Todo: Populate as required.
-
-
   }
 
   constructor({ log, publisher, sutProperties }) {
@@ -57,49 +109,83 @@ class Api extends Sut {
   getSitesTreePopulationStrategy() {
     return {
       ...super.getSitesTreePopulationStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        log: this.log,
+        publisher: this.publisher,
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties(['testSession', 'context']),
+        setContextId: (id) => { this.properties.context.id = id; }
+      }
     };
   }
 
   getEmissaryAuthenticationStrategy() {
     return {
       ...super.getEmissaryAuthenticationStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        log: this.log,
+        publisher: this.publisher,
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties(['authentication', 'loggedInIndicator', 'loggedOutIndicator', 'testSession', 'context']),
+        setUserId: (id) => { this.properties.userId = id; }
+      }
     };
   }
 
   getSpiderStrategy() {
     return {
       ...super.getSpiderStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        publisher: this.publisher,
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties('testSession')
+      }
     };
   }
 
   getScannersStrategy() {
     return {
       ...super.getScannersStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        log: this.log,
+        publisher: this.publisher,
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties('testSession')
+      }
     };
   }
 
   getScanningStrategy() {
     return {
       ...super.getScanningStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        log: this.log,
+        publisher: this.publisher,
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties(['testSession', 'context', 'userId'])
+      }
     };
   }
 
   getPostScanningStrategy() {
     return {
       ...super.getPostScanningStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        publisher: this.publisher,
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties('testSession')
+      }
     };
   }
 
   getReportingStrategy() {
     return {
       ...super.getReportingStrategy(),
-      args: { /* Todo: args specific to the API specific strategy */ }
+      args: {
+        log: this.log,
+        publisher: this.publisher,
+        sutPropertiesSubSet: this.getProperties('testSession')
+      }
     };
   }
 }

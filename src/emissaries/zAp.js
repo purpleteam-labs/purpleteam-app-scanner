@@ -94,10 +94,15 @@ const getProperties = (selecter) => {
 
 /* eslint-disable */
 internals.zApApiRoutes = {
+  alert: {
+    updateAlertsConfidence:       async (params) => internals.zApApi('JSON/alert/action/updateAlertsConfidence/',           { searchParams: new URLSearchParams(params) }),
+    viewAlerts:                   async (params) => internals.zApApi('JSON/alert/view/alerts/',                             { searchParams: new URLSearchParams(params) })
+  },
   ascan: {
     disableAllScanners:           async (params) => internals.zApApi('JSON/ascan/action/disableAllScanners/',               { searchParams: new URLSearchParams(params) }),
     disableScanners:              async (params) => internals.zApApi('JSON/ascan/action/disableScanners/',                  { searchParams: new URLSearchParams(params) }),
     enableAllScanners:            async (params) => internals.zApApi('JSON/ascan/action/enableAllScanners/',                { searchParams: new URLSearchParams(params) }),
+    enableScanners:               async (params) => internals.zApApi('JSON/ascan/action/enableScanners/',                   { searchParams: new URLSearchParams(params) }),
     scan:                         async (params) => internals.zApApi('JSON/ascan/action/scan/',                             { searchParams: new URLSearchParams(params) }),    
     setScannerAlertThreshold:     async (params) => internals.zApApi('JSON/ascan/action/setScannerAlertThreshold/',         { searchParams: new URLSearchParams(params) }),
     setScannerAttackStrength:     async (params) => internals.zApApi('JSON/ascan/action/setScannerAttackStrength/',         { searchParams: new URLSearchParams(params) }),
@@ -119,14 +124,38 @@ internals.zApApiRoutes = {
     htmlreport:                   async (params) => internals.zApApi('OTHER/core/other/htmlreport/',                                             { responseType: 'text' }),
     jsonreport:                   async (params) => internals.zApApi('OTHER/core/other/jsonreport/'                                                                      ),
     mdreport:                     async (params) => internals.zApApi('OTHER/core/other/mdreport/',                                               { responseType: 'text' }),
-    viewNumberOfAlerts:           async (params) => internals.zApApi('JSON/core/view/numberOfAlerts/',                      { searchParams: new URLSearchParams(params) })
+    viewNumberOfAlerts:           async (params) => internals.zApApi('JSON/core/view/numberOfAlerts/',                      { searchParams: new URLSearchParams(params) }),
+    viewUrls:                     async (params) => internals.zApApi('JSON/core/view/urls/',                                { searchParams: new URLSearchParams(params) })
   },
   forcedUser: {
     setForcedUser:                async (params) => internals.zApApi('JSON/forcedUser/action/setForcedUser/',               { searchParams: new URLSearchParams(params) }),
     setForcedUserModeEnabled:     async (params) => internals.zApApi('JSON/forcedUser/action/setForcedUserModeEnabled/',    { searchParams: new URLSearchParams(params) })
   },
+  graphql: {
+    importUrl:                    async (params) => internals.zApApi('JSON/graphql/action/importUrl/',                      { searchParams: new URLSearchParams(params) }),
+    importFile:                   async (params) => internals.zApApi('JSON/graphql/action/importFile/',                     { searchParams: new URLSearchParams(params) }),
+    // Set options.
+    maxQueryDepth:                async (params) => internals.zApApi('JSON/graphql/action/setOptionMaxQueryDepth/',         { searchParams: new URLSearchParams(params) }),
+    maxArgsDepth:                 async (params) => internals.zApApi('JSON/graphql/action/setOptionMaxArgsDepth/',          { searchParams: new URLSearchParams(params) }),
+    optionalArgsEnabled:          async (params) => internals.zApApi('JSON/graphql/action/setOptionOptionalArgsEnabled/',   { searchParams: new URLSearchParams(params) }),
+    argsType:                     async (params) => internals.zApApi('JSON/graphql/action/setOptionArgsType/',              { searchParams: new URLSearchParams(params) }),
+    querySplitType:               async (params) => internals.zApApi('JSON/graphql/action/setOptionQuerySplitType/',        { searchParams: new URLSearchParams(params) }),
+    requestMethod:                async (params) => internals.zApApi('JSON/graphql/action/setOptionRequestMethod/',         { searchParams: new URLSearchParams(params) })
+  },
+  importurls: {
+    importFile:                    async (params) => internals.zApApi('JSON/importurls/action/importurls/',                 { searchParams: new URLSearchParams(params) }),    
+  },
+  openapi: {
+    importUrl:                    async (params) => internals.zApApi('JSON/openapi/action/importUrl/',                      { searchParams: new URLSearchParams(params) }),
+    importFile:                   async (params) => internals.zApApi('JSON/openapi/action/importFile/',                     { searchParams: new URLSearchParams(params) })
+  },
   script: {
+    enable:                       async (params) => internals.zApApi('JSON/script/action/enable/',                          { searchParams: new URLSearchParams(params) }),
     load:                         async (params) => internals.zApApi('JSON/script/action/load/',                            { searchParams: new URLSearchParams(params) })
+  },
+  soap: {
+    importUrl:                    async (params) => internals.zApApi('JSON/soap/action/importUrl/',                         { searchParams: new URLSearchParams(params) }),
+    importFile:                   async (params) => internals.zApApi('JSON/soap/action/importFile/',                        { searchParams: new URLSearchParams(params) })
   },
   spider: {
     setOptionMaxDepth:            async (params) => internals.zApApi('JSON/spider/action/setOptionMaxDepth/',               { searchParams: new URLSearchParams(params) }),
@@ -159,7 +188,7 @@ internals.sitesTree = {
   },
   populateWithSutRoutes: async (sUt) => {
     const { Strategy, args } = sUt.getSitesTreePopulationStrategy();
-    const sitesTreePopulation = new Strategy({ ...args /* , additional args */ });
+    const sitesTreePopulation = new Strategy({ ...args, emissaryPropertiesSubSet: getProperties('uploadDir'), zAp: { aPi: internals.zApApiRoutes } });
     await sitesTreePopulation.populate();
   }
 };

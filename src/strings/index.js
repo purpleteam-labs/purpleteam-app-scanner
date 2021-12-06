@@ -22,4 +22,9 @@ const NowAsFileName = (hourMinuteSecondSeperator = ':') => {
   return `${date.getFullYear()}-${padLeft(date.getMonth() + 1)}-${padLeft(date.getDate())}T${padLeft(date.getHours())}${hourMinuteSecondSeperator}${padLeft(date.getMinutes())}${hourMinuteSecondSeperator}${padLeft(date.getSeconds())}`;
 };
 
-module.exports = { NowAsFileName };
+const percentEncode = (str) => str.split('').map((char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`).reduce((accum, cV) => `${accum}${cV}`, '');
+
+module.exports = {
+  NowAsFileName,
+  percentEncode
+};

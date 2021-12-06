@@ -19,24 +19,28 @@ const SitesTreePopulation = require('./strategy');
 
 class WebDriverStandard extends SitesTreePopulation {
   #browser;
-  #sutPropertiesSubSet;
   #fileName = 'webDriverStandard';
 
-  constructor({ publisher, baseUrl, browser, sutPropertiesSubSet }) {
-    super({ publisher, baseUrl });
+  constructor({ publisher, baseUrl, browser, sutPropertiesSubSet, setContextId, zAp }) {
+    super({ publisher, baseUrl, sutPropertiesSubSet, setContextId, zAp });
     this.#browser = browser;
-    this.#sutPropertiesSubSet = sutPropertiesSubSet;
   }
 
   async populate() {
     const methodName = 'populate';
     const { findElementThenClick, findElementThenClear, findElementThenSendKeys } = this.#browser;
-    const { testSession: { id: testSessionId, relationships: { data: testSessionResourceIdentifiers } }, testRoutes: routeResourceObjects } = this.#sutPropertiesSubSet;
+    const {
+      testSession: { id: testSessionId, relationships: { data: testSessionResourceIdentifiers } },
+      context: { name: contextName },
+      testRoutes: routeResourceObjects
+    } = this.sutPropertiesSubSet;
     const routes = testSessionResourceIdentifiers.filter((resourceIdentifier) => resourceIdentifier.type === 'route').map((resourceIdentifier) => resourceIdentifier.id);
     const routeResourceObjectsOfSession = routeResourceObjects.filter((routeResourceObject) => routes.includes(routeResourceObject.id));
     const webDriver = this.#browser.getWebDriver();
 
     this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `The ${methodName}() method of the ${super.constructor.name} strategy "${this.constructor.name}" has been invoked.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+
+    await this.setContextIdForSut(testSessionId, contextName);
 
     await routeResourceObjectsOfSession.reduce(async (accum, routeResourceObject) => {
       await accum;
@@ -62,4 +66,3 @@ class WebDriverStandard extends SitesTreePopulation {
 }
 
 module.exports = WebDriverStandard;
-

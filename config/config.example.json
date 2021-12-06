@@ -15,7 +15,6 @@
     }
   },
   "cucumber": {
-    "tagExpression": "@app_scan",
     "timeout": 1800000
   },
   "results": {

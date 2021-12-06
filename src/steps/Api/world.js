@@ -14,17 +14,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this PurpleTeam project. If not, see <https://www.gnu.org/licenses/>.
 
-const FormStandard = require('./formStandard');
-const ScriptLink = require('./scriptLink');
-const MaintainJwt = require('./maintainJwt');
 
-module.exports = { FormStandard, ScriptLink, MaintainJwt };
+const { setWorldConstructor, setDefaultTimeout } = require('@cucumber/cucumber');
 
-// Types of authentication that will need supporting:
+let timeout;
 
-// Form-Based
-// Script-Based
-// JSON-Based
-// NTLM
+const ParentWorld = require('../world');
 
-// export, import context
+class ApiWorld extends ParentWorld {
+  constructor({ attach, parameters }) {
+    super({ attach, parameters });
+    ({ timeout } = parameters.cucumber);
+  }
+
+  async initialiseSut() {
+    await this.sUt.initialise(this.zAp.getPropertiesForApiSut());
+  }
+}
+
+setWorldConstructor(ApiWorld);
+setDefaultTimeout(timeout);

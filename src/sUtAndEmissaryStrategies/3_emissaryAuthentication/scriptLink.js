@@ -18,24 +18,27 @@
 const { promises: fsPromises } = require('fs');
 
 const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
-// const crypto = require('crypto');
 
 const rndBytes = require('util').promisify(require('crypto').randomBytes);
 const EmissaryAuthentication = require('./strategy');
 
+const { percentEncode } = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
+
+// Doc: https://www.zaproxy.org/docs/authentication/
+// Doc: https://www.zaproxy.org/docs/desktop/start/features/authentication/
+// Doc: https://www.zaproxy.org/docs/desktop/start/features/authmethods/
+// Doc: https://www.zaproxy.org/docs/api/
+// Doc: https://docs.google.com/document/d/1LSg8CMb4LI5yP-8jYDTVJw1ZIJD2W_WDWXLtJNk3rsQ/edit#
+
 class ScriptLink extends EmissaryAuthentication {
-  #browser;
   #sutPropertiesSubSet;
-  #setContextId;
   #setUserId;
   #emissaryPropertiesSubSet;
   #fileName = 'scriptLink';
 
-  constructor({ log, publisher, baseUrl, browser, sutPropertiesSubSet, setContextId, setUserId, emissaryPropertiesSubSet, zAp }) {
+  constructor({ log, publisher, baseUrl, sutPropertiesSubSet, setUserId, emissaryPropertiesSubSet, zAp }) {
     super({ log, publisher, baseUrl, zAp });
-    this.#browser = browser;
     this.#sutPropertiesSubSet = sutPropertiesSubSet;
-    this.#setContextId = setContextId;
     this.#setUserId = setUserId;
     this.#emissaryPropertiesSubSet = emissaryPropertiesSubSet;
   }
@@ -46,10 +49,9 @@ class ScriptLink extends EmissaryAuthentication {
       authentication: { route: loginRoute },
       loggedInIndicator,
       loggedOutIndicator,
-      testSession: { id: testSessionId, attributes: { username, excludedRoutes } },
-      context: { name: contextName }
+      testSession: { id: testSessionId, attributes: { username, excludedRoutes }, relationships: { data: testSessionResourceIdentifiers } },
+      context: { id: contextId, name: contextName }
     } = this.#sutPropertiesSubSet;
-    const { percentEncode } = this.#browser;
 
     const loggedInOutIndicator = {
       command: loggedInIndicator ? 'setLoggedInIndicator' : 'setLoggedOutIndicator',
@@ -61,7 +63,6 @@ class ScriptLink extends EmissaryAuthentication {
     const { dir: appTesterUploadDir } = config.get('upload');
     const enabled = true;
     const authenticationMethod = 'scriptBasedAuthentication';
-    let contextId;
     let userId;
     const script = {
       name: 'link',
@@ -95,12 +96,11 @@ class ScriptLink extends EmissaryAuthentication {
         this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
         throw new Error(adminErrorText);
       });
-    // console.log(`${emissaryUploadDir}${rndFilePrefix}-${script.fileName}`);
     await this.zAp.aPi.script.load({ scriptName: script.name, scriptType: script.type, scriptEngine: script.engine, fileName: `${emissaryUploadDir}${rndFilePrefix}-${script.fileName}`, scriptDescription: `Used by the ${methodName}() method of the ${super.constructor.name} strategy "${this.constructor.name}"` })
       .then((resp) => {
-        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Loaded script: "${script.fileName}" into the Emissary, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Loaded: "${script.type}" script: "${script.fileName}" into the Emissary, for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
       }).catch((err) => {
-        const buildUserErrorText = `Error occurred while attempting to load the script: "${script.fileName}" into the Emissary`;
+        const buildUserErrorText = `Error occurred while attempting to load the: "${script.type}" script: "${script.fileName}" into the Emissary`;
         const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
         this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
         this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
@@ -115,17 +115,6 @@ class ScriptLink extends EmissaryAuthentication {
         const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
         this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
         this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
-      });
-    await this.zAp.aPi.context.newContext({ contextName })
-      .then((resp) => {
-        contextId = resp.contextId;
-        this.#setContextId(contextId); // Todo: Test that this assignes to the SUT properties.
-        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Created new Zap context with a contextId of: "${contextId}", correlating with the contextName of: "${contextName}".`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-      })
-      .catch((err) => {
-        const errorText = `Error occurred while attempting to create a new Zap context using contextName: "${contextName}", message was: ${err.message}.`;
-        this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-        throw new Error(errorText);
       });
     await this.zAp.aPi.spider.setOptionMaxDepth({ Integer: maxDepth })
       .then((resp) => {
@@ -146,19 +135,26 @@ class ScriptLink extends EmissaryAuthentication {
         throw new Error(errorText);
       });
 
-    const contextTarget = `${this.baseUrl}.*`;
+    const routes = testSessionResourceIdentifiers.filter((resourceIdentifier) => resourceIdentifier.type === 'route').map((resourceIdentifier) => resourceIdentifier.id);
+    const contextTargets = [
+      ...(routes.length > 0 ? routes.map((r) => `${this.baseUrl}${r}`) : [`${this.baseUrl}.*`])
+      // ...(loginRoute ? [`${this.baseUrl}${loginRoute}`] : []) // login route isn't needed.
+    ];
+    // Zap can't handle running many calls in parallel, so we do it sequentially.
+    await contextTargets.reduce(async (accum, cT) => {
+      await accum;
 
-    await this.zAp.aPi.context.includeInContext({ contextName, regex: contextTarget })
-      .then((resp) => {
-        this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Added URI: "${contextTarget}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-      })
-      .catch((err) => {
-        const errorText = `Error occurred while attempting to add URI: "${contextTarget}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`;
-        this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
-        throw new Error(errorText);
-      });
-
-    excludedRoutes.reduce(async (accum, eR) => {
+      await this.zAp.aPi.context.includeInContext({ contextName, regex: cT })
+        .then((resp) => {
+          this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Added URI: "${cT}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        })
+        .catch((err) => {
+          const errorText = `Error occurred while attempting to add URI: "${cT}" to Zap include-in-context: "${contextName}", for Test Session with id: "${testSessionId}". Error was: ${err.message}.`;
+          this.publisher.pubLog({ testSessionId, logLevel: 'error', textData: errorText, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+          throw new Error(errorText);
+        });
+    }, []);
+    await excludedRoutes.reduce(async (accum, eR) => {
       await accum;
 
       await this.zAp.aPi.context.excludeFromContext({ contextName, regex: eR })
@@ -172,7 +168,6 @@ class ScriptLink extends EmissaryAuthentication {
         });
     }, []);
 
-    // Only the 'userName' onwards must be URL encoded. URL encoding entire line doesn't (or at least didn't used to) work.
     await this.zAp.aPi.authentication.setAuthenticationMethod({ contextId, authMethodName: authenticationMethod, authMethodConfigParams: script.params() })
       .then((resp) => {
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set authentication method for contextId: "${contextId}" to: "${authenticationMethod}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
@@ -195,7 +190,7 @@ class ScriptLink extends EmissaryAuthentication {
     await this.zAp.aPi.users.newUser({ contextId, name: username })
       .then((resp) => {
         userId = resp.userId;
-        this.#setUserId(userId); // Todo: Test that this assignes to the SUT properties.
+        this.#setUserId(userId);
         this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Set the newUser: "${username}" of contextId: "${contextId}", for Test Session with id: "${testSessionId}". Response was: ${JSON.stringify(resp)}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
       })
       .catch((err) => {

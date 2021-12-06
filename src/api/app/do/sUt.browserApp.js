@@ -32,7 +32,7 @@ class BrowserApp extends Sut {
 
   #createSchema() {
     this.#sutSchema = Joi.object({
-      sUtType: Joi.string().required().valid('BrowserApp', 'Api'),
+      sUtType: Joi.string().required().valid('BrowserApp'),
       protocol: Joi.string().required().valid('https', 'http'),
       ip: Joi.string().hostname().required(),
       port: Joi.number().port().required(),
@@ -58,12 +58,12 @@ class BrowserApp extends Sut {
         id: Joi.string().alphanum().required(),
         attributes: Joi.object({
           sitesTreePopulationStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('WebDriverStandard'),
-          spiderStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('BrowserAppStandard'),
+          spiderStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
           scannersStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('BrowserAppStandard'),
-          scanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
-          postScanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
+          scanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('BrowserAppStandard'),
+          postScanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('BrowserAppStandard'),
           reportingStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
-          username: Joi.string().min(2),
+          username: Joi.string().min(2).required(),
           password: Joi.string().min(2),
           aScannerAttackStrength: Joi.string().valid(...this.#configSchemaProps.sut._cvtProperties.aScannerAttackStrength.format).uppercase().default(this.config.get('sut.aScannerAttackStrength')), // eslint-disable-line no-underscore-dangle
           aScannerAlertThreshold: Joi.string().valid(...this.#configSchemaProps.sut._cvtProperties.aScannerAlertThreshold.format).uppercase().default(this.config.get('sut.aScannerAlertThreshold')), // eslint-disable-line no-underscore-dangle
@@ -90,7 +90,7 @@ class BrowserApp extends Sut {
           submit: Joi.string().min(2).regex(/^[a-z0-9_-]+/i)
         })
       }))
-    });
+    }).xor('loggedInIndicator', 'loggedOutIndicator');
   }
 
   #selectStrategies() {
@@ -158,7 +158,8 @@ class BrowserApp extends Sut {
         publisher: this.publisher,
         baseUrl: this.baseUrl(),
         browser,
-        sutPropertiesSubSet: this.getProperties(['testSession', 'testRoutes'])
+        sutPropertiesSubSet: this.getProperties(['testSession', 'context', 'testRoutes']),
+        setContextId: (id) => { this.properties.context.id = id; }
       }
     };
   }
@@ -170,9 +171,7 @@ class BrowserApp extends Sut {
         log: this.log,
         publisher: this.publisher,
         baseUrl: this.baseUrl(),
-        browser,
-        sutPropertiesSubSet: this.getProperties(['authentication', 'loggedInIndicator', 'loggedOutIndicator', 'excludeFromContext', 'testSession', 'context']),
-        setContextId: (id) => { this.properties.context.id = id; },
+        sutPropertiesSubSet: this.getProperties(['authentication', 'loggedInIndicator', 'loggedOutIndicator', 'testSession', 'context']),
         setUserId: (id) => { this.properties.userId = id; }
       }
     };
