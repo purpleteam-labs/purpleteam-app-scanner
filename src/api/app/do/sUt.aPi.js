@@ -49,7 +49,7 @@ class Api extends Sut {
       }),
       testSession: Joi.object({
         type: Joi.string().valid('appScanner').required(),
-        id: Joi.string().alphanum().required(),
+        id: Joi.string().regex(/^\w[-\w]{1,200}$/).required(),
         attributes: Joi.object({
           sitesTreePopulationStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ImportUrls'),
           spiderStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),

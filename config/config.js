@@ -91,7 +91,7 @@ const schema = {
       timeoutToBeAvailable: {
         doc: 'The duration in milliseconds before giving up on waiting for the s2 Service Discovery Service Instances to be available.',
         format: 'duration',
-        default: 120000
+        default: 200000
       },
       retryIntervalToBeAvailable: {
         doc: 'The retry interval in milliseconds for the s2 Service Discovery Service Instances to be available.',
@@ -103,12 +103,12 @@ const schema = {
       timeout: {
         doc: 'The duration in milliseconds before giving up on waiting for the s2 containers to be responsive.',
         format: 'duration',
-        default: 30000
+        default: 120000
       },
       retryInterval: {
         doc: 'The retry interval in milliseconds for the s2 containers to be responsive.',
         format: 'duration',
-        default: 2000
+        default: 10000
       }
     }
   },
