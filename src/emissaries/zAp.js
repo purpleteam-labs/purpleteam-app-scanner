@@ -114,9 +114,9 @@ internals.zApApiRoutes = {
     newContext:                   async (params) => internals.zApApi('JSON/context/action/newContext/',                     { searchParams: new URLSearchParams(params) })
   },
   core: {
-    htmlreport:                   async (params) => internals.zApApi('OTHER/core/other/htmlreport/',                                             { responseType: 'text' }),
-    jsonreport:                   async (params) => internals.zApApi('OTHER/core/other/jsonreport/'                                                                      ),
-    mdreport:                     async (params) => internals.zApApi('OTHER/core/other/mdreport/',                                               { responseType: 'text' }),
+    htmlreport:                   async (params) => internals.zApApi('OTHER/core/other/htmlreport/',  { responseType: 'text', searchParams: new URLSearchParams(params) }),
+    jsonreport:                   async (params) => internals.zApApi('OTHER/core/other/jsonreport/',                        { searchParams: new URLSearchParams(params) }),
+    mdreport:                     async (params) => internals.zApApi('OTHER/core/other/mdreport/',    { responseType: 'text', searchParams: new URLSearchParams(params) }),
     viewNumberOfAlerts:           async (params) => internals.zApApi('JSON/core/view/numberOfAlerts/',                      { searchParams: new URLSearchParams(params) }),
     viewUrls:                     async (params) => internals.zApApi('JSON/core/view/urls/',                                { searchParams: new URLSearchParams(params) })
   },
@@ -141,6 +141,9 @@ internals.zApApiRoutes = {
   openapi: {
     importUrl:                    async (params) => internals.zApApi('JSON/openapi/action/importUrl/',                      { searchParams: new URLSearchParams(params) }),
     importFile:                   async (params) => internals.zApApi('JSON/openapi/action/importFile/',                     { searchParams: new URLSearchParams(params) })
+  },
+  reports: {
+    generate:                     async (params) => internals.zApApi('JSON/reports/action/generate/',                       { searchParams: new URLSearchParams(params) })
   },
   script: {
     enable:                       async (params) => internals.zApApi('JSON/script/action/enable/',                          { searchParams: new URLSearchParams(params) }),

@@ -7,7 +7,7 @@
 # the Business Source License, use of this software will be governed
 # by the Apache License, Version 2.0
 
-FROM node:14-alpine
+FROM node:16-alpine
 
 ARG LOCAL_USER_ID
 ARG LOCAL_GROUP_ID
