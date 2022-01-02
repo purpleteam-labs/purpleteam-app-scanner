@@ -137,11 +137,6 @@ const schema = {
         doc: 'The location of the report.',
         format: String,
         default: '/var/log/purpleteam/outcomes/'
-      },
-      formats: {
-        doc: 'The supported formats that reports will be written in.',
-        format: Array,
-        default: ['html', 'json', 'md']
       }
     },
     upload: {

@@ -21,7 +21,6 @@ const internals = {
     apiKey: Joi.string().required(),
     apiFeedbackSpeed: Joi.number().integer().positive(),
     reportDir: Joi.string().required().valid(config.get('emissary.report.dir')),
-    reportFormats: Joi.array().default(config.get('emissary.report.formats')),
     uploadDir: Joi.string().required().valid(config.get('emissary.upload.dir')),
     spider: Joi.object({
       maxDepth: Joi.number().integer().positive(),
@@ -114,9 +113,6 @@ internals.zApApiRoutes = {
     newContext:                   async (params) => internals.zApApi('JSON/context/action/newContext/',                     { searchParams: new URLSearchParams(params) })
   },
   core: {
-    htmlreport:                   async (params) => internals.zApApi('OTHER/core/other/htmlreport/',  { responseType: 'text', searchParams: new URLSearchParams(params) }),
-    jsonreport:                   async (params) => internals.zApApi('OTHER/core/other/jsonreport/',                        { searchParams: new URLSearchParams(params) }),
-    mdreport:                     async (params) => internals.zApApi('OTHER/core/other/mdreport/',    { responseType: 'text', searchParams: new URLSearchParams(params) }),
     viewNumberOfAlerts:           async (params) => internals.zApApi('JSON/core/view/numberOfAlerts/',                      { searchParams: new URLSearchParams(params) }),
     viewUrls:                     async (params) => internals.zApApi('JSON/core/view/urls/',                                { searchParams: new URLSearchParams(params) })
   },
@@ -221,7 +217,7 @@ const postScanProcess = (sUt) => {
 
 const createReports = async (sUt) => {
   const { Strategy, args } = sUt.getReportingStrategy();
-  const reporting = new Strategy({ ...args, emissaryPropertiesSubSet: getProperties(['reportDir', 'reportFormats']), zAp: { aPi: internals.zApApiRoutes } });
+  const reporting = new Strategy({ ...args, emissaryPropertiesSubSet: getProperties(['uploadDir', 'reportDir']), zAp: { aPi: internals.zApApiRoutes } });
   await reporting.createReports();
 };
 

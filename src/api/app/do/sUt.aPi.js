@@ -50,6 +50,7 @@ class Api extends Sut {
           scanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ApiStandard'),
           postScanningStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('ApiStandard'),
           reportingStrategy: Joi.string().min(2).regex(/^[-\w/]{1,200}$/).default('Standard'),
+          reports: Joi.object({ templateThemes: Joi.array().items(Joi.object({ name: Joi.string().min(1).max(100).regex(/^[a-z0-9]+/i).required() })).required() }),
           username: Joi.string().min(2).required(),
           openApi: Joi.object({
             importFileContentBase64: Joi.string().base64({ paddingRequired: true }),
@@ -177,7 +178,8 @@ class Api extends Sut {
       args: {
         log: this.log,
         publisher: this.publisher,
-        sutPropertiesSubSet: this.getProperties('testSession')
+        baseUrl: this.baseUrl(),
+        sutPropertiesSubSet: this.getProperties(['testSession', 'context'])
       }
     };
   }
