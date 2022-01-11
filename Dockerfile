@@ -43,6 +43,7 @@ RUN apk add --no-cache shadow && \
 #     chmod 0440 /etc/sudoers.d/$USER
 
 ENV WORKDIR /usr/src/app/
+ENV EMISSARY_OUTPUT_TRANSITION_DIR /usr/emissaryOutputTransition/
 
 # Home is required for npm install. System account with no ability to login to shell
 # For standard node image:
@@ -50,7 +51,8 @@ ENV WORKDIR /usr/src/app/
 # For node alpine:
 # RUN addgroup -S $USER && adduser -S $USER -G $GROUP
 
-RUN mkdir -p $WORKDIR && chown $USER:$GROUP --recursive $WORKDIR
+RUN mkdir -p $WORKDIR && chown $USER:$GROUP -R $WORKDIR \
+  && mkdir $EMISSARY_OUTPUT_TRANSITION_DIR && chown $USER:$GROUP -R $EMISSARY_OUTPUT_TRANSITION_DIR && chmod -R 770 $EMISSARY_OUTPUT_TRANSITION_DIR
 
 #RUN cat /etc/resolv.conf
 #RUN echo "" > /etc/resolv.conf

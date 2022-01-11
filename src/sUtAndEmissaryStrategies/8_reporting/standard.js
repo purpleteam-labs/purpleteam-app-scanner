@@ -10,6 +10,7 @@
 
 const { promises: fsPromises } = require('fs');
 const Reporting = require('./strategy');
+const chmodr = require('./helper/chmodr');
 
 const strings = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
 const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
@@ -21,6 +22,7 @@ class Standard extends Reporting {
   #emissaryPropertiesSubSet
   #fileName = 'standard';
   #reportPrefix = 'report_';
+  #emissaryOutputTransitionDir = '/usr/emissaryOutputTransition/'; // Defined in Dockerfile
 
   constructor({ log, baseUrl, publisher, sutPropertiesSubSet, emissaryPropertiesSubSet, zAp }) {
     super({ log, publisher, zAp });
@@ -29,25 +31,34 @@ class Standard extends Reporting {
     this.#emissaryPropertiesSubSet = emissaryPropertiesSubSet;
   }
 
-  async #deleteLeftoverReportsAndSupportDirsIfExistFromPreviousTestRun() {
+  async #deleteLeftoverReportsAndSupportDirsIfExistFromPreviousTestRuns() {
+    const methodName = '#deleteLeftoverReportsAndSupportDirsIfExistFromPreviousTestRuns';
     const { dir: appTesterUploadDir } = config.get('upload');
     const { testSession: { id: testSessionId } } = this.#sutPropertiesSubSet;
     const fileAndDirNames = await fsPromises.readdir(appTesterUploadDir);
     const reportFileAndDirNames = fileAndDirNames.filter((f) => f.startsWith(`${this.#reportPrefix}appScannerId-${testSessionId}_`)); // Only delete what we are responsible for.
-    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.rm(`${appTesterUploadDir}${r}`, { recursive: true })));
+    // Cron job defined in userData.tpl sets ownership on everything in this dir so that this process running as user app_scanner is able to delete old files.
+    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.rm(`${appTesterUploadDir}${r}`, { recursive: true })))
+      .then(() => {
+        const adminSuccessText = `Attempt to delete TestSession specific ("${testSessionId}") files and dirs from App Tester upload directory: "${appTesterUploadDir}" ✔ succeeded ✔.`;
+        this.log.info(adminSuccessText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+      })
+      .catch((err) => {
+        const adminErrorText = `Attempt to delete TestSession specific ("${testSessionId}") files and dirs from App Tester upload directory: "${appTesterUploadDir}" ✖ failed ✖. This is probably because the machine instance's cron job to set write permissions has not yet run for these files, Error was: ${err.message}`;
+        this.log.notice(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+      });
   }
 
   async #applyMarkupReplacements(reportMetaData) {
     const methodName = '#applyMarkupReplacements';
     const { testSession: { id: testSessionId } } = this.#sutPropertiesSubSet;
-    const { dir: appTesterUploadDir } = config.get('upload');
 
     const reportMetaDataWithMarkupReplacements = reportMetaData.filter((r) => r.styling?.markupReplacements?.length);
 
     // Read
     await Promise.all(reportMetaDataWithMarkupReplacements.map(async (rMWMR) => {
       const r = rMWMR;
-      r.inputFileContent = await fsPromises.readFile(`${appTesterUploadDir}${r.generation.reportFileName}`, { encoding: 'utf8' })
+      r.inputFileContent = await fsPromises.readFile(`${this.#emissaryOutputTransitionDir}${r.generation.reportFileName}`, { encoding: 'utf8' })
         .catch((err) => {
           const buildUserErrorText = `Error occurred while attempting to read report: "${r.generation.reportFileName}" in order to apply styling`;
           const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
@@ -74,7 +85,7 @@ class Standard extends Reporting {
       return r;
     });
     // Write
-    await Promise.all(reportMetadataWithOutputFileContent.map(async (r) => fsPromises.writeFile(`${appTesterUploadDir}${r.generation.reportFileName}`, r.outputFileContent)
+    await Promise.all(reportMetadataWithOutputFileContent.map(async (r) => fsPromises.writeFile(`${this.#emissaryOutputTransitionDir}${r.generation.reportFileName}`, r.outputFileContent, { mode: 0o664 })
       .catch((err) => {
         const buildUserErrorText = `Error occurred while attempting to write report: "${r.generation.reportFileName}" in order to apply styling`;
         const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
@@ -87,14 +98,13 @@ class Standard extends Reporting {
   async #applyStylingFileReplacements(reportMetaData) {
     const methodName = '#applyStylingFileReplacements';
     const { testSession: { id: testSessionId } } = this.#sutPropertiesSubSet;
-    const { dir: appTesterUploadDir } = config.get('upload');
 
     const reportMetaDataWithFileReplacements = reportMetaData.filter((r) => r.styling?.fileReplacements?.length);
 
     await Promise.all(reportMetaDataWithFileReplacements.map(async (r) => Promise.all(r.styling.fileReplacements.map(async (fR) =>
-      fsPromises.writeFile(`${appTesterUploadDir}${r.supportDir}/${fR.file}`, fR.content) // eslint-disable-line implicit-arrow-linebreak
+      fsPromises.writeFile(`${this.#emissaryOutputTransitionDir}${r.supportDir}/${fR.file}`, fR.content, { mode: 0o664 }) // eslint-disable-line implicit-arrow-linebreak
         .catch((err) => {
-          const buildUserErrorText = `Error occurred while attempting to write styling file replacement: "${r.supportDir}${fR.file}"`;
+          const buildUserErrorText = `Error occurred while attempting to write styling file replacement: "${r.supportDir}/${fR.file}"`;
           const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
           this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
           this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
@@ -107,12 +117,17 @@ class Standard extends Reporting {
     await this.#applyStylingFileReplacements(reportMetaData);
   }
 
-  // emissaryUploadDir  is emissary.upload.dir in config   which is at time of writing /mnt/purpleteam-app-scanner/
-  // appTesterUploadDir is upload.dir          in config   which is at time of writing /mnt/purpleteam-app-scanner/
-  // reportDir          is emissary.report.dr  in config   which is at time of writing /var/log/purpleteam/outcomes/
+  // emissaryUploadDir            is emissary.upload.dir in config   which at time of writing is: /mnt/purpleteam-app-scanner/
+  // appTesterUploadDir           is upload.dir          in config   which at time of writing is: /mnt/purpleteam-app-scanner/
+  // #emissaryOutputTransitionDir defined in this class              which at time of writing is: /usr/emissaryOutputTransition/
+  // reportDir                    is emissary.report.dr  in config   which at time of writing is: /var/log/purpleteam/outcomes/
 
-  // Zap saves reports to emissaryUploadDir
-  // App Tester moves (cp, rm) move reports from appTesterUploadDir to reportDir
+  // 1. App Tester attempts to delete previous reports of same TestSession from appTesterUploadDir
+  // 2. Zap saves reports to emissaryUploadDir
+  // 3. App Tester copies reports from appTesterUploadDir to #emissaryOutputTransitionDir
+  // 4. App Tester changes permissions on files/dirs in #emissaryOutputTransitionDir
+  // 5. App Tester applies markup and style changes
+  // 6. App Tester copies reports from #emissaryOutputTransitionDir to reportDir, then deletes same reports from #emissaryOutputTransitionDir
   async createReports() {
     const methodName = 'createReports';
     const {
@@ -272,12 +287,12 @@ class Standard extends Reporting {
         sections: '', // All
         includedConfidences: 'Low|Medium|High|Confirmed',
         includedRisks: 'Informational|Low|Medium|High',
-        reportFileName: `${this.#reportPrefix}appScannerId-${testSessionId}_risk-confidence_${nowAsFileName}.html`,
+        reportFileName: `${this.#reportPrefix}appScannerId-${testSessionId}_risk-confidence-dark_${nowAsFileName}.html`,
         reportFileNamePattern: '',
         reportDir: emissaryUploadDir,
         display: false
       },
-      supportDir: `${this.#reportPrefix}appScannerId-${testSessionId}_risk-confidence_${nowAsFileName}`,
+      supportDir: `${this.#reportPrefix}appScannerId-${testSessionId}_risk-confidence-dark_${nowAsFileName}`,
       // Styling colours copied from https://purpleteam-labs.com/pricing/
       styling: {
         markupReplacements: [{
@@ -892,7 +907,7 @@ class Standard extends Reporting {
 
     this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `The ${methodName}() method of the ${super.constructor.name} strategy "${this.constructor.name}" has been invoked.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
 
-    await this.#deleteLeftoverReportsAndSupportDirsIfExistFromPreviousTestRun();
+    await this.#deleteLeftoverReportsAndSupportDirsIfExistFromPreviousTestRuns();
 
     const { reports } = { ...testSessionAttributes };
     // If reports, then Build User decided to specify a sub-set of report types rather than all report types.
@@ -915,22 +930,42 @@ class Standard extends Reporting {
         });
     }, {});
 
-    // In order to compare the un-altered Zap reports with the PurpleTeam changes, comment this line out.
-    await this.#applyReportStyling(chosenReportMetaData);
-
     const reportFileAndDirNames = [...chosenReportMetaData.map((r) => r.generation.reportFileName), ...chosenReportMetaData.filter((r) => r.supportDir).map((r) => r.supportDir)];
 
-    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.cp(`${appTesterUploadDir}${r}`, `${reportDir}${r}`, { preserveTimestamps: true, recursive: true }))) // cp is experimental in node v17.
+    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.cp(`${appTesterUploadDir}${r}`, `${this.#emissaryOutputTransitionDir}${r}`, { preserveTimestamps: true, recursive: true }))) // cp is experimental in node v17.
       .catch((err) => {
-        const buildUserErrorText = `Error occurred while attempting to copy reports: "${reportFileAndDirNames}" from App Tester upload directory: "${appTesterUploadDir}" to report directory: "${reportDir}"`;
+        const buildUserErrorText = `Error occurred while attempting to copy reports: "${reportFileAndDirNames}" from App Tester upload directory: "${appTesterUploadDir}" to Emissary output transition directory: "${this.#emissaryOutputTransitionDir}"`;
         const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
         this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
         this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
       });
 
-    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.rm(`${appTesterUploadDir}${r}`, { recursive: true })))
+    await chmodr(this.#emissaryOutputTransitionDir, 0o664)
+      .then(() => {
+        this.log.info(`chmodr was successfully applied to Emissary output transition directory: ${this.#emissaryOutputTransitionDir}`, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+      })
       .catch((err) => {
-        const buildUserErrorText = `Error occurred while attempting to remove reports: "${reportFileAndDirNames}" from App Tester upload directory: "${appTesterUploadDir}"`;
+        const buildUserErrorText = 'Error occurred while attempting to execute chmod -R on the Emissary output transition directory';
+        const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err}`;
+        this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+        throw new Error(buildUserErrorText);
+      });
+
+    // In order to compare the un-altered Zap reports with the PurpleTeam changes, comment this line out.
+    await this.#applyReportStyling(chosenReportMetaData);
+
+    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.cp(`${this.#emissaryOutputTransitionDir}${r}`, `${reportDir}${r}`, { preserveTimestamps: true, recursive: true }))) // cp is experimental in node v17.
+      .catch((err) => {
+        const buildUserErrorText = `Error occurred while attempting to copy reports: "${reportFileAndDirNames}" from Emissary output transition directory: "${this.#emissaryOutputTransitionDir}" to report directory: "${reportDir}"`;
+        const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
+        this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
+        this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
+      });
+
+    await Promise.all(reportFileAndDirNames.map(async (r) => fsPromises.rm(`${this.#emissaryOutputTransitionDir}${r}`, { recursive: true })))
+      .catch((err) => {
+        const buildUserErrorText = `Error occurred while attempting to remove reports: "${reportFileAndDirNames}" from Emissary output transition directory: "${this.#emissaryOutputTransitionDir}"`;
         const adminErrorText = `${buildUserErrorText}, for Test Session with id: "${testSessionId}", Error was: ${err.message}`;
         this.publisher.publish({ testSessionId, textData: `${buildUserErrorText}.`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName] } });
         this.log.error(adminErrorText, { tags: [`pid-${process.pid}`, this.#fileName, methodName] });
