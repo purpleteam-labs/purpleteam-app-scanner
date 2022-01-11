@@ -127,7 +127,7 @@ class ApiStandard extends Scanners {
     }
 
     const zApApiPrintEnabledAScanersFuncCallback = (result) => { // eslint-disable-line no-unused-vars
-      const scannersStateForBuildUser = result.scanners.reduce((all, each) => `${all}\nname: ${each.name.padEnd(50)}, id: ${each.id.padEnd(6)}, enabled: ${each.enabled.padEnd(5)}, attackStrength: ${each.attackStrength.padEnd(7)}, alertThreshold: ${each.alertThreshold.padEnd(7)}`, '');
+      const scannersStateForBuildUser = result.scanners.reduce((all, each) => `${all}\nname: ${each.name.padEnd(52)}, id: ${each.id.padEnd(6)}, enabled: ${each.enabled.padEnd(5)}, attackStrength: ${each.attackStrength.padEnd(7)}, alertThreshold: ${each.alertThreshold.padEnd(7)}`, '');
       // This is for the Build User and the PurpleTeam admin:
       this.publisher.pubLog({ testSessionId, logLevel: 'info', textData: `\n\nThe following are all the active scanners available with their current state, for Test Session with id: "${testSessionId}":\n${scannersStateForBuildUser}\n`, tagObj: { tags: [`pid-${process.pid}`, this.#fileName, methodName, 'pt-build-user'] } });
       // This is for the PurpleTeam admin only:
