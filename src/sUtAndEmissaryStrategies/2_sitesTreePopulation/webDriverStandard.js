@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const SitesTreePopulation = require('./strategy');
+import SitesTreePopulation from './strategy.js';
 
 class WebDriverStandard extends SitesTreePopulation {
   #browser;
@@ -57,4 +57,4 @@ class WebDriverStandard extends SitesTreePopulation {
   }
 }
 
-module.exports = WebDriverStandard;
+export default WebDriverStandard;

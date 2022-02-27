@@ -7,11 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const FormStandard = require('./formStandard');
-const ScriptLink = require('./scriptLink');
-const MaintainJwt = require('./maintainJwt');
+import FormStandard from './formStandard.js';
+import ScriptLink from './scriptLink.js';
+import MaintainJwt from './maintainJwt.js';
 
-module.exports = { FormStandard, ScriptLink, MaintainJwt };
+export default { FormStandard, ScriptLink, MaintainJwt };
 
 // Types of authentication that will need supporting:
 

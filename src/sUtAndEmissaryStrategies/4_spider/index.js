@@ -7,6 +7,6 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Standard = require('./standard');
+import Standard from './standard.js';
 
-module.exports = { Standard };
+export default { Standard };

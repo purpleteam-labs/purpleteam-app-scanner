@@ -20,4 +20,4 @@ class PostScanning {
   }
 }
 
-module.exports = PostScanning;
+export default PostScanning;

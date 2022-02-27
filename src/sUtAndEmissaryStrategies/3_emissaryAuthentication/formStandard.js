@@ -7,14 +7,13 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const EmissaryAuthentication = require('./strategy');
-
-const { percentEncode } = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
+import EmissaryAuthentication from './strategy.js';
+import { percentEncode } from '../../strings/index.js';
 
 // Doc: https://www.zaproxy.org/docs/authentication/
 // Doc: https://www.zaproxy.org/docs/desktop/start/features/authentication/
 // Doc: https://www.zaproxy.org/docs/desktop/start/features/authmethods/
-// Doc: https://www.zaproxy.org/docs/api/
+// Doc: https://www.zaproxy.org/docs/api/#getting-authenticated
 // Doc: https://docs.google.com/document/d/1LSg8CMb4LI5yP-8jYDTVJw1ZIJD2W_WDWXLtJNk3rsQ/edit#
 
 class FormStandard extends EmissaryAuthentication {
@@ -177,4 +176,4 @@ class FormStandard extends EmissaryAuthentication {
   }
 }
 
-module.exports = FormStandard;
+export default FormStandard;

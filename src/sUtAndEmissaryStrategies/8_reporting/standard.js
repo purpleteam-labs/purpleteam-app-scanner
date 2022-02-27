@@ -7,19 +7,20 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
+import { promises as fsPromises } from 'fs';
+import { createRequire } from 'module';
+import Reporting from './strategy.js';
+import chmodr from './helper/chmodr.js';
+import { NowAsFileName } from '../../strings/index.js';
+import config from '../../../config/config.js';
 
-const { promises: fsPromises } = require('fs');
-const Reporting = require('./strategy');
-const chmodr = require('./helper/chmodr');
-
-const strings = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
-const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
-const { version } = require(`${process.cwd()}/package.json`); // eslint-disable-line import/no-dynamic-require
+const require = createRequire(import.meta.url);
+const { version } = require('../../../package');
 
 class Standard extends Reporting {
   #baseUrl;
   #sutPropertiesSubSet;
-  #emissaryPropertiesSubSet
+  #emissaryPropertiesSubSet;
   #fileName = 'standard';
   #reportPrefix = 'report_';
   #emissaryOutputTransitionDir = '/usr/emissaryOutputTransition/'; // Defined in Dockerfile
@@ -137,7 +138,7 @@ class Standard extends Reporting {
 
     const { uploadDir: emissaryUploadDir, reportDir } = this.#emissaryPropertiesSubSet;
     const { dir: appTesterUploadDir } = config.get('upload');
-    const nowAsFileName = strings.NowAsFileName();
+    const nowAsFileName = NowAsFileName();
 
     const reportMetaData = [{
       name: 'traditionalHtml',
@@ -973,4 +974,4 @@ class Standard extends Reporting {
   }
 }
 
-module.exports = Standard;
+export default Standard;

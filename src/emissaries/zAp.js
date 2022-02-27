@@ -7,11 +7,10 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Joi = require('joi');
-const got = require('got');
-const { HttpProxyAgent } = require('hpagent');
-
-const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
+import Joi from 'joi';
+import got from 'got';
+import { HttpProxyAgent } from 'hpagent';
+import config from '../../config/config.js';
 
 const internals = {
   zApSchema: Joi.object({
@@ -236,7 +235,7 @@ const initialise = (options) => {
   internals.initZapApi(zapApiOptions);
 };
 
-module.exports = {
+export default {
   getPropertiesForBrowserAppSut: () => getProperties(['protocol', 'hostname', 'port', 'knownZapErrorsWithHelpMessageForBuildUser']),
   getPropertiesForApiSut: () => ({ /* Populate as required */ }),
   numberOfAlertsForSesh,

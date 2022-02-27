@@ -7,17 +7,15 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-/* eslint-disable import/no-dynamic-require */
-const config = require(`${process.cwd()}/config/config`);
+import config from '../../../../config/config.js';
 // Strategies.
-const sitesTreePopulation = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/2_sitesTreePopulation`);
-const emissaryAuthentication = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/3_emissaryAuthentication`);
-const spider = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/4_spider`);
-const scanners = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/5_scanners`);
-const scanning = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/6_scanning`);
-const postScanning = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/7_postScanning`);
-const reporting = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/8_reporting`);
-/* eslint-enable import/no-dynamic-require */
+import sitesTreePopulation from '../../../sUtAndEmissaryStrategies/2_sitesTreePopulation/index.js';
+import emissaryAuthentication from '../../../sUtAndEmissaryStrategies/3_emissaryAuthentication/index.js';
+import spider from '../../../sUtAndEmissaryStrategies/4_spider/index.js';
+import scanners from '../../../sUtAndEmissaryStrategies/5_scanners/index.js';
+import scanning from '../../../sUtAndEmissaryStrategies/6_scanning/index.js';
+import postScanning from '../../../sUtAndEmissaryStrategies/7_postScanning/index.js';
+import reporting from '../../../sUtAndEmissaryStrategies/8_reporting/index.js';
 
 
 class Sut {
@@ -108,4 +106,4 @@ class Sut {
   }
 }
 
-module.exports = Sut;
+export default Sut;

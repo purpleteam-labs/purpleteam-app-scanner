@@ -7,10 +7,10 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const post = require('./post');
-const get = require('./get');
+import post from './post.js';
+import get from './get.js';
 
-module.exports = [
+export default [
   ...post,
   ...get
 ];

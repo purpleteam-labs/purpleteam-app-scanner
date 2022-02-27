@@ -1,4 +1,0 @@
-{
-  "all": true,
-  "exclude": ["config/", "coverage/", "test/", "testResources/"]
-}

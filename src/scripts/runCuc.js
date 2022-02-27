@@ -7,13 +7,15 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const cucumber = require('@cucumber/cucumber');
-const Bourne = require('@hapi/bourne');
-const { Writable } = require('stream');
+import { Cli as CucCli } from '@cucumber/cucumber';
+import Bourne from '@hapi/bourne';
+import { Writable } from 'stream';
+import { init as initPtLogger } from 'purpleteam-logger';
+import { init as initPublisher } from '../publishers/messagePublisher.js';
+import config from '../../config/config.js';
 
-const config = require('config/config');
-const log = require('purpleteam-logger').init(config.get('logger'));
-const publisher = require('src/publishers/messagePublisher').init({ log, redis: config.get('redis.clientCreationOptions') });
+const log = initPtLogger(config.get('logger'));
+const publisher = await initPublisher({ log, redis: config.get('redis.clientCreationOptions') });
 
 // Following code taken from https://github.com/cucumber/cucumber-js/blob/cfc9b4a1db5b97d95350ce41144ae69084096adc/src/cli/run.js
 //   then modified:
@@ -46,7 +48,7 @@ const cucumberCliStdout = new Writable({
   }
 });
 
-exports.default = async function run() {
+export default async function run() {
   const cwd = process.cwd();
   const worldParametersV = 11;
   const worldParameters = Bourne.parse(process.argv[worldParametersV]);
@@ -61,17 +63,18 @@ exports.default = async function run() {
   });
   */
 
-  const cucumberCliInstance = new cucumber.Cli({
+  const cucumberCliInstance = new CucCli({
     argv: process.argv,
     cwd,
-    stdout: cucumberCliStdout
+    stdout: cucumberCliStdout,
+    env: {} // We really don't want to be passing our env in
   });
 
   let result;
   try {
     result = await cucumberCliInstance.run();
     log.info(`The cucumber result for testSession: ${testSessionId} was ${JSON.stringify(result)}.`, { tags: [`pid-${process.pid}`, 'runCuc'] });
-    publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Tester finished: {sessionId: ${testSessionId}, Tester: app}.`, tagObj: { tags: [`pid-${process.pid}`, 'runCuc'] } });
+    await publisher.pubLog({ testSessionId, logLevel: 'info', textData: `Tester finished: {sessionId: ${testSessionId}, Tester: app}.`, tagObj: { tags: [`pid-${process.pid}`, 'runCuc'] } });
   } catch (error) {
     exitWithError(error);
   }
@@ -85,4 +88,4 @@ exports.default = async function run() {
   // } else {
   //   process.exitCode = exitCode;
   // }
-};
+}

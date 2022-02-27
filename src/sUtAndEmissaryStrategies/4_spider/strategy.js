@@ -20,4 +20,4 @@ class Spider {
   }
 }
 
-module.exports = Spider;
+export default Spider;

@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { /* Before, */ Given, When, Then /* , setDefaultTimeout */, After } = require('@cucumber/cucumber');
+import { /* Before, */ Given, When, Then /* , setDefaultTimeout */, After } from '@cucumber/cucumber';
 
 /*
 Before(() => {

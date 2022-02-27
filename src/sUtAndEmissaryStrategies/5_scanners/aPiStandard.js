@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Scanners = require('./strategy');
+import Scanners from './strategy.js';
 
 class ApiStandard extends Scanners {
   #sutPropertiesSubSet;
@@ -137,4 +137,4 @@ class ApiStandard extends Scanners {
   }
 }
 
-module.exports = ApiStandard;
+export default ApiStandard;

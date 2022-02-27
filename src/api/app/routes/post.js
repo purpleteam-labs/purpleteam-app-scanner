@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-module.exports = [{
+export default [{
   method: 'POST',
   path: '/test-plan',
   handler: async (request, respToolkit) => { // eslint-disable-line no-unused-vars

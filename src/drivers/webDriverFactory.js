@@ -7,11 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { Builder } = require('selenium-webdriver');
-const proxy = require('selenium-webdriver/proxy');
+import { Builder } from 'selenium-webdriver';
+import proxy from 'selenium-webdriver/proxy.js';
 
-const chrome = require('selenium-webdriver/chrome');
-const firefox = require('selenium-webdriver/firefox');
+import chrome from 'selenium-webdriver/chrome.js';
+import firefox from 'selenium-webdriver/firefox.js';
 
 const chromeOptions = new chrome.Options();
 const firefoxOptions = new firefox.Options();
@@ -57,4 +57,4 @@ class WebDriverFactory {
 }
 
 
-module.exports = WebDriverFactory;
+export default WebDriverFactory;

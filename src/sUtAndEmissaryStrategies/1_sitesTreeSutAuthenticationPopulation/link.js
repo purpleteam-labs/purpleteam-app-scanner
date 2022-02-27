@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const SitesTreeSutAuthenticationPopulation = require('./strategy');
+import SitesTreeSutAuthenticationPopulation from './strategy.js';
 
 class Link extends SitesTreeSutAuthenticationPopulation {
   #fileName = 'link';
@@ -34,4 +34,4 @@ class Link extends SitesTreeSutAuthenticationPopulation {
   }
 }
 
-module.exports = Link;
+export default Link;

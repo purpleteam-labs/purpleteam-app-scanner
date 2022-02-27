@@ -7,12 +7,13 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { promises: fsPromises } = require('fs');
+import { promises as fsPromises } from 'fs';
+import { promisify } from 'util';
+import { randomBytes } from 'crypto';
+import config from '../../../config/config.js';
+import SitesTreePopulation from './strategy.js';
 
-const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
-
-const rndBytes = require('util').promisify(require('crypto').randomBytes);
-const SitesTreePopulation = require('./strategy');
+const rndBytes = promisify(randomBytes);
 
 // Doc: https://www.zaproxy.org/docs/desktop/addons/graphql-support/
 // Doc: https://www.zaproxy.org/blog/2020-08-28-introducing-the-graphql-add-on-for-zap/
@@ -136,5 +137,5 @@ class GraphQl extends SitesTreePopulation {
   }
 }
 
-module.exports = GraphQl;
+export default GraphQl;
 

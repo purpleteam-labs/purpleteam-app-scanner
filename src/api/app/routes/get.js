@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-module.exports = [{
+export default [{
   method: 'GET',
   path: '/status',
   handler: () => 'app-scanner is up'

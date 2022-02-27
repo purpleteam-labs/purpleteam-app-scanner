@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { spawn } = require('child_process');
+import { spawn } from 'child_process';
 
 const internals = { nextChildProcessInspectPort: undefined };
 
@@ -69,4 +69,4 @@ const startCucs = (parameters) => {
   });
 };
 
-module.exports = { startCucs };
+export default { startCucs };

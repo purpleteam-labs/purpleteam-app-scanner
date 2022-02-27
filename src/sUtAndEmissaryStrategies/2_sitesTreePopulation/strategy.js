@@ -43,4 +43,4 @@ class SitesTreePopulation {
   }
 }
 
-module.exports = SitesTreePopulation;
+export default SitesTreePopulation;

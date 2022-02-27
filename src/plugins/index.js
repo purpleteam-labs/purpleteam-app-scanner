@@ -7,6 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const hapiEventHandler = require('./hapiEventHandler');
+import hapiEventHandler from './hapiEventHandler.js';
 
-module.exports = { hapiEventHandler };
+export default { hapiEventHandler };
+export { hapiEventHandler };

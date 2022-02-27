@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const BrowserAppStandard = require('./browserAppStandard');
-const ApiStandard = require('./aPiStandard');
+import BrowserAppStandard from './browserAppStandard.js';
+import ApiStandard from './aPiStandard.js';
 
-module.exports = { BrowserAppStandard, ApiStandard };
+export default { BrowserAppStandard, ApiStandard };

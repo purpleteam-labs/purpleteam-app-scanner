@@ -7,10 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const convict = require('convict');
-const { duration } = require('convict-format-with-moment');
-const { url } = require('convict-format-with-validator');
-const path = require('path');
+import convict from 'convict';
+import { duration } from 'convict-format-with-moment';
+import { url } from 'convict-format-with-validator';
+import { fileURLToPath } from 'url';
+import path, { dirname } from 'path';
 
 convict.addFormat(duration);
 convict.addFormat(url);
@@ -73,8 +74,7 @@ const schema = {
       doc: 'The options used for creating the redis client.',
       format: (val) => typeof val === 'object',
       default: {
-        port: 6379,
-        host: 'redis'
+        socket: { host: 'redis', port: 6379 }
         // "host": "172.17.0.2" // host networking or not running in container
       }
     }
@@ -211,7 +211,7 @@ const schema = {
       doc: 'The location of the Cucumber binary.',
       format: String,
       // default: `${process.cwd()}/node_modules/.bin/cucumber-js`
-      default: `${process.cwd()}/bin/purpleteamParallelCucumber`
+      default: path.join(process.cwd(), '/bin/purpleteamCucumber.js')
     },
     timeout: {
       doc: 'The value used to set the timeout (https://github.com/cucumber/cucumber-js/blob/master/docs/support_files/timeouts.md)',
@@ -255,7 +255,9 @@ const schema = {
 };
 
 const config = convict(schema);
-config.loadFile(path.join(__dirname, `config.${process.env.NODE_ENV}.json`));
+const filename = fileURLToPath(import.meta.url);
+const currentDirName = dirname(filename);
+config.loadFile(path.join(currentDirName, `config.${process.env.NODE_ENV}.json`));
 config.validate();
 
-module.exports = config;
+export default config;

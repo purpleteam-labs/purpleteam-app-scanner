@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { By, until } = require('selenium-webdriver');
+import { By, until } from 'selenium-webdriver';
 
 // The three types of wiats in Selenium are:
 //   Implicit Wait    Wait for a measure of time before throwing exception (this is a blunt tool).
@@ -122,7 +122,7 @@ const checkAndNotifyBuildUserIfAnyKnownBrowserErrors = async (testSessionId) => 
   }
 };
 
-module.exports = {
+export default {
   findElementThenClick,
   findElementThenClear,
   findElementThenSendKeys,

@@ -46,7 +46,7 @@ const subscribeToEvents = (server, options) => {
   }, processMonitoringInterval);
 };
 
-module.exports = {
+export default {
   name: 'hapiEventHandlerPlugin',
   version: '1.0.0',
   register: async (server, options) => {

@@ -7,19 +7,19 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { promises: fsPromises } = require('fs');
+import { promises as fsPromises } from 'fs';
+import { promisify } from 'util';
+import { randomBytes } from 'crypto';
+import config from '../../../config/config.js';
+import EmissaryAuthentication from './strategy.js';
+import { percentEncode } from '../../strings/index.js';
 
-const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
-
-const rndBytes = require('util').promisify(require('crypto').randomBytes);
-const EmissaryAuthentication = require('./strategy');
-
-const { percentEncode } = require(`${process.cwd()}/src/strings`); // eslint-disable-line import/no-dynamic-require
+const rndBytes = promisify(randomBytes);
 
 // Doc: https://www.zaproxy.org/docs/authentication/
 // Doc: https://www.zaproxy.org/docs/desktop/start/features/authentication/
 // Doc: https://www.zaproxy.org/docs/desktop/start/features/authmethods/
-// Doc: https://www.zaproxy.org/docs/api/
+// Doc: https://www.zaproxy.org/docs/api/#getting-authenticated
 // Doc: https://docs.google.com/document/d/1LSg8CMb4LI5yP-8jYDTVJw1ZIJD2W_WDWXLtJNk3rsQ/edit#
 
 class MaintainJwt extends EmissaryAuthentication {
@@ -233,4 +233,4 @@ class MaintainJwt extends EmissaryAuthentication {
   }
 }
 
-module.exports = MaintainJwt;
+export default MaintainJwt;

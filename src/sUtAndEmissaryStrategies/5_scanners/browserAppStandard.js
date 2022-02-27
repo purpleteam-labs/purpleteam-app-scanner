@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Scanners = require('./strategy');
+import Scanners from './strategy.js';
 
 class BrowserAppStandard extends Scanners {
   #sutPropertiesSubSet;
@@ -97,4 +97,4 @@ class BrowserAppStandard extends Scanners {
   }
 }
 
-module.exports = BrowserAppStandard;
+export default BrowserAppStandard;

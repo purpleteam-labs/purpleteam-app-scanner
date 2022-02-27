@@ -22,4 +22,4 @@ class SitesTreeSutAuthenticationPopulation {
   }
 }
 
-module.exports = SitesTreeSutAuthenticationPopulation;
+export default SitesTreeSutAuthenticationPopulation;

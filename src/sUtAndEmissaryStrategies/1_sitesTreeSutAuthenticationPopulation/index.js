@@ -7,8 +7,8 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const FormStandard = require('./formStandard');
-const Link = require('./link');
+import FormStandard from './formStandard.js';
+import Link from './link.js';
 
-module.exports = { FormStandard, Link };
+export default { FormStandard, Link };
 

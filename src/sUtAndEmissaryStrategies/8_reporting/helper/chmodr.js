@@ -1,8 +1,8 @@
 // Used and adapted from: https://github.com/isaacs/chmodr
 /* eslint-disable */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // If a party has r, add x
 // so that dirs are listable
@@ -64,5 +64,5 @@ const chmodr = async (p, mode, callbackFromChmodRKid) => {
 
 };
 
-module.exports = chmodr;
+export default chmodr;
 /* eslint-enable */

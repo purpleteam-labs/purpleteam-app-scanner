@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const SitesTreeSutAuthenticationPopulation = require('./strategy');
+import SitesTreeSutAuthenticationPopulation from './strategy.js';
 
 class FormStandard extends SitesTreeSutAuthenticationPopulation {
   #fileName = 'formStandard';
@@ -36,4 +36,4 @@ class FormStandard extends SitesTreeSutAuthenticationPopulation {
   }
 }
 
-module.exports = FormStandard;
+export default FormStandard;

@@ -17,7 +17,6 @@ const NowAsFileName = (hourMinuteSecondSeperator = ':') => {
 
 const percentEncode = (str) => str.split('').map((char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`).reduce((accum, cV) => `${accum}${cV}`, '');
 
-module.exports = {
-  NowAsFileName,
-  percentEncode
-};
+export default { NowAsFileName, percentEncode };
+export { NowAsFileName, percentEncode };
+

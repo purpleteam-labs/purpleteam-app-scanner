@@ -7,12 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const test = require('ava');
-const sinon = require('sinon');
+import test from 'ava';
+import sinon from 'sinon';
+import App from '../../../../src/api/app/models/app.js';
 
 const appRootDir = process.cwd();
-
-const App = require('../../../../src/api/app/models/app');
 
 // ////////////////////////////////////////////////
 // getActiveFeatureFileUris

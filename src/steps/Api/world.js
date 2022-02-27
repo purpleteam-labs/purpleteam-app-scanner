@@ -7,11 +7,10 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const { setWorldConstructor, setDefaultTimeout } = require('@cucumber/cucumber');
+import { setWorldConstructor, setDefaultTimeout } from '@cucumber/cucumber';
+import ParentWorld from '../world.js';
 
 let timeout;
-
-const ParentWorld = require('../world');
 
 class ApiWorld extends ParentWorld {
   constructor({ attach, parameters }) {

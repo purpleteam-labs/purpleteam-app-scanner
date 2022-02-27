@@ -7,13 +7,14 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const config = require(`${process.cwd()}/config/config`); // eslint-disable-line import/no-dynamic-require
-const log = require('purpleteam-logger').init(config.get('logger'));
+import { init as initPtLogger } from 'purpleteam-logger';
+import { init as initMessagePublisher } from '../publishers/messagePublisher.js';
+import config from '../../config/config.js';
+import sUt from '../api/app/do/index.js';
+import zAp from '../emissaries/zAp.js';
 
-const messagePublisher = require(`${process.cwd()}/src/publishers/messagePublisher`).init({ log, redis: config.get('redis.clientCreationOptions') }); // eslint-disable-line import/no-dynamic-require
-
-const sUt = require(`${process.cwd()}/src/api/app/do`); // eslint-disable-line import/no-dynamic-require
-const zAp = require(`${process.cwd()}/src/emissaries/zAp`); // eslint-disable-line import/no-dynamic-require
+const log = initPtLogger(config.get('logger'));
+const messagePublisher = await initMessagePublisher({ log, redis: config.get('redis.clientCreationOptions') });
 
 class ParentWorld {
   constructor({ attach, parameters }) {
@@ -30,4 +31,4 @@ class ParentWorld {
   }
 }
 
-module.exports = ParentWorld;
+export default ParentWorld;

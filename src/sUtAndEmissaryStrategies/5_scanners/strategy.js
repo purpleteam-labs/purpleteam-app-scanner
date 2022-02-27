@@ -21,4 +21,4 @@ class Scanners {
   }
 }
 
-module.exports = Scanners;
+export default Scanners;

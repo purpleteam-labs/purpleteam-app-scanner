@@ -21,5 +21,5 @@ class EmissaryAuthentication {
   }
 }
 
-module.exports = EmissaryAuthentication;
+export default EmissaryAuthentication;
 

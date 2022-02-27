@@ -7,11 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const WebDriverStandard = require('./webDriverStandard');
-const ImportUrls = require('./importUrls');
-const OpenApi = require('./openApi');
-const Soap = require('./sOap');
-const GraphQl = require('./graphQl');
+import WebDriverStandard from './webDriverStandard.js';
+import ImportUrls from './importUrls.js';
+import OpenApi from './openApi.js';
+import Soap from './sOap.js';
+import GraphQl from './graphQl.js';
 
-module.exports = { WebDriverStandard, ImportUrls, OpenApi, Soap, GraphQl };
+export default { WebDriverStandard, ImportUrls, OpenApi, Soap, GraphQl };
 

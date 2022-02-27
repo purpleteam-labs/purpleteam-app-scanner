@@ -20,4 +20,4 @@ class Reporting {
   }
 }
 
-module.exports = Reporting;
+export default Reporting;

@@ -7,8 +7,8 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const BrowserApp = require('./sUt.browserApp');
-const Api = require('./sUt.aPi');
+import BrowserApp from './sUt.browserApp.js';
+import Api from './sUt.aPi.js';
 
 // Get help with cucumber cli:
 // node ./node_modules/.bin/cucumber-js --help
@@ -16,4 +16,4 @@ const Api = require('./sUt.aPi');
 // Debug cucumber cli without actually running the tests (--dry-run). --dry-run to check that all glue code exists: https://github.com/cucumber/cucumber-jvm/issues/907
 // node --inspect-brk ./node_modules/.bin/cucumber-js --dry-run src/features --require src/steps --tags "not @simple_math"
 
-module.exports = { BrowserApp, Api };
+export default { BrowserApp, Api };

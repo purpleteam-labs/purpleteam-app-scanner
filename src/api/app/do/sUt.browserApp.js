@@ -7,14 +7,12 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Joi = require('joi');
-const Sut = require('./sUt');
-/* eslint-disable import/no-dynamic-require */
-const WebDriverFactory = require(`${process.cwd()}/src/drivers/webDriverFactory`);
-const browser = require(`${process.cwd()}/src/clients/browser`);
+import Joi from 'joi';
+import Sut from './sUt.js';
+import WebDriverFactory from '../../../drivers/webDriverFactory.js';
+import browser from '../../../clients/browser.js';
 // Strategies.
-const sitesTreeSutAuthenticationPopulation = require(`${process.cwd()}/src/sUtAndEmissaryStrategies/1_sitesTreeSutAuthenticationPopulation`);
-/* eslint-enable import/no-dynamic-require */
+import sitesTreeSutAuthenticationPopulation from '../../../sUtAndEmissaryStrategies/1_sitesTreeSutAuthenticationPopulation/index.js';
 
 
 class BrowserApp extends Sut {
@@ -230,4 +228,4 @@ class BrowserApp extends Sut {
   }
 }
 
-module.exports = BrowserApp;
+export default BrowserApp;

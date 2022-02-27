@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const PostScanning = require('./strategy');
+import PostScanning from './strategy.js';
 
 class ApiStandard extends PostScanning {
   #sutPropertiesSubSet;
@@ -35,4 +35,4 @@ class ApiStandard extends PostScanning {
   }
 }
 
-module.exports = ApiStandard;
+export default ApiStandard;

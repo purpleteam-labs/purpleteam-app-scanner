@@ -1,17 +1,26 @@
 {
+  "ava": {
+    "files": [
+      "test/**/*"
+    ],
+    "environmentVariables": {
+      "NODE_ENV": "test"
+    }
+  },
   "name": "purpleteam-app-scanner",
   "version": "3.1.0-alpha.3",
   "description": "Application scanning component of purpleteam -- security regression testing SaaS",
-  "main": "index.js",
+  "exports": "./index.js",
   "bin": {
-    "purpleteamParallelCucumber": "./bin/purpleteamParallelCucumber"
+    "purpleteamCucumber": "./bin/purpleteamCucumber.js"
   },
   "scripts": {
     "lint": "eslint .",
     "deps": "npm-check",
     "update:deps": "npm-check -u",
-    "test": "nyc --reporter=lcov --reporter=text-summary ava",
-    "test:nolint": "nyc --reporter=lcov --reporter=text-summary ava",
+    "test": "c8 --reporter=lcov --reporter=text-summary ava",
+    "test:nolint": "c8 --reporter=lcov --reporter=text-summary ava",
+    "test:coveralls": "c8 --reporter lcov -o ./coverage/lcov.info ava",
     "test:debug": "ava debug --break ./test/api/app/models/app.js",
     "pretest": "npm run lint",
     "debug": "node --inspect-brk ./index.js",
@@ -57,39 +66,37 @@
   },
   "homepage": "https://purpleteam-labs.com",
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.18.0",
-    "@aws-sdk/client-servicediscovery": "^3.18.0",
-    "@cucumber/cucumber": "^7.2.1",
-    "@cucumber/gherkin-streams": "2.0.2",
+    "@aws-sdk/client-lambda": "^3.49.0",
+    "@aws-sdk/client-servicediscovery": "^3.49.0",
+    "@cucumber/cucumber": "^8.0.0-rc.2",
+    "@cucumber/gherkin-streams": "4.0.0",
     "@hapi/bourne": "^2.0.0",
-    "@hapi/hapi": "^20.1.3",
-    "app-module-path": "^2.2.0",
-    "axios": "^0.21.1",
-    "convict": "^6.1.0",
-    "convict-format-with-moment": "^6.0.1",
-    "convict-format-with-validator": "^6.0.1",
-    "got": "^11.8.2",
+    "@hapi/hapi": "^20.2.1",
+    "axios": "^0.26.0",
+    "convict": "^6.2.1",
+    "convict-format-with-moment": "^6.2.0",
+    "convict-format-with-validator": "^6.2.0",
+    "got": "^12.0.1",
     "hpagent": "^0.1.2",
-    "http-proxy-agent": "^4.0.1",
-    "joi": "^17.4.0",
-    "purpleteam-logger": "^1.1.2",
-    "redis": "^3.1.2",
-    "selenium-webdriver": "^4.0.0-beta.3"
+    "http-proxy-agent": "^5.0.0",
+    "joi": "^17.6.0",
+    "purpleteam-logger": "purpleteam-labs/purpleteam-logger.git#binarymist/upgrade",
+    "redis": "^4.0.2",
+    "selenium-webdriver": "^4.1.1"
   },
   "//Install ajv --save-dev": "gets rid of npm warning.",
   "devDependencies": {
-    "ava": "^3.15.0",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-ava": "^12.0.0",
-    "eslint-plugin-import": "^2.24.2",
+    "ava": "^4.0.1",
+    "c8": "^7.11.0",
+    "eslint": "^8.9.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-ava": "^13.2.0",
+    "eslint-plugin-import": "^2.25.4",
+    "husky": "^7.0.4",
     "npm-check": "^5.9.2",
-    "nyc": "^15.1.0",
-    "rewire": "^5.0.0",
-    "sinon": "^11.1.1",
-    "husky": "^6.0.0"
+    "sinon": "^13.0.1"
   },
+  "type": "module",
   "files": [
     "index.js",
     "Dockerfile",

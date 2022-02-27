@@ -12,11 +12,11 @@
 // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-servicediscovery/index.html
 // Doc: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-servicediscovery/classes/listinstancescommand.html
 // Doc: https://docs.aws.amazon.com/code-samples/latest/catalog/javascriptv3-lambda-src-MyLambdaApp-index.ts.html
-const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
-const { ServiceDiscoveryClient, ListInstancesCommand } = require('@aws-sdk/client-servicediscovery');
-const axios = require('axios');
-const HttpProxyAgent = require('http-proxy-agent');
-const Bourne = require('@hapi/bourne');
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+import { ServiceDiscoveryClient, ListInstancesCommand } from '@aws-sdk/client-servicediscovery';
+import axios from 'axios';
+import HttpProxyAgent from 'http-proxy-agent';
+import Bourne from '@hapi/bourne';
 
 // For complete sessionsProps
 // https://github.com/cucumber/cucumber-js/issues/786#issuecomment-372928596
@@ -482,7 +482,7 @@ const initEmissaries = async ({ sessionsProps, app: { log, status, s2Containers,
   return returnResult;
 };
 
-module.exports = {
+export default {
   deprovisionS2ContainersViaLambda,
   initEmissaries
 };

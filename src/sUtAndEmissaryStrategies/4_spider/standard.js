@@ -7,7 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Spider = require('./strategy');
+import Spider from './strategy.js';
 
 class Standard extends Spider {
   #sutPropertiesSubSet;
@@ -41,4 +41,4 @@ class Standard extends Spider {
   }
 }
 /* eslint-enable */
-module.exports = Standard;
+export default Standard;

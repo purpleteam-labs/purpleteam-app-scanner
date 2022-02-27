@@ -7,13 +7,11 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-const Joi = require('joi');
-const Sut = require('./sUt');
-/* eslint-disable import/no-dynamic-require */
+import Joi from 'joi';
+import Sut from './sUt.js';
 
 // Strategies.
-
-/* eslint-enable import/no-dynamic-require */
+// ...
 
 class Api extends Sut {
   #configSchemaProps;
@@ -185,4 +183,4 @@ class Api extends Sut {
   }
 }
 
-module.exports = Api;
+export default Api;
