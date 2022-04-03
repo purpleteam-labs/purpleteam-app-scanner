@@ -8,105 +8,22 @@
 // by the Apache License, Version 2.0
 
 import test from 'ava';
-import sinon from 'sinon';
+// import sinon from 'sinon';
 import App from '../../../../src/api/app/models/app.js';
-
-const appRootDir = process.cwd();
 
 // ////////////////////////////////////////////////
 // getActiveFeatureFileUris
 // ////////////////////////////////////////////////
 
-const setupGetActiveFeatureFileUris = async ({ tagExpression }) => {
-  const theFeatureFilesThatExist = [`${appRootDir}/testResources/features/app_scan.feature`, `${appRootDir}/testResources/features/simple_math.feature`];
-
-  const configuration = {
-    pickleFilterOptions: { cwd: appRootDir, featurePaths: ['testResources/features'], names: [], tagExpression },
-    featurePaths: theFeatureFilesThatExist
-  };
-  const getConfigurationFake = sinon.fake.returns(configuration);
-  const cucumberCli = { getConfiguration: getConfigurationFake };
-  const appOptions = { log: undefined, strings: undefined, emissary: undefined, cucumber: undefined, results: undefined, cloud: undefined, debug: undefined, s2Containers: undefined }; // eslint-disable-line max-len
-  const app = new App(appOptions);
-
-  return app.getActiveFeatureFileUris(cucumberCli);
+const getAnAppInstance = () => {
+  const cucumberConfig = { features: 'src/features', steps: 'src/steps' };
+  const appOptions = { log: undefined, strings: undefined, emissary: undefined, cucumber: cucumberConfig, results: undefined, cloud: undefined, debug: undefined, s2Containers: undefined }; // eslint-disable-line max-len
+  return new App(appOptions);
 };
 
-test('Given tagExpression: (@app_scan) - when getActiveFeatureFileUris is invoked - then active feature file Uris app_scan.feature should be returned', async (t) => {
-  t.plan(1);
-  // Active feature files are based on the cucumber.tagExpression defined in config.
-  // https://cucumber.io/docs/cucumber/api/#tag-expressions
-  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
-  const tagExpression = '(@app_scan)';
-  const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
-  t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`]);
-});
-
-test('Given tagExpression: (@simple_math) - when getActiveFeatureFileUris is invoked - then active feature file Uris simple_math.feature should be returned', async (t) => {
-  t.plan(1);
-  // Active feature files are based on the cucumber.tagExpression defined in config.
-  // https://cucumber.io/docs/cucumber/api/#tag-expressions
-  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
-  const tagExpression = '(@simple_math)';
-  const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
-  t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/simple_math.feature`]);
-});
-
-test('Given tagExpression: (@app_scan or @simple_math) - when getActiveFeatureFileUris is invoked - then active feature file Uris app_scan.feature and simple_math.feature should be returned', async (t) => {
-  t.plan(1);
-  // Active feature files are based on the cucumber.tagExpression defined in config.
-  // https://cucumber.io/docs/cucumber/api/#tag-expressions
-  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
-  const tagExpression = '(@app_scan or @simple_math)';
-  const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
-  t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`, `${appRootDir}/testResources/features/simple_math.feature`]);
-});
-
-// Since cucumber.getTestCasesFromFilesystem was removed, the following test cases fail, including the ones not yet implemented.
-
-test('Given tagExpression: (@app_scan and @simple_math) - when getActiveFeatureFileUris is invoked - then no active feature file Uris should be returned', async (t) => {
-  t.plan(1);
-  // Active feature files are based on the cucumber.tagExpression defined in config.
-  // https://cucumber.io/docs/cucumber/api/#tag-expressions
-  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
-  const tagExpression = '(@app_scan and @simple_math)';
-  const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
-  t.deepEqual(activeFeatureFileUris, []);
-});
-
-test('Given tagExpression: (not @simple_math) - when getActiveFeatureFileUris is invoked - then active feature file Uris app_scan.feature should be returned', async (t) => {
-  t.plan(1);
-  // Active feature files are based on the cucumber.tagExpression defined in config.
-  // https://cucumber.io/docs/cucumber/api/#tag-expressions
-  // https://github.com/cucumber/cucumber/tree/master/tag-expressions#migrating-from-old-style-tags
-  const tagExpression = '(not @simple_math)';
-  const activeFeatureFileUris = await setupGetActiveFeatureFileUris({ tagExpression });
-  t.deepEqual(activeFeatureFileUris, [`${appRootDir}/testResources/features/app_scan.feature`]);
-});
-
-// Ideas for creating feature files with tags to test for here: https://cucumber.io/docs/cucumber/api/#tags
-
-// @wip and not @slow
-// Scenarios tagged with @wip that are not also tagged with @slow
-
-// (@smoke or @ui) and (not @slow)
-// Scenarios tagged with @smoke or @ui that are not also tagged with @slow
-
-// not @foo and (@bar or @zap)
-// Scenarios tagged with @bar or @zap that are not also tagged with @foo
-
-// Continue implementing failing tests?
-
-// ////////////////////////////////////////////////
-// getTestPlanText
-// ////////////////////////////////////////////////
-
-test('Given activeFeatureFileUris: [appRootDir/testResources/features/app_scan.feature] - when getTestPlanText is invoked - then app_scan.feature test plan should be returned', async (t) => {
-  t.plan(1);
-  const activeFeatureFileUris = [`${appRootDir}/testResources/features/app_scan.feature`];
-  const appOptions = { log: undefined, strings: undefined, emissary: undefined, cucumber: undefined, cucumberConfig: undefined, results: undefined, publisher: undefined, runType: undefined, cloud: undefined, debug: undefined }; // eslint-disable-line max-len
-  const app = new App(appOptions);
-  const expectedTestPlanText = `@app_scan
+test('Given tagExpression: (@app_scan) - when testPlan is invoked - then the app_scan.feature text should be returned', async (t) => {
+  const testJob = { data: { type: 'BrowserApp' } };
+  const expectedTestPlan = `@app_scan
 Feature: Web application free of security vulnerabilities known to the Emissary
 
 # Before hooks are run before Background
@@ -123,17 +40,14 @@ Scenario: The application should not contain vulnerabilities known to the Emissa
   Then the vulnerability count should not exceed the Build User defined threshold of vulnerabilities known to the Emissary
 
 `;
-  const testPlanText = await app.getTestPlanText(activeFeatureFileUris);
-  t.deepEqual(testPlanText, expectedTestPlanText);
+  const testPlan = await getAnAppInstance().testPlan(testJob);
+  t.is(testPlan, expectedTestPlan);
 });
 
-test('Given activeFeatureFileUris: [appRootDir/testResources/features/app_scan.feature, appRootDir/testResources/features/simple_math.feature] - when getTestPlanText is invoked - then app_scan.feature and simple_math.feature test plans should be returned', async (t) => {
-  t.plan(1);
-  const activeFeatureFileUris = [`${appRootDir}/testResources/features/app_scan.feature`, `${appRootDir}/testResources/features/simple_math.feature`];
-  const appOptions = { log: undefined, strings: undefined, emissary: undefined, cucumber: undefined, cucumberConfig: undefined, results: undefined, publisher: undefined, runType: undefined, cloud: undefined, debug: undefined }; // eslint-disable-line max-len
-  const app = new App(appOptions);
-  const expectedTestPlanText = `@app_scan
-Feature: Web application free of security vulnerabilities known to the Emissary
+test('Given tagExpression: (@api_scan) - when testPlan is invoked - then the api_scan.feature text should be returned', async (t) => {
+  const testJob = { data: { type: 'Api' } };
+  const expectedTestPlan = `@api_scan
+Feature: Web API free of security vulnerabilities known to the Emissary
 
 # Before hooks are run before Background
 
@@ -141,38 +55,15 @@ Background:
   Given a new Test Session based on each Build User supplied appScanner resourceObject
   And the Emissary sites tree is populated with each Build User supplied route of each appScanner resourceObject
   And the Emissary authentication is configured for the SUT
-  And the application is spidered for each appScanner resourceObject
+  And the API is spidered for each appScanner resourceObject
 
 Scenario: The application should not contain vulnerabilities known to the Emissary that exceed the Build User defined threshold
   Given the active scanners are configured
   When the active scan is run
   Then the vulnerability count should not exceed the Build User defined threshold of vulnerabilities known to the Emissary
 
-
-
-@simple_math
-Feature: Simple maths
-  In order to do maths
-  As a developer
-  I want to increment variables
-
-  Scenario: easy maths
-    Given a variable set to 1
-    When I increment the variable by 1
-    Then the variable should contain 2
-
-  Scenario Outline: much more complex stuff
-    Given a variable set to <var>
-    When I increment the variable by <increment>
-    Then the variable should contain <result>
-
-    Examples:
-      | var | increment | result |
-      | 100 |         5 |    105 |
-      |  99 |      1234 |   1333 |
-      |  12 |         5 |     17 |
-
 `;
-  const testPlanText = await app.getTestPlanText(activeFeatureFileUris);
-  t.deepEqual(testPlanText, expectedTestPlanText);
+  const testPlan = await getAnAppInstance().testPlan(testJob);
+  t.is(testPlan, expectedTestPlan);
 });
+

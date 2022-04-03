@@ -7,8 +7,7 @@
 // the Business Source License, use of this software will be governed
 // by the Apache License, Version 2.0
 
-import { Cli as CucCli, PickleFilter } from '@cucumber/cucumber';
-import { GherkinStreams } from '@cucumber/gherkin-streams';
+import { loadConfiguration, loadSources } from '@cucumber/cucumber/api'; // eslint-disable-line import/no-unresolved
 import { promises as fsPromises } from 'fs';
 import model from './index.js';
 
@@ -133,17 +132,22 @@ class App {
     }
   }
 
-
   async testPlan(testJob) {
-    const cucumberArgs = this.#createCucumberArgs({ sessionProps: { sUtType: testJob.data.type } });
-    const cucumberCliInstance = new CucCli({
-      argv: ['node', ...cucumberArgs],
-      cwd: process.cwd(),
-      stdout: process.stdout
+    const sUtType = testJob.data.type;
+    const tagExpression = { BrowserApp: '@app_scan', Api: '@api_scan' }[sUtType];
+    const { runConfiguration } = await loadConfiguration({
+      provided: {
+        paths: [`${this.#cucumber.features}/${sUtType}`],
+        require: [`${this.#cucumber.steps}/${sUtType}`],
+        tags: tagExpression
+      }
     });
-    const activeFeatureFileUris = await this.getActiveFeatureFileUris(cucumberCliInstance);
-    const testPlanText = await this.getTestPlanText(activeFeatureFileUris);
-    return testPlanText;
+    const loadSourcesResult = await loadSources(runConfiguration.sources);
+    const activeFeatureFileUris = loadSourcesResult.plan.map((pickle) => pickle.uri)
+      .reduce((accum, cV) => [...accum, ...(accum.includes(cV) ? [] : [cV])], []);
+    return (await Promise.all(activeFeatureFileUris
+      .map((aFFU) => readFile(aFFU, { encoding: 'utf8' }))))
+      .reduce((accumulatedFeatures, feature) => `${accumulatedFeatures}${!accumulatedFeatures.length > 0 ? feature : `\n\n${feature}`}`, '');
   }
 
   #numberOfTestSessions() {
@@ -194,47 +198,6 @@ class App {
 
     // Todo: KC: Validation, Filtering and Sanitisation required, as these are being executed, although they should all be under our control.
     return cucumberArgs;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async getActiveFeatureFileUris(cucumberCli) {
-    const configuration = await cucumberCli.getConfiguration();
-    const pickleFilter = (() => new PickleFilter(configuration.pickleFilterOptions))();
-
-    const streamToArray = async (readableStream) => new Promise((resolve, reject) => {
-      const items = [];
-      readableStream.on('data', (item) => items.push(item));
-      readableStream.on('error', (err) => reject(err));
-      readableStream.on('end', () => resolve(items));
-    });
-
-    const activeFeatureFileUris = async () => {
-      const envelopes = await streamToArray(GherkinStreams.fromPaths(configuration.featurePaths, { includeSource: false, includeGherkinDocument: true, includePickles: true }));
-      let gherkinDocument = null;
-      const pickles = [];
-
-      envelopes.forEach((e) => {
-        if (e.gherkinDocument) {
-          gherkinDocument = e.gherkinDocument;
-        } else if (e.pickle && gherkinDocument) {
-          const { pickle } = e;
-          if (pickleFilter.matches({ gherkinDocument, pickle })) pickles.push({ pickle });
-        }
-      });
-
-      return pickles
-        .map((p) => p.pickle.uri)
-        .reduce((accum, cV) => [...accum, ...(accum.includes(cV) ? [] : [cV])], []);
-    };
-
-    return activeFeatureFileUris();
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async getTestPlanText(activeFeatureFileUris) {
-    return (await Promise.all(activeFeatureFileUris
-      .map((aFFU) => readFile(aFFU, { encoding: 'utf8' }))))
-      .reduce((accumulatedFeatures, feature) => `${accumulatedFeatures}${!accumulatedFeatures.length > 0 ? feature : `\n\n${feature}`}`, '');
   }
 }
 
