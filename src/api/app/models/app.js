@@ -183,7 +183,7 @@ class App {
     const cucumberArgs = [
       this.#cucumber.binary,
       `${this.#cucumber.features}/${sessionProps.sUtType}`,
-      '--require',
+      '--import',
       `${this.#cucumber.steps}/${sessionProps.sUtType}`,
       /* '--exit', */
       `--format=message:${this.#results.dir}result_appScannerId-${sessionProps.testSession ? sessionProps.testSession.id : 'noSessionPropsAvailable'}_${this.#strings.NowAsFileName('-')}.NDJSON`,
