@@ -79,7 +79,7 @@
     "hpagent": "^0.1.2",
     "http-proxy-agent": "^5.0.0",
     "joi": "^17.6.0",
-    "purpleteam-logger": "purpleteam-labs/purpleteam-logger.git#binarymist/upgrade",
+    "purpleteam-logger": "^2.0.0",
     "redis": "^4.0.2",
     "selenium-webdriver": "^4.1.1"
   },
