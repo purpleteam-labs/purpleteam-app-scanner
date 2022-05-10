@@ -14,8 +14,8 @@
 // Doc: https://docs.aws.amazon.com/code-samples/latest/catalog/javascriptv3-lambda-src-MyLambdaApp-index.ts.html
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { ServiceDiscoveryClient, ListInstancesCommand } from '@aws-sdk/client-servicediscovery';
-import axios from 'axios';
-import HttpProxyAgent from 'http-proxy-agent';
+import got from 'got';
+import { HttpProxyAgent } from 'hpagent';
 import Bourne from '@hapi/bourne';
 
 // For complete sessionsProps
@@ -247,10 +247,22 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
     //   https://github.com/zaproxy/zaproxy/issues/3796#issuecomment-319376915
     //   https://github.com/zaproxy/zaproxy/issues/3594
     {
-      cloud() { return axios.get(`${protocol}://zap:${port}/UI`, { httpAgent: new HttpProxyAgent(`${protocol}://${mCV.appEmissaryHostName}:${mCV.appEmissaryPort}`) }); },
-      local() { return axios.get(`${protocol}://${mCV.appEmissaryHostName}:${mCV.appEmissaryPort}/UI`); }
+      cloud() {
+        const agent = {
+          http: new HttpProxyAgent({
+            keepAlive: true,
+            keepAliveMsecs: 1000,
+            maxSockets: 256,
+            maxFreeSockets: 256,
+            scheduling: 'lifo',
+            proxy: `${protocol}://${mCV.appEmissaryHostName}:${mCV.appEmissaryPort}`
+          })
+        };
+        return got.get(`${protocol}://zap:${port}/UI`, { agent });
+      },
+      local() { return got.get(`${protocol}://${mCV.appEmissaryHostName}:${mCV.appEmissaryPort}/UI`); }
     }[process.env.NODE_ENV](),
-    axios.get(`http://${mCV.seleniumHostName}:${mCV.seleniumPort}/wd/hub/status`)
+    got.get(`http://${mCV.seleniumHostName}:${mCV.seleniumPort}/wd/hub/status`)
   ]);
 
   const results = await Promise.all(containerReadyPromises)
@@ -262,7 +274,7 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
         log.warning(`${error.response.status}`, { tags: ['app.emissary'] });
         log.warning(`${error.response.headers}`, { tags: ['app.emissary'] });
       } else if (error.request && error.message) {
-        log.warning(`The request was made to check emissary health but no response was received.\nThe error.message was: ${error.message}\nThe error.stack was: ${error.stack}`, { tags: ['app.emissary'] });
+        log.warning(`The request was made to check emissary health but no response was received.\nThe error.message was: ${error.message}`, { tags: ['app.emissary'] });
       } else {
         log.warning('Something happened in setting up the request that triggered an Error', { tags: ['app.emissary'] });
         log.warning(`${error.message}`, { tags: ['app.emissary'] });
@@ -271,8 +283,8 @@ internals.s2ContainersReady = async ({ collectionOfS2ContainerHostNamesWithPorts
 
   if (results) {
     const isReady = {
-      appEmissary: (response) => (typeof response.data === 'string') && response.data.includes('ZAP API UI'),
-      seleniumContainer: (response) => response.data.value.ready === true
+      appEmissary: (response) => (typeof response.body === 'string') && response.body.includes('ZAP API UI'),
+      seleniumContainer: (response) => Bourne.parse(response.body).value.ready === true
     };
     const containersThatAreNotReady = results.filter((e) => !(isReady.appEmissary(e) || isReady.seleniumContainer(e)));
     log.notice(`containersThatAreNotReady is: ${JSON.stringify(containersThatAreNotReady)}`, { tags: ['app.emissary', 's2ContainersReady'] });
