@@ -15,7 +15,7 @@
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { ServiceDiscoveryClient, ListInstancesCommand } from '@aws-sdk/client-servicediscovery';
 import got from 'got';
-import HttpProxyAgent from 'http-proxy-agent';
+import { HttpProxyAgent } from 'hpagent';
 import Bourne from '@hapi/bourne';
 
 // For complete sessionsProps
