@@ -71,7 +71,6 @@
     "@cucumber/cucumber": "^8.0.0-rc.3",
     "@hapi/bourne": "^2.0.0",
     "@hapi/hapi": "^20.2.1",
-    "axios": "^0.26.0",
     "convict": "^6.2.1",
     "convict-format-with-moment": "^6.2.0",
     "convict-format-with-validator": "^6.2.0",
