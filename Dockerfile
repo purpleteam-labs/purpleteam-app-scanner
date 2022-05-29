@@ -16,8 +16,6 @@ ARG LOCAL_GROUP_ID
 # ENV USER 1000
 ENV USER app_scanner
 ENV GROUP purpleteam
-# Hack to get around cucumber's dependency change: https://github.com/cucumber/cucumber-js/issues/2011
-ENV FORCE_COLOR 1
 RUN echo user is: ${USER}, LOCAL_USER_ID is: ${LOCAL_USER_ID}, group is: ${GROUP}, LOCAL_GROUP_ID is: ${LOCAL_GROUP_ID}
 
 # Used for testing zap access manually (usefull for cloud env).

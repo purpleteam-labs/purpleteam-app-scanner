@@ -68,7 +68,7 @@
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.49.0",
     "@aws-sdk/client-servicediscovery": "^3.49.0",
-    "@cucumber/cucumber": "^8.0.0-rc.3",
+    "@cucumber/cucumber": "^8.2.1",
     "@hapi/bourne": "^2.0.0",
     "@hapi/hapi": "^20.2.1",
     "axios": "^0.26.0",
