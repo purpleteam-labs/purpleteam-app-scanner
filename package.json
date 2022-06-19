@@ -20,7 +20,7 @@
     "update:deps": "npm-check -u",
     "test": "c8 --reporter=lcov --reporter=text-summary ava",
     "test:nolint": "c8 --reporter=lcov --reporter=text-summary ava",
-    "test:coveralls": "c8 --reporter lcov -o ./coverage/lcov.info ava",
+    "test:coverage": "c8 ava",
     "test:debug": "ava debug --break ./test/api/app/models/app.js",
     "pretest": "npm run lint",
     "debug": "node --inspect-brk ./index.js",
