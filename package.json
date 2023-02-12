@@ -74,7 +74,7 @@
     "convict": "^6.2.1",
     "convict-format-with-moment": "^6.2.0",
     "convict-format-with-validator": "^6.2.0",
-    "got": "^12.0.1",
+    "got": "^12.5.3",
     "hpagent": "^0.1.2",
     "joi": "^17.6.0",
     "purpleteam-logger": "^2.0.0",
